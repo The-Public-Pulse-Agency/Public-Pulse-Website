@@ -1,0 +1,150 @@
+/// <reference path="./.sst/platform/config.d.ts" />
+
+// SST v3 (Ion) — OpenNext deployment for publicpulse.com.bd.
+//
+// ════════════════════════════════════════════════════════════════════════════
+// NO CUSTOM DOMAIN IS ATTACHED ON ANY STAGE.
+//
+// The `domain` block in the Nextjs component is intentionally commented out
+// for every stage. Every `sst deploy` lands on the SST-managed CloudFront URL
+// (e.g. dXXXX.cloudfront.net). Apex publicpulse.com.bd / www stays on the
+// legacy distribution until a separate, manual DNS-cutover step performed by
+// the user — documented in docs/DEPLOY.md § "Production cutover".
+//
+// If you ever uncomment a `domain:` block here, you are doing the cutover.
+// Do not do that without the user's explicit go-ahead.
+// ════════════════════════════════════════════════════════════════════════════
+//
+// Stages:
+//   • production → the live infra. Deployed via `bash scripts/deploy.sh production`.
+//     CloudFront URL only — DNS cutover is a separate manual step.
+//   • <other>    → only spin up if you reintroduce a staging-style stage; would
+//                  also need a matching .env.<stage>.
+//
+// Secrets: every credential is an sst.Secret stored in AWS SSM Parameter Store
+// (SecureString) under /sst/publicpulse-website/<stage>/. Set values once per
+// stage with `sst secret set <NAME> <value> --stage <stage>` before deploy.
+// See docs/ENV.md for the full list and how to get each value.
+
+export default $config({
+  app(input) {
+    return {
+      name: "publicpulse-website",
+      // Production keeps removed resources; staging tears them down on `sst remove`.
+      removal: input?.stage === "production" ? "retain" : "remove",
+      home: "aws",
+      providers: {
+        aws: { region: "ap-southeast-1" },
+      },
+    };
+  },
+
+  async run() {
+    const stage = $app.stage;
+    const isProd = stage === "production";
+
+    // ─── Secrets (SSM SecureString) ────────────────────────────────────
+    // Each one must be set with `sst secret set` before the first deploy.
+    const DATABASE_URL = new sst.Secret("DATABASE_URL");
+    // Resend handles all transactional email (replaces AWS SES).
+    // RESEND_API_KEY is the secret. RESEND_FROM_EMAIL and RESEND_REPLY_TO
+    // are also pushed as secrets so they can be rotated per stage without
+    // a code change, even though they're not cryptographic secrets.
+    const RESEND_API_KEY = new sst.Secret("RESEND_API_KEY");
+    const RESEND_FROM_EMAIL = new sst.Secret("RESEND_FROM_EMAIL");
+    const RESEND_REPLY_TO = new sst.Secret("RESEND_REPLY_TO");
+    const BETTER_AUTH_SECRET = new sst.Secret("BETTER_AUTH_SECRET");
+    const ADMIN_EMAIL = new sst.Secret("ADMIN_EMAIL");
+    // ADMIN_PASSWORD is the PLAINTEXT password. It's stored in SSM as a
+    // SecureString (encrypted at rest, KMS-managed) and only readable by the
+    // linked Lambda role. The Lambda hashes it with BetterAuth's scrypt at
+    // first /manage hit and writes the hash to Postgres — after that, the
+    // SSM value can be rotated/removed if desired.
+    //
+    // Why plaintext (and not a pre-computed hash): BetterAuth's verifier uses
+    // scrypt PHC. Manually generating the matching hash format is fragile —
+    // letting BetterAuth's own hashPassword() run on the Lambda guarantees the
+    // verifier sees what it expects. See src/lib/admin-bootstrap.ts.
+    const ADMIN_PASSWORD = new sst.Secret("ADMIN_PASSWORD");
+
+    // ─── Next.js (OpenNext) ────────────────────────────────────────────
+    // The Nextjs component handles CloudFront + S3 (static + ISR cache) +
+    // Lambda (server) + Image Optimizer Lambda. Cache policy details in
+    // docs/CACHING.md.
+    const web = new sst.aws.Nextjs("Web", {
+      link: [
+        DATABASE_URL,
+        RESEND_API_KEY,
+        RESEND_FROM_EMAIL,
+        RESEND_REPLY_TO,
+        BETTER_AUTH_SECRET,
+        ADMIN_EMAIL,
+        ADMIN_PASSWORD,
+      ],
+      // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
+      // Resend is called over public HTTPS — no IAM permissions needed.
+      server: {
+        memory: "1024 MB",
+        timeout: "10 seconds",
+        runtime: "nodejs22.x",
+      },
+      // Image optimizer: ALSO outside VPC; output cached at CloudFront so a
+      // given variant only invokes Lambda once.
+      imageOptimization: {
+        memory: "1536 MB",
+      },
+      // ──────────────────────────────────────────────────────────────────
+      // DOMAIN: deliberately NOT attached on any stage. See the banner at
+      // the top of this file. Production deploys land on the SST-managed
+      // CloudFront URL; publicpulse.com.bd does not change until the DNS
+      // cutover step in docs/DEPLOY.md is run manually by the user.
+      //
+      // When the user is ready to cut over, uncomment the block below in
+      // the same commit that performs the Route 53 alias change — never
+      // ahead of it. SST will request an ACM cert in us-east-1 and bind it
+      // to the distribution, but DNS validation will not flip the live
+      // apex until the Route 53 record is changed.
+      //
+      //   ...(isProd && {
+      //     domain: {
+      //       name: "publicpulse.com.bd",
+      //       redirects: ["www.publicpulse.com.bd"],
+      //     },
+      //   }),
+      // ──────────────────────────────────────────────────────────────────
+    });
+
+    // ─── AWS Budgets alarm (cost guardrail) ────────────────────────────
+    // Two thresholds: $5 (warning) and $25 (action) per month.
+    // TODO(user): replace BUDGET_ALERT_EMAIL with the address you actually
+    // monitor. Default below uses the agency inbox.
+    new aws.budgets.Budget("MonthlyBudget", {
+      name: `publicpulse-website-${stage}-monthly`,
+      budgetType: "COST",
+      limitAmount: isProd ? "25" : "5",
+      limitUnit: "USD",
+      timeUnit: "MONTHLY",
+      notifications: [
+        {
+          comparisonOperator: "GREATER_THAN",
+          notificationType: "ACTUAL",
+          threshold: 80,
+          thresholdType: "PERCENTAGE",
+          subscriberEmailAddresses: ["info@publicpulse.com.bd"],
+        },
+        {
+          comparisonOperator: "GREATER_THAN",
+          notificationType: "FORECASTED",
+          threshold: 100,
+          thresholdType: "PERCENTAGE",
+          subscriberEmailAddresses: ["info@publicpulse.com.bd"],
+        },
+      ],
+    });
+
+    return {
+      url: web.url,
+      stage,
+    };
+  },
+});

@@ -14,13 +14,24 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Node / Vite (for when React source is added)
+# Node / Next.js
 node_modules/
 dist/
 .vite/
+.next/
+out/
+next-env.d.ts
 .env
 .env.local
 .env.*.local
+# Per-stage env files used by scripts/deploy-staging.sh — populated locally,
+# values pushed to SSM. Never commit the populated forms.
+.env.staging
+.env.production
+
+# SST
+.sst/
+.open-next/
 
 # AWS / secrets — never commit
 .aws/

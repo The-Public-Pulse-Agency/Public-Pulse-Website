@@ -1,0 +1,43 @@
+# Public Pulse Agency
+
+> Bangladesh's 360° digital marketing and political PR agency, based in Dhaka.
+> Sister concern within Pulse Group (Event Pulse, Tender Pulse, Social Pulse, The Pulse Today).
+
+## Services
+
+- [Political PR & Image Building](https://publicpulse.com.bd/services/political-pr): Candidate image building, narrative engineering, crisis communication, 5-phase election PR.
+- [Social Media Management](https://publicpulse.com.bd/services/social-media): Facebook, Instagram, YouTube, TikTok end-to-end management.
+- [Content Production](https://publicpulse.com.bd/services/content-production): Video, photo, motion graphics, drone shoots — strategy-driven content.
+- [Paid Ads & Campaigns](https://publicpulse.com.bd/services/paid-ads): Meta Ads, Google Ads, YouTube — ROI-focused paid media.
+- [Hospitality Marketing](https://publicpulse.com.bd/services/hospitality): Resorts, restaurants, hotels — from Cox's Bazar to Sylhet.
+- [Brand Building & Design](https://publicpulse.com.bd/services/brand-building): Logo, identity, packaging, brand guidelines.
+- [SEO & Website Development](https://publicpulse.com.bd/services/seo-website): Local SEO, technical SEO, conversion-focused websites.
+- [Analytics & Performance Reporting](https://publicpulse.com.bd/services/analytics-reporting): Dashboards, ROI tracking, actionable insights.
+- [Influencer & KOL Marketing](https://publicpulse.com.bd/services/influencer-marketing): Micro to mega influencer campaigns.
+
+## Blog
+
+- [Digital Marketing in Bangladesh 2026: The Complete Guide](https://publicpulse.com.bd/blog/digital-marketing-bangladesh-2026)
+- [Political PR & Election Campaign Strategy: The Definitive Guide](https://publicpulse.com.bd/blog/political-pr-election-strategy)
+- [Restaurant Marketing in Dhaka: How to Boost Orders by 60%](https://publicpulse.com.bd/blog/restaurant-marketing-dhaka)
+- [Facebook Ads Guide for Bangladesh](https://publicpulse.com.bd/blog/facebook-ads-guide-bangladesh)
+- [Brand Building for Startups](https://publicpulse.com.bd/blog/brand-building-startup-guide)
+- [Resort Marketing in Cox's Bazar](https://publicpulse.com.bd/blog/resort-marketing-coxs-bazar)
+- [Video Content Production Tips](https://publicpulse.com.bd/blog/content-production-video-tips)
+- [SEO Guide for Bangladesh Business](https://publicpulse.com.bd/blog/seo-guide-bangladesh-business)
+- [E-Commerce Growth Strategy](https://publicpulse.com.bd/blog/ecommerce-growth-strategy)
+- [Influencer Marketing in Bangladesh](https://publicpulse.com.bd/blog/influencer-marketing-bangladesh)
+- [Google Ads: Search & Display Guide](https://publicpulse.com.bd/blog/google-ads-search-display)
+- [Crisis Management & PR Guide](https://publicpulse.com.bd/blog/crisis-management-pr-guide)
+
+## About
+
+- [About Public Pulse Agency](https://publicpulse.com.bd/about): Founded 2024, 50+ active clients across 10+ industries, 300%+ avg engagement growth.
+- [Pulse Group](https://publicpulse.com.bd/group): Parent group — Public Pulse, Event Pulse, Tender Pulse, Social Pulse, The Pulse Today.
+- [Contact](https://publicpulse.com.bd/contact): Phone +880 1717-714676 · Email info@publicpulse.com.bd · WhatsApp available.
+
+## Optional
+
+- [Sitemap](https://publicpulse.com.bd/sitemap.xml)
+- [RSS feed](https://publicpulse.com.bd/feed.xml)
+- [Full content for ingestion](https://publicpulse.com.bd/llms-full.txt)
