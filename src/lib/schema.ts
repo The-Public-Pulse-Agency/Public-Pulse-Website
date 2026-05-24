@@ -3,7 +3,6 @@
 // the graph together across pages.
 
 import { SITE, absoluteUrl } from "./site";
-import { PULSE_GROUP, PULSE_BRANDS } from "./group";
 
 const ORG_ID = SITE.organizationId;
 const WEBSITE_ID = `${SITE.url}/#website`;
@@ -27,12 +26,6 @@ export function organizationSchema() {
       addressCountry: SITE.contact.address.country,
     },
     sameAs: [SITE.social.facebook, SITE.social.instagram],
-    parentOrganization: {
-      "@type": "Organization",
-      "@id": PULSE_GROUP.id,
-      name: PULSE_GROUP.name,
-      url: PULSE_GROUP.url,
-    },
     foundingDate: "2024",
     areaServed: { "@type": "Country", name: "Bangladesh" },
     contactPoint: [
@@ -58,25 +51,6 @@ export function websiteSchema() {
     name: SITE.name,
     publisher: { "@id": ORG_ID },
     inLanguage: SITE.language,
-  };
-}
-
-// ─── Pulse Group page: Organization with subOrganization siblings ───────
-
-export function pulseGroupSchema() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "@id": PULSE_GROUP.id,
-    name: PULSE_GROUP.name,
-    url: PULSE_GROUP.url,
-    description: PULSE_GROUP.tagline,
-    subOrganization: PULSE_BRANDS.map((b) => ({
-      "@type": "Organization",
-      name: b.name,
-      url: b.url,
-      description: b.tagline,
-    })),
   };
 }
 

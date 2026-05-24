@@ -5,66 +5,76 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // ── SaaS palette (sister-product parity with tenderpulse) ──
-        "brand-navy": "#0F1B3D",
-        "brand-navy-soft": "#1A2A52",
-        "brand-teal": "#0D9488", // primary accent (Tailwind teal-600)
-        "brand-teal-soft": "#14B8A6", // hover (teal-500)
-        "brand-teal-deep": "#0F766E", // pressed (teal-700)
-        "brand-teal-tint": "#CCFBF1", // tag bg (teal-100)
-        // Brand red retained as a SECONDARY accent for legacy reasons
-        // (favicon, brand wordmark colour). Don't use on CTAs.
-        "brand-red": "#D32F2F",
-        // Neutrals
-        "surface-alt": "#F8FAFC", // section alternate (slate-50)
-        "surface-tint": "#F1F5F9", // pill / chip bg (slate-100)
+        // ── Avoora-inspired palette: B&W base + saturated orange accent ──
+        "ink": "#0A0A0A",
+        "ink-soft": "#1A1A1A",
+        "paper": "#FFFFFF",
+        "paper-alt": "#F5F5F5",
+        "paper-tint": "#EDEDED",
+        "brand-orange": "#FF5C00",
+        "brand-orange-soft": "#FF7A2E",
+        "brand-orange-deep": "#E04E00",
+        // Legacy aliases (keep so any unmigrated markup still compiles)
+        "brand-navy": "#0A0A0A",
+        "brand-navy-soft": "#1A1A1A",
+        "brand-teal": "#FF5C00",
+        "brand-teal-soft": "#FF7A2E",
+        "brand-teal-deep": "#E04E00",
+        "brand-teal-tint": "#FFE6D6",
+        "brand-red": "#FF5C00",
+        "surface-alt": "#F5F5F5",
+        "surface-tint": "#EDEDED",
         whatsapp: "#25D366",
-        // Category palette — kept for service-card top borders only
+        // Category palette retained for service-card top borders only
         "cat-red": "#D32F2F",
         "cat-blue": "#1565C0",
         "cat-purple": "#6A1B9A",
         "cat-teal": "#0D9488",
         "cat-green": "#2E7D32",
-        "cat-orange": "#EF6C00",
-        "cat-navy": "#0F1B3D",
+        "cat-orange": "#FF5C00",
+        "cat-navy": "#0A0A0A",
         "cat-brown": "#795548",
         "cat-magenta": "#AD1457",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        // `font-serif` is intentionally an alias to sans now — any legacy
-        // `font-serif` markup keeps working without re-introducing a serif.
+        display: ["var(--font-display)", "var(--font-inter)", "system-ui", "sans-serif"],
+        // serif aliased to sans so legacy markup compiles
         serif: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       fontSize: {
-        // SaaS-tuned: less dramatic clamps, tighter line-heights for product-style copy.
-        display: ["clamp(2.25rem, 3.5vw + 1rem, 4rem)", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
-        h1: ["clamp(2rem, 2.5vw + 1rem, 3.25rem)", { lineHeight: "1.15", letterSpacing: "-0.02em" }],
-        h2: ["clamp(1.625rem, 1.5vw + 1rem, 2.25rem)", { lineHeight: "1.2", letterSpacing: "-0.015em" }],
-        h3: ["clamp(1.125rem, 0.5vw + 1rem, 1.375rem)", { lineHeight: "1.3", letterSpacing: "-0.005em" }],
+        // Avoora-tuned: big bold headlines with tight tracking
+        mega: ["clamp(3.25rem, 6vw + 1rem, 7.5rem)", { lineHeight: "0.95", letterSpacing: "-0.04em" }],
+        display: ["clamp(2.5rem, 4vw + 1rem, 5.5rem)", { lineHeight: "1.02", letterSpacing: "-0.035em" }],
+        h1: ["clamp(2rem, 2.5vw + 1rem, 3.75rem)", { lineHeight: "1.08", letterSpacing: "-0.025em" }],
+        h2: ["clamp(1.75rem, 1.5vw + 1rem, 2.75rem)", { lineHeight: "1.12", letterSpacing: "-0.02em" }],
+        h3: ["clamp(1.125rem, 0.5vw + 1rem, 1.5rem)", { lineHeight: "1.25", letterSpacing: "-0.01em" }],
         eyebrow: ["0.75rem", { lineHeight: "1.2", letterSpacing: "0.12em" }],
         lead: ["clamp(1.0625rem, 0.25vw + 1rem, 1.25rem)", { lineHeight: "1.55" }],
         body: ["1rem", { lineHeight: "1.6" }],
-        meta: ["0.8125rem", { lineHeight: "1.4", letterSpacing: "0.01em" }],
+        meta: ["0.8125rem", { lineHeight: "1.4", letterSpacing: "0.04em" }],
         "display-number": [
-          "clamp(2.25rem, 2vw + 1.25rem, 3.25rem)",
-          { lineHeight: "1", letterSpacing: "-0.02em" },
+          "clamp(3rem, 4vw + 2rem, 6rem)",
+          { lineHeight: "1", letterSpacing: "-0.04em" },
         ],
       },
       maxWidth: {
-        container: "1200px",
+        container: "1280px",
         prose: "65ch",
       },
       borderRadius: {
-        // SaaS radii: button 8, card 12, panel 16
-        btn: "8px",
-        card: "12px",
-        panel: "16px",
+        btn: "9999px",
+        card: "8px",
+        panel: "12px",
       },
-      boxShadow: {
-        card: "0 1px 2px rgba(15, 27, 61, 0.04), 0 1px 3px rgba(15, 27, 61, 0.06)",
-        "card-hover": "0 10px 25px -10px rgba(15, 27, 61, 0.18)",
-        ring: "0 0 0 1px rgba(15, 27, 61, 0.08)",
+      animation: {
+        marquee: "marquee 40s linear infinite",
+      },
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
     },
   },

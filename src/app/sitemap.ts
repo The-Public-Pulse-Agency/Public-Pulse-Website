@@ -17,7 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/services"), lastModified: today, changeFrequency: "monthly", priority: 0.9 },
     { url: absoluteUrl("/blog"), lastModified: today, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/contact"), lastModified: today, changeFrequency: "yearly", priority: 0.7 },
-    { url: absoluteUrl("/group"), lastModified: today, changeFrequency: "monthly", priority: 0.6 },
   ];
 
   // Only ready services/posts are in the sitemap. Don't advertise URLs that

@@ -3,21 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --brand-navy: #0f1b3d;
-  --brand-teal: #0d9488;
-  --brand-teal-deep: #0f766e;
-  --brand-red: #d32f2f;
+  --ink: #0a0a0a;
+  --paper: #ffffff;
+  --brand-orange: #ff5c00;
+  --brand-orange-deep: #e04e00;
+  --brand-orange-soft: #ff7a2e;
 }
 
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: var(--paper);
 }
 
 body {
-  color: #0f172a;
-  background: #ffffff;
+  color: var(--ink);
+  background: var(--paper);
   font-family: var(--font-inter), system-ui, sans-serif;
   font-size: 1rem;
   line-height: 1.6;
@@ -25,28 +27,30 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* ─── AnswerBlock ──────────────────────────────────────────── */
-/* AEO/GEO surface. Selector .answer-block is referenced by Article
-   schema's `speakable` field — don't rename without updating
-   src/lib/schema.ts. */
+::selection {
+  background: var(--brand-orange);
+  color: var(--paper);
+}
+
+/* ─── AnswerBlock (AEO/GEO surface) ─────────────────────────────────── */
 .answer-block {
-  border-left: 3px solid var(--brand-teal);
-  background: #f8fafc;
-  padding: 20px 24px;
-  border-radius: 12px;
+  border-left: 3px solid var(--brand-orange);
+  background: #f5f5f5;
+  padding: 22px 26px;
+  border-radius: 8px;
   font-size: 1rem;
   line-height: 1.65;
-  color: #0f172a;
+  color: var(--ink);
 }
 .answer-block-dark {
-  border-left: 3px solid var(--brand-teal);
+  border-left: 3px solid var(--brand-orange);
   background: rgba(255, 255, 255, 0.05);
-  padding: 20px 24px;
-  border-radius: 12px;
+  padding: 22px 26px;
+  border-radius: 8px;
   color: rgba(255, 255, 255, 0.92);
 }
 
-/* ─── Buttons ──────────────────────────────────────────────── */
+/* ─── Buttons ────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -55,76 +59,113 @@ body {
   font-weight: 600;
   font-size: 0.9375rem;
   line-height: 1;
-  padding: 0.75rem 1.125rem;
-  border-radius: 8px;
+  padding: 0.875rem 1.5rem;
+  border-radius: 9999px;
   transition:
-    background-color 150ms ease-out,
-    color 150ms ease-out,
-    border-color 150ms ease-out,
-    box-shadow 150ms ease-out,
-    transform 150ms ease-out;
+    background-color 200ms ease-out,
+    color 200ms ease-out,
+    border-color 200ms ease-out,
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
   white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+.btn:hover {
+  transform: translateY(-1px);
 }
 .btn-primary {
-  background: var(--brand-teal);
-  color: #ffffff;
+  background: var(--ink);
+  color: var(--paper);
 }
 .btn-primary:hover {
-  background: var(--brand-teal-deep);
+  background: var(--brand-orange);
+}
+.btn-orange {
+  background: var(--brand-orange);
+  color: var(--paper);
+}
+.btn-orange:hover {
+  background: var(--brand-orange-deep);
 }
 .btn-secondary {
-  background: #ffffff;
-  color: var(--brand-navy);
-  border: 1px solid #e2e8f0;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
 }
 .btn-secondary:hover {
-  border-color: var(--brand-navy);
-  background: #f8fafc;
+  background: var(--ink);
+  color: var(--paper);
 }
 .btn-ghost-dark {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--paper);
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 .btn-ghost-dark:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--paper);
 }
 
-/* ─── Cards ────────────────────────────────────────────────── */
+/* ─── Cards ──────────────────────────────────────────────────────────── */
 .card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  padding: 1.75rem;
   transition:
-    transform 200ms ease-out,
-    border-color 200ms ease-out,
-    box-shadow 200ms ease-out;
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .card:hover {
-  transform: translateY(-2px);
-  border-color: #cbd5e1;
-  box-shadow: 0 10px 25px -10px rgba(15, 27, 61, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 8px 8px 0 0 var(--ink);
+}
+.card-dark {
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  padding: 1.75rem;
+  transition:
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-dark:hover {
+  transform: translateY(-4px);
+  box-shadow: 8px 8px 0 0 var(--brand-orange);
 }
 
-/* ─── Motion: scroll-reveal ────────────────────────────────── */
-/* SSR content is in the DOM either way — opacity only suppressed when
-   JS has marked the page `reveal-ready`. No-JS crawlers never see opacity:0. */
+/* ─── Motion: scroll-reveal (fade + scale 105 → 100) ────────────────── */
 html.reveal-ready .reveal {
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(20px) scale(1.05);
   transition:
-    opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 800ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 html.reveal-ready .reveal.is-visible {
   opacity: 1;
-  transform: none;
+  transform: translateY(0) scale(1);
 }
 
-/* ─── Reduced motion ───────────────────────────────────────── */
+/* ─── Marquee ────────────────────────────────────────────────────────── */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+  will-change: transform;
+}
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   html.reveal-ready .reveal,
   html.reveal-ready .reveal.is-visible {
@@ -134,25 +175,31 @@ html.reveal-ready .reveal.is-visible {
   }
   .btn,
   .card,
-  .card:hover {
+  .card-dark,
+  .card:hover,
+  .card-dark:hover,
+  .btn:hover {
     transform: none !important;
     transition: none !important;
+  }
+  .marquee-track {
+    animation: none !important;
   }
   html {
     scroll-behavior: auto;
   }
 }
 
-/* ─── Form inputs ──────────────────────────────────────────── */
+/* ─── Form inputs ────────────────────────────────────────────────────── */
 .form-input {
   display: block;
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--ink);
   border-radius: 8px;
-  background: #ffffff;
-  color: #0f172a;
-  font-size: 1rem; /* ≥16px to prevent iOS zoom-on-focus */
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 1rem;
   line-height: 1.4;
   transition:
     border-color 150ms ease-out,
@@ -160,31 +207,45 @@ html.reveal-ready .reveal.is-visible {
 }
 .form-input:focus {
   outline: none;
-  border-color: var(--brand-teal);
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 3px rgba(255, 92, 0, 0.2);
 }
 .form-input[aria-invalid="true"] {
-  border-color: var(--brand-red);
+  border-color: var(--brand-orange);
 }
 .form-input[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 92, 0, 0.25);
 }
 
-/* ─── Pill chip ────────────────────────────────────────────── */
+/* ─── Pill chip ──────────────────────────────────────────────────────── */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1;
-  padding: 0.375rem 0.625rem;
+  padding: 0.375rem 0.75rem;
   border-radius: 9999px;
-  background: var(--surface-tint, #f1f5f9);
-  color: #334155;
-  letter-spacing: 0.01em;
+  background: var(--ink);
+  color: var(--paper);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-.chip-teal {
-  background: #ccfbf1;
-  color: #0f766e;
+.chip-orange {
+  background: var(--brand-orange);
+  color: var(--paper);
+}
+.chip-light {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+/* ─── Section dividers ───────────────────────────────────────────────── */
+.section-rule {
+  border-top: 1px solid var(--ink);
+}
+.section-rule-light {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { ArrowRight, CalendarDays, Clock } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Clock } from "lucide-react";
 
 import { buildMetadata } from "@/lib/seo";
 import {
@@ -95,17 +95,16 @@ export default async function BlogPostPage({
         ]}
       />
 
-      {/* ─── HERO ─────────────────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white">
+      <section className="bg-paper">
         <Container className="pt-10 pb-10 md:pt-14">
           <Breadcrumbs crumbs={crumbs} />
-          <header className="mx-auto mt-6 max-w-3xl text-center">
-            <span className="chip chip-teal mx-auto">{post.category}</span>
-            <h1 className="mt-5 text-h1 font-extrabold tracking-tight text-brand-navy">
+          <header className="mx-auto mt-8 max-w-3xl">
+            <span className="chip chip-orange">{post.category}</span>
+            <h1 className="mt-6 text-display font-extrabold tracking-tight text-ink">
               {post.title}
             </h1>
-            <p className="mt-4 text-lead text-slate-600">{post.description}</p>
-            <div className="mt-5 flex items-center justify-center gap-4 text-meta text-slate-500">
+            <p className="mt-4 text-lead text-ink/70">{post.description}</p>
+            <div className="mt-5 flex items-center gap-4 text-meta text-ink/55">
               <span className="inline-flex items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5" aria-hidden />
                 {dateStr}
@@ -113,17 +112,16 @@ export default async function BlogPostPage({
               <span aria-hidden>·</span>
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" aria-hidden />
-                {post.readMinutes} min read
+                {post.readMinutes} min
               </span>
             </div>
           </header>
         </Container>
       </section>
 
-      {/* ─── HERO IMAGE ──────────────────────────────────────────────── */}
-      <section className="bg-white">
+      <section className="bg-paper">
         <Container className="pt-8">
-          <div className="mx-auto max-w-4xl overflow-hidden rounded-panel border border-slate-200">
+          <div className="mx-auto max-w-4xl overflow-hidden rounded-panel border border-ink">
             <Image
               src={post.hero}
               alt={post.title}
@@ -137,31 +135,25 @@ export default async function BlogPostPage({
         </Container>
       </section>
 
-      {/* ─── BODY ────────────────────────────────────────────────────── */}
-      <section className="bg-white py-12 md:py-16">
+      <section className="bg-paper py-12 md:py-16">
         <Container>
           <div className="mx-auto max-w-3xl">
             <AnswerBlock>{content.answer}</AnswerBlock>
-
             <div className="mt-10 space-y-10">
               {content.sections.map((s) => (
                 <section key={s.heading}>
-                  <h2 className="text-h2 font-bold tracking-tight text-brand-navy">{s.heading}</h2>
-                  <p className="mt-4 text-base leading-relaxed text-slate-700">{s.body}</p>
+                  <h2 className="text-h2 font-extrabold tracking-tight text-ink">{s.heading}</h2>
+                  <p className="mt-4 text-base leading-relaxed text-ink/80">{s.body}</p>
                 </section>
               ))}
             </div>
-
             <section className="mt-14">
-              <h2 className="text-h2 font-bold tracking-tight text-brand-navy">FAQs</h2>
+              <h2 className="text-h2 font-extrabold tracking-tight text-ink">FAQs</h2>
               <dl className="mt-6 space-y-4">
                 {content.faqs.map((f) => (
-                  <div
-                    key={f.q}
-                    className="rounded-card border border-slate-200 bg-white p-5"
-                  >
-                    <dt className="font-semibold text-brand-navy">{f.q}</dt>
-                    <dd className="mt-2 text-sm leading-relaxed text-slate-600">{f.a}</dd>
+                  <div key={f.q} className="rounded-card border border-ink/15 bg-paper p-5">
+                    <dt className="font-semibold text-ink">{f.q}</dt>
+                    <dd className="mt-2 text-sm leading-relaxed text-ink/70">{f.a}</dd>
                   </div>
                 ))}
               </dl>
@@ -170,23 +162,21 @@ export default async function BlogPostPage({
         </Container>
       </section>
 
-      {/* ─── CLOSING CTA ─────────────────────────────────────────────── */}
-      <section className="border-t border-slate-200 bg-surface-alt py-20 md:py-24">
+      <section className="border-t border-ink bg-ink py-24 text-paper md:py-28">
         <Container>
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-h2 font-bold tracking-tight text-brand-navy">
-              Want help executing this?
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-mega font-extrabold leading-[0.95] tracking-tight">
+              Want help <span className="text-brand-orange">executing</span> this?
             </h2>
-            <p className="mt-4 text-lead text-slate-600">
-              Public Pulse Agency offers a free 30-minute consultation. We&rsquo;ll review your
-              channels and propose a plan.
+            <p className="mt-6 text-lead text-white/70">
+              Public Pulse Agency offers a free 30-minute consultation.
             </p>
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/contact" className="btn btn-primary">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/contact" className="btn btn-orange">
                 Get a free consultation
-                <ArrowRight className="h-4 w-4" aria-hidden />
+                <ArrowUpRight className="h-4 w-4" aria-hidden />
               </Link>
-              <Link href="/services" className="btn btn-secondary">
+              <Link href="/services" className="btn btn-ghost-dark">
                 Browse all 9 services
               </Link>
             </div>
