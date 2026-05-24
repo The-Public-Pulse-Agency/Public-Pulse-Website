@@ -13,6 +13,108 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 7: Resend swap, Inter+teal SaaS redesign, **DNS CUTOVER LIVE on apex**
+
+**`https://publicpulse.com.bd` is now served by the SST/Next.js/CloudFront stack with the redesigned SaaS UI.** Legacy stack is intact behind the scenes for rollback. Total apex outage during the swap was ~2-3 min (T+0 = 2026-05-25 23:07:25 UTC → live at ~23:11 UTC).
+
+**Email — swapped from AWS SES to Resend:**
+
+- `@aws-sdk/client-ses` removed; `resend@6.12.3` added. Contact server action now uses `resend.emails.send()` with lazy client init (no API key needed at build time).
+- `sst.config.ts`: dropped `ses:SendEmail` IAM perms; added `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO` as SST secrets.
+- `scripts/deploy.sh` preflight now hits `GET https://api.resend.com/domains` with the supplied key and STOPs if the key is invalid or the sender domain isn't verified in the Resend dashboard.
+- `publicpulse.com.bd` was already DKIM-set up at Route 53 (`resend._domainkey.publicpulse.com.bd` TXT was live from a prior setup), so domain verification flipped to "verified" the moment the key was added.
+- Docs updated end-to-end (`docs/ENV.md`, `docs/DEPLOY.md`, both `.env.<stage>.example` files).
+
+**Two bugs fixed during the first deploy:**
+
+1. `drizzle-kit push` was stalling on an interactive confirmation when running unattended (no TTY). Added `--force` to `scripts/deploy.sh`. The first deploy reported "Schema in sync" falsely because the prompt rejection short-circuited; the schema didn't actually apply until I ran it manually with `--force`.
+2. `/manage/sign-in` was infinite-redirecting to itself. The `/manage` layout was reading `x-pathname` / `x-invoke-path` headers to detect the sign-in route, but Next 16 doesn't auto-inject those headers. Added `src/middleware.ts` scoped to `/manage/:path*` that explicitly sets `x-pathname` on the request — the layout's pathname check now works.
+3. (`/manage/sign-in` URL fix in the same file) `scripts/deploy.sh` now hits `/manage/sign-in` for admin bootstrap instead of bare `/manage` (which 404s — there's no page.tsx at the manage root).
+
+**Full SaaS redesign — "sister-product parity with tenderpulse":**
+
+The previous editorial style (Fraunces serif headlines, asymmetric layouts, brand-red accent, navy-dominant editorial sections) is gone. The new look mirrors tenderpulse.com.bd as the family resemblance:
+
+- `tailwind.config.ts`: dropped Fraunces, `font-sans` is now Inter, `font-serif` is aliased to Inter (so legacy `font-serif` markup still compiles without re-introducing a serif). Added `brand-teal` (#0D9488) primary accent with `-soft` (#14B8A6) hover and `-deep` (#0F766E) pressed states. Type scale tuned for SaaS — smaller clamps, tighter line-heights. Border radii: btn 8, card 12, panel 16.
+- `src/styles/globals.css`: `.btn` / `.btn-primary` / `.btn-secondary` / `.btn-ghost-dark` primitives. `.card` with hover lift. `.chip` and `.chip-teal` for category pills. `.answer-block` border-left swapped to teal. Reduced-motion contract preserved.
+- `src/app/layout.tsx`: dropped Fraunces import, uses just `Inter` from `next/font/google`. `themeColor` swapped to teal.
+- `src/components/layout/Header.tsx`: clean SaaS nav — logo + 5 links + secondary "Sign in" + primary "Book a free audit" CTA. Sticky with backdrop blur.
+- `src/components/layout/Footer.tsx`: 5-column grid (brand + Platform + Company + Sister concerns + contact chips).
+- `src/app/page.tsx`: centered hero + AnswerBlock + sister-brands trust band + 9-service feature grid + 4-step process + cached case-studies + testimonial + 6-item promise band + dark CTA.
+- `src/app/services/[slug]/page.tsx`: centered hero + AnswerBlock + deliverables checklist + 5-step process cards + why-us cards + FAQ cards + related services + dark CTA.
+- `src/app/services/page.tsx`, `about/page.tsx`, `contact/page.tsx`, `group/page.tsx`, `blog/page.tsx`, `blog/[slug]/page.tsx`: all rewritten with the same hero / chip / card primitives. Direct-channel cards on /contact now use lucide icons (MessageCircle/Phone/Mail). About has 4 value cards (Senior in room, Local by design, One team, Honest reporting). Group page is a 2-col card grid instead of full-width editorial rows.
+
+**Cutover sequence executed:**
+
+Tried `aws cloudfront associate-alias` for near-zero downtime. **AWS rejected with `IllegalUpdate: Invalid or missing alias DNS TXT records.`** This is the October-2024 CloudFront CNAME ownership-proof requirement — even for same-account moves, AWS now wants a TXT record at `_<alias>` containing the account ID. For www this would be addable, but for the apex `_publicpulse.com.bd` lives outside our zone (it'd have to be in `.com.bd`, which we don't control). Route 53 explicitly refused with `RRSet with DNS name _publicpulse.com.bd. is not permitted in zone publicpulse.com.bd.`
+
+Fell back to the brief-planned-outage path (user explicitly chose this via AskUserQuestion):
+
+| T+ | Action | Outcome |
+|---|---|---|
+| T+0 (23:07:25 UTC) | `aws cloudfront update-distribution` removes apex+www aliases from legacy dist `EFMM4G8ZO6TJX`, swaps ViewerCertificate to default | Apex DNS still pointed at OLD; OLD no longer accepts the host header → outage starts |
+| T+~0 to T+~2 | `npx sst deploy --stage production` runs with canonical `domain: { name: "publicpulse.com.bd", redirects: ["www..."], cert: wildcard, dns: false }` | SST creates the www-redirect distribution `E34YNSTXM5DS7N`, attaches apex+www to the new dist `E3IPCTOUJMXJWF`. CloudFront edge SNI routing flips at this moment |
+| T+~3 (23:10:05 UTC) | Route 53 `UPSERT` apex A/AAAA → `d2mb91txyfc3vy.cloudfront.net`, plus new www A/AAAA → `djdgdt1dwl4ho.cloudfront.net` | DNS cleanup (traffic was already routed via CloudFront edge SNI; this fixes long-term resolution) |
+| T+~4 (~23:11 UTC) | `dig` + `curl -I https://publicpulse.com.bd` verified | Live. New design, valid cert, all cache headers correct |
+
+**Verification (post-cutover, live apex):**
+
+```text
+$ dig +short publicpulse.com.bd → 18.155.107.x (new CloudFront IPs)
+$ curl -sI https://publicpulse.com.bd/
+  HTTP/2 200, cache-control: s-maxage=31536000, x-cache: Hit from cloudfront
+$ curl -sI https://www.publicpulse.com.bd/
+  HTTP/2 301, location: https://publicpulse.com.bd/
+$ curl -s  https://publicpulse.com.bd/  | grep 'rel="canonical"'
+  rel="canonical" href="https://publicpulse.com.bd"
+$ curl -sI https://publicpulse.com.bd/manage/sign-in
+  cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+$ curl -s  https://publicpulse.com.bd/robots.txt | grep -i manage → 12 hits
+$ curl -s  https://publicpulse.com.bd/sitemap.xml | grep -c manage → 0
+$ curl -s  https://publicpulse.com.bd/services/political-pr | grep '"@type"'
+  Organization, Service, BreadcrumbList, FAQPage
+$ openssl s_client …
+  subject=CN=publicpulse.com.bd, notAfter=Oct 25 2026
+```
+
+Plus: seeded case study ("+47% direct bookings") visible on homepage; service page emits all four expected schemas; favicon + og-image both 200.
+
+**Production state (live):**
+
+| Resource | ID | Status |
+|---|---|---|
+| Apex distribution (new) | `E3IPCTOUJMXJWF` (`d2mb91txyfc3vy.cloudfront.net`) | Live, serving `publicpulse.com.bd` |
+| www redirect distribution | `E34YNSTXM5DS7N` (`djdgdt1dwl4ho.cloudfront.net`) | Live, 301 → apex |
+| Legacy distribution | `EFMM4G8ZO6TJX` (`d2d44nxwur5g9k.cloudfront.net`) | Aliases stripped, still online, kept as rollback |
+| ACM cert | `8a48a7d7-...` | Shared with new distribution |
+| Route 53 zone | `Z00453651ICNJYNV229CW` | apex + www point at new distros |
+| Resend domain | `publicpulse.com.bd` | Verified, sending enabled |
+| Neon | pooled + direct endpoints | Schema applied, seed row present |
+
+**Git hygiene (this session):**
+
+Initial repo had only the legacy S3 site committed. All Next.js work was untracked. Bundled into three meaningful commits:
+
+- `3d7d8fc` — `feat: full Next.js 16 rebuild with SST/Neon backend, deploy automation, Resend email, partial SaaS redesign` (98 files)
+- `bc7ba43` — `feat(ui): finish SaaS sister-product redesign (about, contact, group, blog)` (8 files)
+- (this commit) — `feat: production DNS cutover — publicpulse.com.bd live on new stack` (sst.config + JOURNEY)
+
+`.env.production` is gitignored (verified). `tsconfig.tsbuildinfo` added to .gitignore + removed from tracking.
+
+**Rollback (documented, not needed):**
+
+If something breaks: re-add apex+www aliases to `EFMM4G8ZO6TJX` (the original `/tmp/old-dist-rollback.json` snapshot is preserved locally), then change-batch Route 53 A/AAAA back to `d2d44nxwur5g9k.cloudfront.net`. Re-deploy SST with the canonical domain block removed. The legacy S3 bucket contents are untouched.
+
+**Next (yours, not blocking):**
+
+- Replace `// TODO(user):` placeholders in `src/app/page.tsx` (real client stats, real case studies), `src/app/about/page.tsx` (real team bios + photos + sameAs links), `src/lib/group.ts` (sister-brand taglines + colors)
+- Sign into `https://publicpulse.com.bd/manage` (creds: `moshiur@publicpulse.com.bd` + the password you set), delete the seeded placeholder, publish real case studies
+- Run `bash scripts/setup-oidc.sh` (one-time IAM trust setup); add the printed role ARN to GitHub repo Variables as `AWS_DEPLOY_ROLE_ARN`; create the `production` GitHub Environment with required-reviewer protection. After that, deploys can come from `git tag vX.Y.Z && git push --tags`
+- After ~7 days of stable operation, retire the legacy distribution `EFMM4G8ZO6TJX` and `site/` mirror
+- Request SES production access (or stay on Resend exclusively — Resend covers our needs)
+
+---
+
 ## 2026-05-25 — STEP 6: collapse to single PRODUCTION stage (domain-less), CI cleanup, cutover plan ready
 
 **Decision change:** there is no separate staging stage anymore. The production stack is the only SST stage and is deployed **without** the apex domain attached — it lands on the SST-managed CloudFront URL while `publicpulse.com.bd` stays on the legacy distribution. DNS cutover stays a manual step, scheduled separately.

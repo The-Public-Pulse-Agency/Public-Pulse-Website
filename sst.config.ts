@@ -112,6 +112,19 @@ export default $config({
       //     },
       //   }),
       // ──────────────────────────────────────────────────────────────────
+      //
+      // PRODUCTION DOMAIN — apex + www. Cert is the existing wildcard
+      // (8a48a7d7-..., covers apex + *.publicpulse.com.bd). dns: false
+      // because Route 53 is managed manually outside SST so we don't risk
+      // SST clobbering MX/DKIM/other records in the zone.
+      ...(isProd && {
+        domain: {
+          name: "publicpulse.com.bd",
+          redirects: ["www.publicpulse.com.bd"],
+          cert: "arn:aws:acm:us-east-1:739275468267:certificate/8a48a7d7-6876-46b0-a54a-167c94022d44",
+          dns: false,
+        },
+      }),
     });
 
     // ─── AWS Budgets alarm (cost guardrail) ────────────────────────────
