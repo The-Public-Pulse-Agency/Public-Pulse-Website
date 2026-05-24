@@ -13,6 +13,55 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 9: avoora-inspired redesign LIVE; Pulse Group removed; SEO mega-build cancelled
+
+**`https://publicpulse.com.bd` now serves the avoora-style redesign.** SST deploy `9b73145d` updated the live stack at ~23:30 UTC.
+
+**Direction change (mid-STEP 8):** the user cancelled the STEP 8 SEO/AEO/GEO mega-build and pointed at https://avoora.webflow.io as the target look. Also: "forget about Pulse Group section also in AEO, SEO and GEO part." STEP 8 phases 1-8 are NOT being executed.
+
+**What landed (commit `bb79ae3` → deploy `9b73145d`):**
+
+Design tokens
+- Dropped teal accent. Primary palette is ink (`#0A0A0A`) + paper (`#FFFFFF`) + brand-orange (`#FF5C00`). Legacy color aliases (brand-teal etc.) point to the orange so no unmigrated markup breaks.
+- New `text-mega` clamp up to 7.5rem with -0.04em tracking for avoora-style headlines.
+- Pill buttons (radius 9999), hard-shadow card lift on hover (avoora "block" pattern).
+- Marquee keyframes (40s linear infinite, `translateX(0 → -50%)` for seamless loop, pauses on hover).
+- ScrollReveal upgraded: fade + scale 1.05 → 1.0 over 800ms (avoora's signature reveal).
+- `prefers-reduced-motion` fully respected.
+
+Layout + pages
+- Header: white sticky with backdrop blur; "Public" black + "Pulse" orange + dot. Dropped /group from nav. Primary CTA "Let's talk".
+- Footer: mega "Let's make NOISE" CTA strip on ink bg + 4-column grid (drop Sister Concerns column per direction).
+- New marquee section between hero and services rolls the 9 service names + "Bangladesh" + "Dhaka" + "Cox's Bazar" + "Election ready" + "Brand systems" with orange ✦ separators.
+- Homepage rebuilt: hero ("brands that refuse to be ignored") with 5-star rating chip and chip-orange "Dhaka · since 2024" tag → marquee → dark Services with numbered cards (`01–09`) → mega Stats → 4-step Process → cached case studies → mega single Testimonial → dark mega Final CTA.
+- Service detail / services index / about / contact / blog / blog post all rewritten in the same vocabulary: chip-orange, text-mega heros, alternating paper/ink section rhythm, hard-edged cards.
+
+Pulse Group cleanup (user-directed "forget Pulse Group section also in AEO/SEO/GEO")
+- `/group` page deleted — route 404s; no longer linked from anywhere on the site.
+- `src/lib/schema.ts`: `organizationSchema()` no longer emits `parentOrganization`; `pulseGroupSchema` export removed.
+- `sitemap.ts`: `/group` entry removed.
+- `src/lib/group.ts` data file left in place (no consumers; can be deleted later or repurposed).
+
+Build + deploy
+- `npm run build` green: 21 routes (was 22 — minus `/group`); all public Static/SSG, all `/manage/*` and `/api/auth/*` dynamic.
+- Commit `bb79ae3` pushed to `main` (CI verify triggered).
+- `npx sst deploy --stage production` ran with the live wildcard cert + canonical apex domain block from STEP 7. The new Lambda + S3 artifacts replaced the previous; CloudFront invalidated.
+- Verified live:
+  - `https://publicpulse.com.bd/` returns HTTP/2 200 with `cache-control: s-maxage=31536000` and CloudFront edge serving
+  - HTML contains `brand-orange`, `chip-orange`, `marquee-track` (proof of redesign on disk in S3)
+  - `/group` returns 404 (route removed)
+  - `/services/political-pr` returns 200 with correct title
+  - Organization + WebSite JSON-LD still emit; `parentOrganization` is absent (Pulse Group dropped from schema)
+
+**SEO mega-build status:** Phase 0 inventory commit (`4533a30`) remains in git history as documentation. Phases 1–8 NOT executed; the direction change makes that work moot for the current site (no /locations, /industries, /glossary, /guides, /compare routes; no Bedrock content pipeline; no bilingual setup).
+
+**Pending you (none blocking):**
+- Real client stats/case studies via /manage to replace the seed
+- Replace `// TODO(user):` placeholders in `src/app/about/page.tsx` (team) and homepage stats
+- `bash scripts/setup-oidc.sh` + GitHub repo Variable `AWS_DEPLOY_ROLE_ARN` if you want tag-driven CI deploys to replace the manual `sst deploy` flow
+
+---
+
 ## 2026-05-25 — STEP 8 / PHASE 0: SEO/AEO/GEO mega-build — inventory
 
 **State of repo on entry to the mega-build:**
