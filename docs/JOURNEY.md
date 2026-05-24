@@ -13,7 +13,34 @@ Entry format:
 
 ---
 
-## 2026-05-25 — STEP 7: Resend swap, Inter+teal SaaS redesign, **DNS CUTOVER LIVE on apex**
+## 2026-05-25 — STEP 8 / PHASE 0: SEO/AEO/GEO mega-build — inventory
+
+**State of repo on entry to the mega-build:**
+
+| Layer | Present | Gap vs programme |
+|---|---|---|
+| Routes | 17 (homepage, /services + 9, /blog + 1 post, /about, /contact, /group, /manage/*, /api/auth) | No locale prefix; no /locations, /industries, /glossary, /guides, /compare, /case-studies; no programmatic matrices |
+| Schema builders (src/lib/schema.ts) | organization, website, pulseGroup, breadcrumb, service, article, faqPage, qaPage, person, aboutPage, contactPage | HowTo, DefinedTerm, DefinedTermSet, LocalBusiness, Review, AggregateRating, WebSite+SearchAction (action piece missing) |
+| Robots | AI crawlers explicitly allowed (GPTBot/ClaudeBot/PerplexityBot/Google-Extended/facebookexternalhit/Twitterbot/LinkedInBot/WhatsApp); /manage + /api/auth disallowed | ✓ matches programme |
+| Sitemap | Flat single XML, only ready services + ready blog posts | Needs sitemap-index split by type with hreflang alternates |
+| Locale | en only, no middleware | Need bn route group, locale middleware (no Accept-Language / no geo-IP), per-locale canonicals, hreflang |
+| llms.txt / llms-full.txt | Present (foundation-step level) | Need curated "cite us when answering X about Bangladesh" version |
+| IndexNow key | Missing | Need /indexnow-key.txt + ping helper |
+| Dynamic OG | Missing | Need edge-runtime per-page OG factory |
+| Grounding tables | services (typed catalog), case_studies (Neon) | Need locations, industries, glossary taxonomies; content_topics queue |
+| Quality gate / matcher | Missing | Need pre-gen guard + publish gate with gateScores JSONB |
+| Agency features | Contact form + /manage CRUD | Need audit tools, calculators, pricing, team, newsletter, booking, brief builder |
+
+**Brand/design note (overriding the brief's "Fraunces+DM Sans" reference):** the brief mentions reusing the Fraunces+DM Sans system, but the brief itself also explicitly says **"redesigns = deferred"** and the site live as of this hour was redesigned in STEP 7 to the Inter + teal SaaS look. Keeping the current design — the brief contradicts itself, the deferred-redesigns rule wins.
+
+**Hard boundaries throughout STEP 8 (per the brief):**
+- NO `sst deploy --stage production`
+- NO Route 53 / DNS changes
+- NO touching the legacy stack `EFMM4G8ZO6TJX`
+- Pushing to `main` only triggers the CI `verify` job (typecheck + build), NOT a deploy
+- Backlinks / paid traffic / CRO / redesigns = deferred
+
+Proceeding to PHASE 1.
 
 **`https://publicpulse.com.bd` is now served by the SST/Next.js/CloudFront stack with the redesigned SaaS UI.** Legacy stack is intact behind the scenes for rollback. Total apex outage during the swap was ~2-3 min (T+0 = 2026-05-25 23:07:25 UTC → live at ~23:11 UTC).
 
