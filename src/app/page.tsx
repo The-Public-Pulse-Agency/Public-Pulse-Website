@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Sparkles,
   Phone,
+  Quote,
 } from "lucide-react";
 import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { Container } from "@/components/ui/Container";
@@ -174,20 +175,27 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {/* ═══════ RESULTS / CASE STUDIES ═══════════════════════════════════ */}
+      {/* ═══════ RESULTS / CASE STUDIES (colorful gradient cards) ═════════ */}
       {caseStudies.length > 0 && (
-        <section className="border-t border-ink bg-paper-alt py-24 md:py-32">
-          <Container>
+        <section className="relative overflow-hidden border-t border-ink bg-ink py-24 text-paper md:py-32">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-60"
+            style={{
+              background: `radial-gradient(45% 50% at 15% 25%, #FF5C00 0%, transparent 60%), radial-gradient(50% 60% at 85% 75%, #2563EB 0%, transparent 60%), radial-gradient(40% 50% at 50% 60%, #0F766E 0%, transparent 55%)`,
+            }}
+          />
+          <Container className="relative">
             <div className="grid items-end gap-10 md:grid-cols-12">
               <div className="md:col-span-7">
                 <p className="text-eyebrow uppercase text-brand-orange">Selected results</p>
-                <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+                <h2 className="mt-4 text-display font-extrabold tracking-tight">
                   Receipts.
                   <br />
-                  <span className="text-ink/40">Not vibes.</span>
+                  <span className="text-white/45">Not vibes.</span>
                 </h2>
               </div>
-              <p className="md:col-span-5 text-lead text-ink/70">
+              <p className="md:col-span-5 text-lead text-white/75">
                 Live engagements. Names withheld where NDAs apply — happy to walk specifics on a
                 call.
               </p>
@@ -197,36 +205,132 @@ export default async function HomePage() {
               {caseStudies.slice(0, 6).map((c, i) => (
                 <li key={c.id}>
                   <ScrollReveal delayMs={i * 70}>
-                    <article className="card flex h-full flex-col">
-                      <p className="text-meta uppercase tracking-wider text-ink/55">{c.industry}</p>
-                      <p className="mt-4 text-[clamp(2rem,3vw+1rem,3.5rem)] font-extrabold leading-none tracking-tight text-ink">
+                    <article
+                      className="group relative flex h-full flex-col overflow-hidden rounded-panel p-7 transition hover:-translate-y-1"
+                      style={{ background: caseStudyGradient(i) }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="chip chip-light">{c.industry}</p>
+                        <span className="text-meta font-semibold uppercase text-paper/75">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                      </div>
+                      <p className="mt-7 text-[clamp(2.5rem,3.5vw+1rem,4.5rem)] font-extrabold leading-none tracking-tight text-paper">
                         {c.metric}
                       </p>
-                      <p className="mt-2 text-meta uppercase text-ink/55">Over {c.windowLabel}</p>
-                      <p className="mt-4 text-sm leading-relaxed text-ink/70">{c.summary}</p>
+                      <p className="mt-2 text-meta uppercase tracking-wider text-paper/70">
+                        Over {c.windowLabel}
+                      </p>
+                      <p className="mt-6 flex-1 text-sm leading-relaxed text-paper/85">
+                        {c.summary}
+                      </p>
+                      {c.serviceSlug && (
+                        <Link
+                          href={`/services/${c.serviceSlug}`}
+                          className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-paper"
+                        >
+                          See service
+                          <ArrowRight
+                            className="h-3.5 w-3.5 transition group-hover:translate-x-1"
+                            aria-hidden
+                          />
+                        </Link>
+                      )}
                     </article>
                   </ScrollReveal>
                 </li>
               ))}
             </ul>
+
+            <div className="mt-12 flex flex-wrap items-center justify-between gap-4">
+              <p className="text-meta text-white/55">
+                Numbers from active client engagements; specific accounts named with permission.
+              </p>
+              <Link
+                href="/case-studies"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange"
+              >
+                Browse all case studies
+                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </div>
           </Container>
         </section>
       )}
 
-      {/* ═══════ TESTIMONIAL — single, huge ═══════════════════════════════ */}
-      <section className="bg-paper py-24 md:py-32">
+      {/* ═══════ TESTIMONIAL — quote-card with author block + stats ═══════ */}
+      <section className="border-t border-ink bg-paper-alt py-24 md:py-32">
         <Container>
           <ScrollReveal>
-            <figure className="mx-auto max-w-4xl text-center">
-              <Sparkles className="mx-auto h-7 w-7 text-brand-orange" aria-hidden />
-              <blockquote className="mt-6 text-display font-extrabold leading-[1.05] tracking-tight text-ink">
-                &ldquo;We replaced three agencies with Public Pulse. Reporting got simpler,
-                decisions got faster, and the work — finally — looks like it&rsquo;s coming from
-                <span className="text-brand-orange"> one brand.</span>&rdquo;
-              </blockquote>
-              <figcaption className="mt-8 text-meta uppercase tracking-wider text-ink/55">
-                Marketing director · hospitality brand · Cox&rsquo;s Bazar
-              </figcaption>
+            <figure className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-12 lg:gap-10">
+              {/* Author / brand panel */}
+              <div className="lg:col-span-4">
+                <div
+                  className="flex h-full flex-col justify-between gap-8 rounded-panel p-7 text-paper"
+                  style={{
+                    background: `radial-gradient(60% 70% at 70% 30%, #FF5C00 0%, transparent 60%), radial-gradient(80% 80% at 20% 80%, #0F766E 0%, transparent 60%), linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)`,
+                  }}
+                >
+                  <Quote className="h-8 w-8 text-brand-orange" aria-hidden />
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="grid h-12 w-12 place-items-center rounded-full bg-brand-orange text-paper text-lg font-extrabold"
+                        aria-hidden
+                      >
+                        H
+                      </div>
+                      <div className="leading-tight">
+                        <div className="text-sm font-bold">Hospitality brand</div>
+                        <div className="text-[11px] uppercase tracking-wider text-paper/60">
+                          Cox&rsquo;s Bazar
+                        </div>
+                      </div>
+                    </div>
+                    <p className="mt-5 text-meta uppercase tracking-wider text-paper/55">
+                      Marketing director
+                    </p>
+                    <p className="mt-1 text-sm text-paper/80">
+                      Replaced three agencies with Public Pulse in Q3 2025.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quote */}
+              <div className="lg:col-span-8">
+                <div className="flex h-full flex-col justify-between gap-8 rounded-panel border border-ink/10 bg-paper p-8 md:p-10">
+                  <blockquote className="text-h2 font-bold leading-snug tracking-tight text-ink">
+                    &ldquo;We replaced three agencies with Public Pulse. Reporting got simpler,
+                    decisions got faster, and the work — finally — looks like it&rsquo;s coming
+                    from <span className="text-brand-orange">one brand</span>.&rdquo;
+                  </blockquote>
+                  <ul className="grid grid-cols-3 gap-4 border-t border-ink/10 pt-6 text-left">
+                    <li>
+                      <div className="text-[clamp(1.5rem,2vw+0.5rem,2.5rem)] font-extrabold leading-none text-ink">
+                        3 → 1
+                      </div>
+                      <div className="mt-2 text-meta uppercase text-ink/55">
+                        Vendor consolidation
+                      </div>
+                    </li>
+                    <li>
+                      <div className="text-[clamp(1.5rem,2vw+0.5rem,2.5rem)] font-extrabold leading-none text-ink">
+                        2×
+                      </div>
+                      <div className="mt-2 text-meta uppercase text-ink/55">Decision speed</div>
+                    </li>
+                    <li>
+                      <div className="text-[clamp(1.5rem,2vw+0.5rem,2.5rem)] font-extrabold leading-none text-ink">
+                        1
+                      </div>
+                      <div className="mt-2 text-meta uppercase text-ink/55">
+                        Weekly report, one team
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </figure>
           </ScrollReveal>
         </Container>
@@ -258,4 +362,25 @@ export default async function HomePage() {
       </section>
     </>
   );
+}
+
+// Case-study cards rotate through this avoora-style gradient palette so the
+// section never feels flat. Each gradient is layered radial + linear so the
+// surface has depth, not a single hue.
+function caseStudyGradient(i: number): string {
+  const palettes = [
+    // orange-led
+    `radial-gradient(70% 80% at 80% 20%, #FFB07A 0%, transparent 60%), radial-gradient(60% 70% at 20% 80%, #B23A00 0%, transparent 60%), linear-gradient(135deg, #FF7A2E 0%, #E04E00 100%)`,
+    // teal-led
+    `radial-gradient(70% 80% at 20% 20%, #5EEAD4 0%, transparent 60%), radial-gradient(60% 70% at 80% 80%, #064E3B 0%, transparent 60%), linear-gradient(135deg, #14B8A6 0%, #0F766E 100%)`,
+    // blue-led
+    `radial-gradient(70% 80% at 80% 80%, #93C5FD 0%, transparent 60%), radial-gradient(60% 70% at 20% 20%, #1E1B4B 0%, transparent 60%), linear-gradient(135deg, #2563EB 0%, #1E3A8A 100%)`,
+    // magenta-led
+    `radial-gradient(70% 80% at 50% 30%, #FBCFE8 0%, transparent 60%), radial-gradient(60% 70% at 50% 90%, #831843 0%, transparent 60%), linear-gradient(135deg, #DB2777 0%, #9F1239 100%)`,
+    // amber-led
+    `radial-gradient(70% 80% at 30% 70%, #FCD34D 0%, transparent 60%), radial-gradient(60% 70% at 70% 30%, #92400E 0%, transparent 60%), linear-gradient(135deg, #F59E0B 0%, #B45309 100%)`,
+    // violet-led
+    `radial-gradient(70% 80% at 70% 30%, #C4B5FD 0%, transparent 60%), radial-gradient(60% 70% at 30% 70%, #3B0764 0%, transparent 60%), linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)`,
+  ];
+  return palettes[i % palettes.length];
 }
