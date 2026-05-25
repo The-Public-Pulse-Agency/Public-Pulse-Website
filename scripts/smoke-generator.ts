@@ -137,20 +137,41 @@ async function main() {
       continue;
     }
     const started = Date.now();
+    // Mirror the retry policy in src/lib/generator/run.ts so the smoke shows
+    // realistic gate-pass rates (BN gets 1.5x token budget; retry once if
+    // FAQs missing or body short).
+    const localeFactor = t.locale === "bn" ? 1.5 : 1;
+    const baseMax = Math.round(8000 * localeFactor);
+    const retryMax = Math.min(16000, Math.round(baseMax * 1.5));
+    const baseInvoke = {
+      system: buildSystemPrompt(t.locale),
+      userMessage: buildUserPrompt({
+        topic: t.topic,
+        targetKeyword: t.targetKeyword,
+        locale: t.locale,
+        grounding,
+      }),
+      tools: [{ ...EMIT_POST_TOOL }],
+      toolChoice: { type: "tool", name: "emit_post" },
+      temperature: 0.4,
+    };
     let resp;
+    let attemptN = 1;
     try {
-      resp = await invokeModel({
-        system: buildSystemPrompt(t.locale),
-        userMessage: buildUserPrompt({
-          topic: t.topic,
-          targetKeyword: t.targetKeyword,
-          locale: t.locale,
-          grounding,
-        }),
-        tools: [EMIT_POST_TOOL],
-        toolChoice: { type: "tool", name: "emit_post" },
-        temperature: 0.4,
-      });
+      resp = await invokeModel({ ...baseInvoke, maxTokens: baseMax });
+      const tu0 = resp.content.find((b) => b.type === "tool_use");
+      if (tu0 && tu0.type === "tool_use") {
+        const p0 = tu0.input as Record<string, unknown>;
+        const faqs0 = (p0.faqs ?? []) as { q: string; a: string }[];
+        const body0 = String(p0.bodyMdx ?? "");
+        const wordsB = body0.split(/\s+/).filter(Boolean).length;
+        const hitNearCap = resp.usage.output_tokens >= baseMax * 0.95;
+        const looksTruncated = (wordsB < 400 && hitNearCap) || faqs0.length < 3;
+        if (looksTruncated) {
+          attemptN = 2;
+          resp = await invokeModel({ ...baseInvoke, maxTokens: retryMax });
+        }
+      }
     } catch (err) {
       console.log(`[${i}] ERROR  ${t.locale}  ${t.topic.slice(0, 70)}  — ${(err as Error).message}`);
       fail += 1;
@@ -184,7 +205,8 @@ async function main() {
     const verdictColor = gate.verdict === "PUBLISH" ? "✓ PUBLISH" : "✗ REVIEW ";
     console.log(
       `[${i}] ${verdictColor}  score=${String(gate.score).padStart(3)}  ${t.locale}  ` +
-        `tokens=${resp.usage.input_tokens}→${resp.usage.output_tokens}  ${ms}ms  ` +
+        `tokens=${resp.usage.input_tokens}→${resp.usage.output_tokens}  ${ms}ms` +
+        `${attemptN > 1 ? ` (retry-x${attemptN - 1})` : ""}  ` +
         `${title.slice(0, 50)}${title.length > 50 ? "…" : ""}`
     );
     if (gate.hardFails.length) console.log(`        hardFails: ${gate.hardFails.join(" | ")}`);

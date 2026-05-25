@@ -21,8 +21,10 @@ import {
 export const BEDROCK_REGION = process.env.BEDROCK_REGION ?? "us-east-1";
 export const BEDROCK_MODEL_ID =
   process.env.BEDROCK_MODEL_ID ?? "us.anthropic.claude-haiku-4-5-20251001-v1:0";
-/** Soft cap on output tokens for one generation. */
-export const BEDROCK_MAX_TOKENS = Number(process.env.BEDROCK_MAX_TOKENS ?? 4096);
+/** Soft cap on output tokens for one generation. Bumped to 8000 because
+ *  Bengali tokenization is ~3-4× heavier per character; a 600-word BN body
+ *  + 3 FAQs + tags + seo fields routinely overflowed the previous 4096 cap. */
+export const BEDROCK_MAX_TOKENS = Number(process.env.BEDROCK_MAX_TOKENS ?? 8000);
 
 let _client: BedrockRuntimeClient | null = null;
 function client(): BedrockRuntimeClient {

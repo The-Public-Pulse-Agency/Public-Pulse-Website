@@ -76,7 +76,7 @@ HARD RULES:
    don't.
 3. AnswerBlock (answerFirst): 40–60 words. Lead with the answer. Reference one
    concrete fact from FACTS. Mention "Public Pulse Agency" at most once.
-4. ≥3 FAQs, each Q ends in "?".
+4. **≥3 FAQs are mandatory** (never emit \`faqs: []\` or fewer than 3 — the gate hard-fails otherwise). Each question ends in "?", each answer is 2–4 sentences of plain prose.
 5. Body ≥600 words. Use ## and ### headings. No "In conclusion", "TL;DR",
    "In today's fast-paced world", or LLM-tell filler.
 6. Never invent numbers, founder names, study citations, or company history.
@@ -86,19 +86,25 @@ HARD RULES:
    (still dominant in BD), Bkash, Nagad, real local phenomena.
 9. Internal-link friendly: when you mention a glossary term that appears in FACTS,
    write its name in plain text; the renderer auto-links it.
+10. NEVER output placeholders of any kind: \`[name]\`, \`[client]\`, \`[date]\`,
+    \`[company]\`, \`[placeholder]\`, \`[fill in]\`, \`TODO\`, \`TKTK\`, \`XXX\`,
+    \`Lorem ipsum\`, or any other bracketed/templated stand-in. Use concrete
+    grounded specifics from the FACTS block. If a specific is not in FACTS and
+    you don't know it, write around it — never leave a slot to fill.
 `.trim();
 
 const SHARED_RULES_BN = `
 কঠোর নিয়মাবলী (HARD RULES):
 ১. শুধুমাত্র একবার emit_post টুল ব্যবহার করুন। টুলের বাইরে কোনো লেখা নয়।
-২. REQUIRED_REFS-এ দেওয়া প্রতিটি slug অন্তত একবার বডিতে উল্লেখ করুন (slug-রূপে বা হাইফেন বাদ দিয়ে শব্দরূপে)। পাবলিশ-গেট না মানলে পোস্ট ফেরত পাঠাবে।
+২. REQUIRED_REFS-এ দেওয়া প্রতিটি slug অন্তত একবার বডিতে উল্লেখ করুন। বাংলা পোস্টে যখন একটি English slug-কে রেফার করছেন, প্রথম ব্যবহারে slug-টি Latin script-এ বন্ধনীতে লিখুন — যেমন "সোশ্যাল মিডিয়া (social-media)" বা "এসইও (seo-website)"। এটাতে পাবলিশ-গেট মিলবে এবং পাঠক বুঝবে আমরা কোন service-এর কথা বলছি।
 ৩. answerFirst: ৪০–৬০ ইংরেজি শব্দের সমান বাংলা দৈর্ঘ্য, উত্তর দিয়ে শুরু, FACTS থেকে একটি কংক্রিট তথ্য, "Public Pulse Agency" সর্বোচ্চ একবার।
-৪. কমপক্ষে তিনটি FAQ, প্রশ্ন "?" দিয়ে শেষ।
+৪. **কমপক্ষে তিনটি FAQ আবশ্যক** (faqs অ্যারে কখনো খালি রাখবেন না, ৩-এর কম দিলে গেট ফেল হবে)। প্রতিটি প্রশ্ন "?" দিয়ে শেষ, উত্তর ২-৪ বাক্যের।
 ৫. মূল লেখা: কমপক্ষে ৬০০ শব্দের সমতুল্য বাংলা, ## এবং ### শিরোনাম ব্যবহার করুন। "উপসংহারে", "সব মিলিয়ে" জাতীয় ফিলার নয়।
 ৬. কোনো সংখ্যা, প্রতিষ্ঠাতার নাম, গবেষণা উদ্ধৃতি বা কোম্পানির ইতিহাস তৈরি করবেন না। শুধু FACTS এবং সাধারণ জ্ঞান।
 ৭. ইমোজি নয়, বিস্ময়বোধক চিহ্ন নয়, "আপনাকে অবশ্যই" জাতীয় hard sell নয়।
 ৮. পুরো লেখায় বাংলাদেশের প্রসঙ্গ — ঢাকার এলাকার নাম, টাকা (BDT), Facebook (বাংলাদেশে এখনো প্রভাবশালী), bKash, Nagad, প্রকৃত স্থানীয় উদাহরণ।
 ৯. মেশিন অনুবাদ নয় — বাংলায় স্বাভাবিক বাক্যগঠন। ইংরেজি বাক্য বাংলায় বসাবেন না।
+১০. কোনো placeholder ব্যবহার করবেন না: \`[name]\`, \`[client]\`, \`[date]\`, \`[company]\`, \`TODO\`, \`TKTK\`, \`XXX\`, \`Lorem ipsum\`, বা অনুরূপ কিছুই নয়। FACTS থেকে কংক্রিট তথ্য ব্যবহার করুন। FACTS-এ না থাকলে এবং আপনি না জানলে, ঐ অংশটা এড়িয়ে যান — কখনো ফাঁকা স্লট রেখে যাবেন না।
 
 আউটপুট কন্ট্রাক্ট: emit_post টুলের সব ফিল্ড বাংলায় (slug + tags ব্যতীত — সেগুলো ইংরেজিতে)।
 `.trim();

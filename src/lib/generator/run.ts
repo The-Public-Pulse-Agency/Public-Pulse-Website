@@ -16,7 +16,7 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { blogPosts, contentTopics, type ContentTopic } from "@/db/schema";
-import { invokeModel, BEDROCK_MODEL_ID, BEDROCK_REGION } from "@/lib/bedrock";
+import { invokeModel, BEDROCK_MODEL_ID, BEDROCK_REGION, BEDROCK_MAX_TOKENS } from "@/lib/bedrock";
 import { resolveGrounding, type ResolvedGrounding } from "./grounding-resolver";
 import { buildSystemPrompt, buildUserPrompt, EMIT_POST_TOOL } from "./prompts";
 import { runQualityGate, type GateResult } from "@/lib/quality-gate";
@@ -147,56 +147,124 @@ async function processOne(
   }
 
   // 3. Invoke Bedrock with the tool-use contract.
+  //    Retry once at 1.5x maxTokens if the first attempt hit max_tokens or
+  //    produced a truncated tool_use payload (missing body or <3 FAQs).
+  //    Cheaper than saving a doomed REVIEW post and regenerating from
+  //    /manage by hand.
   const locale = (topic.locale === "bn" ? "bn" : "en") as "en" | "bn";
+  const baseInvoke = {
+    system: buildSystemPrompt(locale),
+    userMessage: buildUserPrompt({
+      topic: topic.topic,
+      targetKeyword: topic.targetKeyword,
+      locale,
+      grounding,
+    }),
+    // Spread to drop the readonly markers `as const` puts on EMIT_POST_TOOL.
+    tools: [{ ...EMIT_POST_TOOL }],
+    toolChoice: { type: "tool", name: "emit_post" },
+    temperature: 0.4,
+  };
+
+  // BN tokens are ~3-4x heavier per character. Give BN a higher ceiling on
+  // both attempts to avoid the "structurally complete but faqs=[]" failure
+  // mode where the model elides FAQs to stay under cap.
+  const localeFactor = locale === "bn" ? 1.5 : 1;
+  const attempts: { attempt: number; maxTokens: number }[] = [
+    { attempt: 1, maxTokens: Math.round(BEDROCK_MAX_TOKENS * localeFactor) },
+    { attempt: 2, maxTokens: Math.min(16000, Math.round(BEDROCK_MAX_TOKENS * localeFactor * 1.5)) },
+  ];
+
   let bedrockResp;
-  try {
-    bedrockResp = await invokeModel({
-      system: buildSystemPrompt(locale),
-      userMessage: buildUserPrompt({
+  let toolUse;
+  let payload: EmitPostInput | { error: string } | null = null;
+  let lastFailReason = "";
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let usedAttempts = 0;
+
+  for (const a of attempts) {
+    usedAttempts = a.attempt;
+    try {
+      bedrockResp = await invokeModel({ ...baseInvoke, maxTokens: a.maxTokens });
+    } catch (err) {
+      return {
+        topicId: topic.id,
         topic: topic.topic,
-        targetKeyword: topic.targetKeyword,
-        locale,
-        grounding,
-      }),
-      tools: [EMIT_POST_TOOL],
-      toolChoice: { type: "tool", name: "emit_post" },
-      temperature: 0.4,
-    });
-  } catch (err) {
-    return {
-      topicId: topic.id,
-      topic: topic.topic,
-      locale: topic.locale,
-      outcome: "ERROR",
-      reason: `bedrock-error: ${(err as Error).message}`,
-    };
+        locale: topic.locale,
+        outcome: "ERROR",
+        reason: `bedrock-error (attempt ${a.attempt}): ${(err as Error).message}`,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+      };
+    }
+    totalInputTokens += bedrockResp.usage.input_tokens;
+    totalOutputTokens += bedrockResp.usage.output_tokens;
+
+    toolUse = bedrockResp.content.find((b) => b.type === "tool_use");
+    if (!toolUse || toolUse.type !== "tool_use") {
+      lastFailReason = "no-tool-use-in-response";
+      // No tool_use means stop_reason is usually "max_tokens" with text
+      // overflow or a refusal — retry only if max_tokens.
+      if (bedrockResp.stop_reason === "max_tokens" && a.attempt < attempts.length) continue;
+      return {
+        topicId: topic.id,
+        topic: topic.topic,
+        locale: topic.locale,
+        outcome: "ERROR",
+        reason: lastFailReason,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+      };
+    }
+
+    payload = parseEmitPostInput(toolUse.input);
+    if ("error" in payload) {
+      lastFailReason = `parse-error: ${payload.error}`;
+      // Most parse errors here are "missing-required-field" from a
+      // truncated tool_input — retry at higher max_tokens once.
+      if (bedrockResp.stop_reason === "max_tokens" && a.attempt < attempts.length) continue;
+      return {
+        topicId: topic.id,
+        topic: topic.topic,
+        locale: topic.locale,
+        outcome: "ERROR",
+        reason: lastFailReason,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+      };
+    }
+
+    // Truncation heuristic: parser succeeded structurally but the content
+    // is suspiciously thin — short body (<400 words) or <3 FAQs — and the
+    // model spent most of the budget. Bedrock returns stop_reason="tool_use"
+    // for completed tool calls even when output hits max_tokens mid-stream,
+    // so we can't trust stop_reason alone. Use quality signals + a near-cap
+    // output-tokens check as the trigger.
+    const wordsInBody = payload.bodyMdx.split(/\s+/).filter(Boolean).length;
+    const hitNearCap = bedrockResp.usage.output_tokens >= a.maxTokens * 0.95;
+    const looksTruncated =
+      (wordsInBody < 400 && hitNearCap) ||
+      payload.faqs.length < 3;
+    if (looksTruncated && a.attempt < attempts.length) {
+      lastFailReason = `truncated-on-attempt-${a.attempt} (faqs=${payload.faqs.length}, words=${wordsInBody}, out=${bedrockResp.usage.output_tokens}/${a.maxTokens})`;
+      continue;
+    }
+    break; // good — proceed to gate
   }
 
-  const toolUse = bedrockResp.content.find((b) => b.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") {
+  if (!payload || "error" in payload || !toolUse) {
     return {
       topicId: topic.id,
       topic: topic.topic,
       locale: topic.locale,
       outcome: "ERROR",
-      reason: "no-tool-use-in-response",
-      inputTokens: bedrockResp.usage.input_tokens,
-      outputTokens: bedrockResp.usage.output_tokens,
+      reason: lastFailReason || "unknown-failure",
+      inputTokens: totalInputTokens,
+      outputTokens: totalOutputTokens,
     };
   }
-
-  const payload = parseEmitPostInput(toolUse.input);
-  if ("error" in payload) {
-    return {
-      topicId: topic.id,
-      topic: topic.topic,
-      locale: topic.locale,
-      outcome: "ERROR",
-      reason: `parse-error: ${payload.error}`,
-      inputTokens: bedrockResp.usage.input_tokens,
-      outputTokens: bedrockResp.usage.output_tokens,
-    };
-  }
+  const attemptsTag = usedAttempts > 1 ? ` (retry-x${usedAttempts - 1})` : "";
 
   // 4. Run the quality gate.
   const gate = runQualityGate({
@@ -217,11 +285,11 @@ async function processOne(
       topic: topic.topic,
       locale: topic.locale,
       outcome: willPublish ? "PUBLISH" : "REVIEW",
-      reason: gate.verdict === "PUBLISH" ? "dry-run-would-publish" : `gate:${gate.hardFails.join(",")||gate.score}`,
+      reason: (gate.verdict === "PUBLISH" ? "dry-run-would-publish" : `gate:${gate.hardFails.join(",")||gate.score}`) + attemptsTag,
       postSlug: finalSlug,
       gate,
-      inputTokens: bedrockResp.usage.input_tokens,
-      outputTokens: bedrockResp.usage.output_tokens,
+      inputTokens: totalInputTokens,
+      outputTokens: totalOutputTokens,
     };
   }
 
@@ -285,11 +353,11 @@ async function processOne(
     topic: topic.topic,
     locale: topic.locale,
     outcome: willPublish ? "PUBLISH" : "REVIEW",
-    reason: willPublish ? "gate-pass" : `gate:${gate.hardFails.join(",") || `score-${gate.score}`}`,
+    reason: (willPublish ? "gate-pass" : `gate:${gate.hardFails.join(",") || `score-${gate.score}`}`) + attemptsTag,
     postSlug: finalSlug,
     gate,
-    inputTokens: bedrockResp.usage.input_tokens,
-    outputTokens: bedrockResp.usage.output_tokens,
+    inputTokens: totalInputTokens,
+    outputTokens: totalOutputTokens,
   };
 }
 

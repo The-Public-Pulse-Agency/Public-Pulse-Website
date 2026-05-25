@@ -75,6 +75,28 @@ function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
+/** Normalize for slug-vs-prose matching: lowercase, strip diacritics, drop
+ *  apostrophes / hyphens / underscores, collapse whitespace. So
+ *  "Cox's Bazar", "coxs-bazar", "Cox’s Bāzar" all become "coxs bazar". */
+function normalizeForMatch(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip combining diacritics
+    .toLowerCase()
+    .replace(/[''‘’`]/g, "") // strip apostrophes (ASCII + Unicode)
+    .replace(/[-_]+/g, " ") // hyphens/underscores → spaces
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Slug appears in body as-is, as a de-hyphenated phrase, OR as the same
+ *  phrase after apostrophe/diacritic-stripping. The grounded entity MUST
+ *  still appear — this is just a robust matcher, not a leniency. */
+function bodyCitesRef(bodyNormalized: string, ref: string): boolean {
+  const refNorm = normalizeForMatch(ref);
+  return bodyNormalized.includes(refNorm);
+}
+
 export function runQualityGate(content: GateContent): GateResult {
   const hardFails: string[] = [];
   const softFails: { rule: string; weight: number }[] = [];
@@ -85,13 +107,12 @@ export function runQualityGate(content: GateContent): GateResult {
     hardFails.push("no-source-refs");
     groundingScore = 0;
   } else {
-    // Each ref must appear in body in phrase form (the slug as words or the
-    // slug itself). Otherwise it's nominally grounded but not actually cited.
-    const bodyLower = content.body.toLowerCase();
-    const missing = content.sourceRefs.filter((ref) => {
-      const phrase = ref.replace(/-/g, " ").toLowerCase();
-      return !bodyLower.includes(ref) && !bodyLower.includes(phrase);
-    });
+    // Each ref must appear in body. We normalize BOTH sides (apostrophes,
+    // diacritics, hyphens, case) so "Cox's Bazar" in prose matches the
+    // "coxs-bazar" slug. The ref still HAS to be present — this is a robust
+    // matcher, not a leniency.
+    const bodyNorm = normalizeForMatch(content.body);
+    const missing = content.sourceRefs.filter((ref) => !bodyCitesRef(bodyNorm, ref));
     if (missing.length > 0) {
       hardFails.push(`source-ref-not-cited:${missing.join(",")}`);
       groundingScore = Math.max(0, 100 - missing.length * 25);
