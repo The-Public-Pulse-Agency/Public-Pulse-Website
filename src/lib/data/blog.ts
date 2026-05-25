@@ -32,8 +32,11 @@ export const getCategories = unstable_cache(
       return [];
     }
   },
-  ["blog:categories:all"],
-  { tags: [CATEGORIES_TAG, BLOG_TAG], revalidate: false }
+  ["blog:categories:all:v2"],
+  // SELF-HEAL: revalidate every 60s. The previous `revalidate: false`
+  // (tag-only) caused a permanent empty-state when the build-time call
+  // ran without DATABASE_URL — the cache stuck on []. See JOURNEY 2026-05-26.
+  { tags: [CATEGORIES_TAG, BLOG_TAG], revalidate: 60 }
 );
 
 export const getCategoryBySlug = unstable_cache(
@@ -49,8 +52,11 @@ export const getCategoryBySlug = unstable_cache(
       return null;
     }
   },
-  ["blog:category:by-slug"],
-  { tags: [CATEGORIES_TAG, BLOG_TAG], revalidate: false }
+  ["blog:category:by-slug:v2"],
+  // SELF-HEAL: revalidate every 60s. The previous `revalidate: false`
+  // (tag-only) caused a permanent empty-state when the build-time call
+  // ran without DATABASE_URL — the cache stuck on []. See JOURNEY 2026-05-26.
+  { tags: [CATEGORIES_TAG, BLOG_TAG], revalidate: 60 }
 );
 
 // ─── Authors ─────────────────────────────────────────────────────────────
@@ -67,8 +73,8 @@ export const getAuthors = unstable_cache(
       return [];
     }
   },
-  ["blog:authors:visible"],
-  { tags: [AUTHORS_TAG, BLOG_TAG], revalidate: false }
+  ["blog:authors:visible:v2"],
+  { tags: [AUTHORS_TAG, BLOG_TAG], revalidate: 60 }
 );
 
 export const getAuthorBySlug = unstable_cache(
@@ -80,8 +86,8 @@ export const getAuthorBySlug = unstable_cache(
       return null;
     }
   },
-  ["blog:author:by-slug"],
-  { tags: [AUTHORS_TAG, BLOG_TAG], revalidate: false }
+  ["blog:author:by-slug:v2"],
+  { tags: [AUTHORS_TAG, BLOG_TAG], revalidate: 60 }
 );
 
 // ─── Posts ───────────────────────────────────────────────────────────────
@@ -123,8 +129,8 @@ export const getPublishedPosts = unstable_cache(
       return [];
     }
   },
-  ["blog:posts:published"],
-  { tags: [BLOG_TAG], revalidate: false }
+  ["blog:posts:published:v2"],
+  { tags: [BLOG_TAG], revalidate: 60 }
 );
 
 export const getPostBySlug = unstable_cache(
@@ -151,7 +157,7 @@ export const getPostBySlug = unstable_cache(
     }
   },
   ["blog:post:by-slug"],
-  { tags: [BLOG_TAG], revalidate: false }
+  { tags: [BLOG_TAG], revalidate: 60 }
 );
 
 export const getRelatedPosts = unstable_cache(
@@ -187,7 +193,7 @@ export const getRelatedPosts = unstable_cache(
     }
   },
   ["blog:posts:related"],
-  { tags: [BLOG_TAG], revalidate: false }
+  { tags: [BLOG_TAG], revalidate: 60 }
 );
 
 /** Posts referencing a specific service / location / industry slug — drives
@@ -227,5 +233,5 @@ export const getPostsBySourceRef = unstable_cache(
     }
   },
   ["blog:posts:by-sourceref"],
-  { tags: [BLOG_TAG], revalidate: false }
+  { tags: [BLOG_TAG], revalidate: 60 }
 );
