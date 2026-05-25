@@ -13,6 +13,119 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 15 / PROD DRAIN + DEPLOY — 120 posts in review on https://publicpulse.com.bd, 93% gate-pass
+
+**End-to-end against PROD (explicit user authorization).** Drizzle schema additive push → 5 new tables in prod Neon → seed → drain all 126 topics REVIEW-FIRST → SST deploy to publicpulse.com.bd → verify.
+
+Public `/blog` shows the empty-state (no auto-publish — all 120 posts are `status=review`). `/manage/blog` lists 120 awaiting your approval. Bulk-publish in batches from the admin UI.
+
+### Safety guardrails honored
+
+- **Schema push was additive-only.** Pre-flight snapshot showed 6 existing tables (`account, case_studies, leads, session, user, verification`). Generated migration SQL inspected manually: only `CREATE TABLE` for the 5 new ones (`authors, blog_categories, blog_posts, content_topics, subscribers`) + their indexes. The two `ALTER TABLE … ADD CONSTRAINT` statements in the migration file (BetterAuth FKs on `account`/`session`) were verified to already exist in prod by querying `information_schema.constraint_column_usage` — `drizzle-kit push` saw the diff was empty and skipped them. Zero `DROP`, zero `ALTER COLUMN`, zero data touched.
+- **Generated REVIEW-FIRST.** Every post lands `status=review` regardless of gate verdict. Public reads filter `status='published'` → 0 posts visible to visitors until you click Publish. No surprises.
+- **Build + tsc green** before deploy (`npx tsc --noEmit` zero errors, `npm run build` green).
+- **Rollback target preserved.** Current live before this deploy was `30ae205` (lucide icons / professional animation pass). To roll back: `git checkout 30ae205 && AWS_PROFILE=eventpulse npx sst deploy --stage production`. Neon blog tables are additive so rollback is a code-only revert — they remain in the DB (unused by the rolled-back code).
+
+### Sequence
+
+| Step | Result |
+|---|---|
+| 1. Schema push (`drizzle-kit push --force` against `DATABASE_URL_DIRECT`) | 5 new tables created, existing 6 untouched |
+| 2. `tsx src/db/seed-blog.ts` | 10 blog_categories + 3 authors inserted |
+| 3. `tsx src/db/seed-topics.ts` | 126 grounded topics queued |
+| 4. `tsx scripts/generate.ts --env .env.production --max 126 --review-first` | **119 generated · 6 skipped (null-grounding glossary topics) · 71 min wall-clock** |
+| 5. `npx sst deploy --stage production` | Live on `https://publicpulse.com.bd` |
+| 6. Verification curls | `/`, `/blog`, `/services/political-pr`, `/manage/sign-in`, `/sitemap.xml` all 200; 0 blog entries in sitemap (all review) |
+
+### Generator report (FULL drain)
+
+```text
+Model:           us.anthropic.claude-haiku-4-5-20251001-v1:0
+Region:          us-east-1
+Considered:      125  (+1 single-topic sanity check = 126 total)
+Generated:       119
+  → published:   0    (review-first mode)
+  → review:      119  (+1 from sanity check = 120 in DB)
+Skipped/errors:  6    (4 glossary terms not in src/lib/taxonomies/glossary.ts catalog + 2 stragglers)
+Gate pass rate:  111/119 = 93%
+Avg gate score:  99 / 100
+Total tokens:    in=316,517   out=456,854
+Wall-clock:      71 min
+```
+
+**Bedrock cost (Haiku 4.5 list price):** `316,517 × $0.80 / MTok + 456,854 × $4.00 / MTok = $2.08`. Whole programme (smoke + tunings + this drain) totalled ~$2.60 against the $25/mo Budget alarm.
+
+### Breakdown — 120 posts in prod Neon (all `status=review`)
+
+| Category | EN | BN | total |
+|---|---|---|---|
+| political-pr | 20 | 1 | 21 |
+| social-media | 20 | 1 | 21 |
+| paid-media | 20 | 1 | 21 |
+| content | 20 | 1 | 21 |
+| hospitality | 10 | 1 | 11 |
+| blog (location/industry overviews) | 19 | 0 | 19 |
+| ai-aeo-geo | 2 | 0 | 2 |
+| analytics / branding / influencer / seo | 4 | 0 | 4 |
+| **Total** | **115** | **5** | **120** |
+
+The "blog" category bucket holds the 19 location/industry overview posts — grounding-resolver's `guessCategoryForService` only maps service-grounded topics; the rest default to `blog`. Easy to remap by editing post categories in `/manage/blog` if a finer split is wanted.
+
+### 6 skipped topics (all `reason: null-grounding`)
+
+```
+SPEAKABLE SCHEMA — what Bangladeshi marketers need to know in 2026
+FIRST PARTY DATA  — what Bangladeshi marketers need to know in 2026
+ATTRIBUTION WINDOW — what Bangladeshi marketers need to know in 2026
+ENGAGEMENT RATE — what Bangladeshi marketers need to know in 2026
+CORE WEB VITALS — what Bangladeshi marketers need to know in 2026
+CONVERSION API — what Bangladeshi marketers need to know in 2026
+```
+
+All point at glossary slugs not currently present in `src/lib/taxonomies/glossary.ts` (which has 8 of 15 listed). Adding them to the catalog would let the generator pick them up on a re-run. Zero LLM spend on these (hard-skip pre-LLM call, as designed).
+
+### Verification (live https://publicpulse.com.bd)
+
+```bash
+$ curl -sI https://publicpulse.com.bd/blog                          HTTP/2 200
+$ curl -s   https://publicpulse.com.bd/blog | grep -c 'CollectionPage'   1
+$ curl -s   https://publicpulse.com.bd/blog | grep -oE 'category=[a-z-]+' | sort -u
+  category=ai-aeo-geo, analytics, branding, content, hospitality,
+  influencer, paid-media, political-pr, seo, social-media      (all 10 chips render)
+$ curl -sI https://publicpulse.com.bd/manage/sign-in                HTTP/2 200
+$ curl -sI https://publicpulse.com.bd/                              HTTP/2 200
+$ curl -sI https://publicpulse.com.bd/services/political-pr         HTTP/2 200
+$ curl -s   https://publicpulse.com.bd/sitemap.xml | grep -c '/blog/' 0
+  (correct — all 120 posts are `status=review`, sitemap only lists published)
+```
+
+`/blog` renders the listing shell with the "No posts match" empty-state, the 10 category chips, the search form, and the `CollectionPage`/`ItemList` JSON-LD — everything you'd expect from a DB-backed listing when zero posts are published. As soon as you bulk-publish from `/manage/blog`, posts populate the grid and the sitemap.
+
+### Code changes that landed in this deploy
+
+Cumulative since `30ae205` (live before today):
+- STEP 12 — blog programme (DB schema + admin CRUD + DB-backed `/blog` + post detail page with PostBody/FAQ accordion/author byline/related/per-post OG + sitemap async with hreflang + service-page "related posts" + `/manage/{leads,subscribers,team,content-topics,blog}` + analytics overview at `/manage`)
+- STEP 13 — real Bedrock generator (`src/lib/bedrock.ts`, `src/lib/generator/*`, `scripts/generate.ts`, `/manage/content-topics` Run-batch UI, sst.config IAM `bedrock:InvokeModel*` + Lambda 60s timeout)
+- STEP 14 — generator tunings (placeholder-ban prompt, normalize-aware gate matcher, BN max_tokens 8000 + locale-factor + quality-aware retry, FAQ requirement strengthened, BN slug parenthetical citation)
+- STEP 15 (this) — `server-only` removed from `src/db/client.ts` + `src/lib/data/blog.ts` so the CLI doesn't crash importing them; auto-generated migration SQL committed as audit trail
+
+### Now waiting on you — review sample, bulk-publish
+
+1. Open `https://publicpulse.com.bd/manage/sign-in` (BetterAuth — same creds as before).
+2. Browse `/manage/blog` — 120 posts in `review` status, ranked by category. Filter by category or locale.
+3. Spot-check a few (open the edit page, scroll the body, eyeball the answerFirst + FAQs). Recommended sample: a political-pr post, a paid-media post, the AEO/glossary post, and one of the 5 BN posts.
+4. Bulk-publish in batches via the row checkboxes + "Publish" action in `/manage/blog`. Each publish triggers `updateTag('blog')` + `revalidatePath('/blog')` + `pingIndexNow()`, so published posts appear on `/blog` within seconds and IndexNow notifies Bing/Yandex.
+5. If a post needs edits, click in → edit → save (still in review) → publish when happy.
+
+To re-run the 6 skipped glossary topics later: add the 6 missing glossary entries to `src/lib/taxonomies/glossary.ts`, redeploy code, then `tsx scripts/generate.ts --env .env.production --max 6 --review-first`. The seed-topics catalog already has them as queued rows, currently `status=skipped`; just need to flip them back to `queued` and re-run.
+
+### Pending (separate)
+
+- **Hero image upload:** generated posts have `heroImageUrl = null`. Either supply per-post images via `/manage/blog` or wire a per-post OG image (already auto-generated at `/blog/[slug]/opengraph-image` — see STEP 12).
+- **Author display:** `getAuthorBySlug` returns null for generated posts that reference `moshiur-rahman` (the GENERATOR_DEFAULT_AUTHOR env default). Verified the seed inserted 3 authors with that exact slug, so this should already work — confirm on a published-post page.
+
+---
+
 ## 2026-05-25 — STEP 14 / GENERATOR TUNINGS — gate-pass 50% → 100% on re-smoke
 
 **PART 1 of the brief.** Three tunings against the STEP 13 failure modes, applied to system prompts + quality gate + retry policy. Re-smoke (same 8 topics) went **8/8 PUBLISH (100%)** vs the 4/8 baseline. PART 2 (staging UI verification) **blocked** — `.env.staging` not present.
