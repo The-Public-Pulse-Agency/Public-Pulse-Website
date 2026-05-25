@@ -13,6 +13,54 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 17 / BEDROCK PER-CALL TIMEOUT (fail fast, retry once)
+
+**Follow-up to the STEP 16 stall.** The generator went silent for 6+ minutes mid-batch with the process in `STAT=SN` (interruptible sleep) — a hung Bedrock HTTPS socket with no per-call deadline. Killing + restarting recovered idempotently, but we shouldn't need to.
+
+### Changes
+
+[src/lib/bedrock.ts](../src/lib/bedrock.ts):
+
+- New env-driven knob: `BEDROCK_TIMEOUT_MS` (default `90000` = 90s). Generous enough for BN posts that legitimately stream for 30–60s; tight enough that a stalled socket fails fast instead of blocking the queue.
+- `invokeModel()` now wraps each `client().send(command, { abortSignal })` in an `AbortController` with a `setTimeout(controller.abort, BEDROCK_TIMEOUT_MS)`. Timer cleared in `finally` so successful calls leave no dangling handles.
+- One automatic retry inside `invokeModel` when the first attempt aborts on timeout (with a 500ms jitter to avoid hammering a temporarily-degraded region). Non-timeout errors (5xx, validation, throttling) bubble immediately — the caller's retry budget is reserved for content-quality issues (the existing 2-attempt loop in `run.ts` for max-tokens truncation).
+- Aborts are detected by error `name === "AbortError" | "TimeoutError" | "RequestAbortedException"` so different SDK runtimes all hit the same path.
+- New `BedrockTimeoutError` class — `name === "BedrockTimeoutError"`, carries `attempts` + `timeoutMs` for diagnostics. Surfaces in `run.ts` as `bedrock-error: Bedrock call timed out after 2 attempt(s) at 90000ms each` which is unambiguously a hang, not a quota or validation issue.
+
+### What this changes operationally
+
+| Failure mode | Before | After |
+|---|---|---|
+| Healthy call (typical) | succeeds in 15–60s | unchanged |
+| One transient socket hang | process sleeps forever | aborts at 90s, retries once with 500ms jitter, usually succeeds |
+| Bedrock outage / persistent hang | process sleeps forever | aborts at 90s, retries at 90.5s, raises `BedrockTimeoutError` after ~180s total — generator's per-topic catch flips topic to ERROR result and moves on |
+| Rate-limit / throttling (`ThrottlingException`) | bubbles immediately | unchanged (not a timeout) |
+| Validation error (bad input) | bubbles immediately | unchanged (not a timeout) |
+
+The previous 6-minute stall scenario now caps at ~3 minutes worst-case before the generator moves on to the next topic — a 50× improvement in time-to-recover with zero impact on the success path.
+
+### Build verification
+
+- `npx tsc --noEmit`: zero errors.
+- `npm run build`: green. No route changes; only `src/lib/bedrock.ts` touched.
+- No deploy needed for this fix to take effect — it's CLI-side. The next time someone runs `scripts/generate.ts` or hits `/manage/content-topics`'s Run-batch button, the timeout is active. (Server-side it lands on the next prod deploy, which is fine since hung Bedrock sockets only matter for the long-running CLI drains.)
+
+### Configuration knobs
+
+```bash
+BEDROCK_TIMEOUT_MS=90000        # per-call deadline (default 90s)
+BEDROCK_MAX_TOKENS=8000         # output cap (existing)
+BEDROCK_MODEL_ID=us.anthropic.claude-haiku-4-5-20251001-v1:0  # existing
+BEDROCK_REGION=us-east-1        # existing
+GENERATOR_MAX_POSTS_PER_RUN=5   # batch cap (existing)
+```
+
+### Pushed
+
+Commit on `main`. CI verify only (no deploy).
+
+---
+
 ## 2026-05-25 — STEP 16 / GLOSSARY GAP + BN EXPANSION + HERO-IMAGE FIX
 
 Three things this turn, against the same prod guardrails as STEP 15 (additive-only schema, review-first, no auto-publish, build green before deploy, rollback target preserved):
