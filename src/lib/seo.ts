@@ -43,7 +43,10 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
     tags,
     noIndex,
     ogEyebrow,
-    useDynamicOg = !ogImage, // if no explicit OG image supplied, generate one
+    // Default to static OG. The dynamic /og factory works at build time and
+    // returns a per-title PNG, but on first request it can cold-start slowly;
+    // opt-in per page if you want the dynamic image.
+    useDynamicOg = false,
   } = input;
 
   warnIfLong("title", title, 60);

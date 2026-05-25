@@ -5,7 +5,14 @@ import { ImageResponse } from "next/og";
 // Edge runtime. 1200×630. Returns PNG. No DB calls. Cache headers tuned
 // for CDN reuse (a given title is hashed in the URL so dedup is automatic).
 
-export const runtime = "edge";
+// Edge runtime is the standard for next/og, but OpenNext on AWS Lambda
+// doesn't ship edge entrypoints reliably (Cannot find module
+// 'app-edge-has-no-entrypoint'). Use nodejs runtime which OpenNext bundles
+// the same way as every other dynamic route — ImageResponse works fine in
+// Node, just slightly heavier per cold start.
+export const runtime = "nodejs";
+export const dynamic = "force-static";
+export const revalidate = 86400;
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
