@@ -13,6 +13,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { caseStudies } from "@/db/schema";
 import { CASE_STUDIES_TAG } from "@/lib/data/case-studies";
+import { pingIndexNow } from "@/lib/indexnow";
+import { SITE } from "@/lib/site";
 
 const caseStudySchema = z.object({
   slug: z.string().min(2).max(120).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers, hyphens"),
@@ -30,13 +32,20 @@ async function requireSession() {
   if (!session) redirect("/manage/sign-in");
 }
 
-function refreshPublic() {
+function refreshPublic(slug?: string) {
   // Belt-and-braces: invalidate the tag (data layer) AND nudge the homepage
   // path directly. Next 16 split the API — updateTag() is the fire-and-forget
   // invalidate; revalidateTag() requires a CacheLife profile and is for the
   // newer cacheLife system. We want the former.
   updateTag(CASE_STUDIES_TAG);
   revalidatePath("/");
+  revalidatePath("/case-studies");
+
+  // Best-effort IndexNow ping so Bing / Yandex / Seznam recrawl quickly.
+  // Fire-and-forget — failures don't block the publish flow.
+  const urls = [`${SITE.url}/`, `${SITE.url}/case-studies`];
+  if (slug) urls.push(`${SITE.url}/case-studies/${slug}`);
+  void pingIndexNow(urls).catch(() => {});
 }
 
 export type ActionState = { ok: true } | { ok: false; error: string };
@@ -59,7 +68,7 @@ export async function createCaseStudy(formData: FormData): Promise<void> {
     published: data.published,
     publishedAt: data.published ? new Date() : null,
   });
-  refreshPublic();
+  refreshPublic(data.slug);
   redirect("/manage/case-studies");
 }
 
@@ -85,7 +94,7 @@ export async function updateCaseStudy(id: string, formData: FormData): Promise<v
       updatedAt: new Date(),
     })
     .where(eq(caseStudies.id, id));
-  refreshPublic();
+  refreshPublic(data.slug);
   redirect("/manage/case-studies");
 }
 
