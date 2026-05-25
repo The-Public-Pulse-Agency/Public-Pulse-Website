@@ -7,6 +7,7 @@ import { Send, CheckCircle2, ArrowRight } from "lucide-react";
 import { contactSchema, type ContactInput } from "@/lib/contact-schema";
 import { submitContact } from "@/app/contact/actions";
 import { SERVICES } from "@/lib/services";
+import { getServiceIcon } from "@/lib/icons";
 
 export function ContactForm() {
   const [pending, startTransition] = useTransition();
@@ -103,6 +104,7 @@ export function ContactForm() {
         <div className="mt-3 flex flex-wrap gap-2">
           {SERVICES.map((s) => {
             const isActive = selectedService === s.slug;
+            const Icon = getServiceIcon(s.slug);
             return (
               <button
                 key={s.slug}
@@ -117,7 +119,7 @@ export function ContactForm() {
                     : "border-ink/20 bg-paper text-ink/80 hover:border-ink"
                 }`}
               >
-                <span aria-hidden>{s.emoji}</span>
+                <Icon className="h-4 w-4" aria-hidden />
                 {s.shortName}
               </button>
             );

@@ -8,6 +8,7 @@ import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SERVICES } from "@/lib/services";
+import { getServiceIcon } from "@/lib/icons";
 
 export const metadata: Metadata = buildMetadata({
   title: "Services | Public Pulse Agency — 9 Digital Marketing Services",
@@ -41,7 +42,9 @@ export default function ServicesIndexPage() {
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>
           <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {SERVICES.map((s, i) => (
+            {SERVICES.map((s, i) => {
+              const Icon = getServiceIcon(s.slug);
+              return (
               <li key={s.slug}>
                 <ScrollReveal delayMs={Math.min(i, 5) * 50}>
                   <Link href={`/services/${s.slug}`} className="card group flex h-full flex-col">
@@ -49,8 +52,8 @@ export default function ServicesIndexPage() {
                       <span className="text-meta font-semibold uppercase text-ink/45">
                         {String(i + 1).padStart(2, "0")}
                       </span>
-                      <span className="text-3xl" aria-hidden>
-                        {s.emoji}
+                      <span className="grid h-11 w-11 place-items-center rounded-card bg-brand-orange/10 text-brand-orange transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" aria-hidden>
+                        <Icon className="h-5 w-5" />
                       </span>
                     </div>
                     <h2 className="mt-6 text-h3 font-bold text-ink">{s.name}</h2>
@@ -65,7 +68,8 @@ export default function ServicesIndexPage() {
                   </Link>
                 </ScrollReveal>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </Container>
       </section>

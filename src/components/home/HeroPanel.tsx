@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, MessageCircleMore } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { SERVICES } from "@/lib/services";
+import { getServiceIcon } from "@/lib/icons";
 
 // Avoora-style hero: massive wordmark, sales-team card top-right (filled
 // gradient), gradient panel with avatar pile, sub-headline, and 5 numbered
@@ -73,8 +74,15 @@ export function HeroPanel() {
           className="relative mt-8 overflow-hidden rounded-[20px] p-6 md:mt-10 md:p-10 lg:min-h-[560px]"
           style={{
             background: `radial-gradient(60% 50% at 75% 25%, #2563EB 0%, transparent 60%), radial-gradient(45% 55% at 20% 70%, #FF5C00 0%, transparent 60%), radial-gradient(50% 60% at 85% 85%, #0F766E 0%, transparent 55%), radial-gradient(40% 60% at 40% 30%, #14B8A6 0%, transparent 60%), linear-gradient(135deg, #FF7A2E 0%, #14B8A6 50%, #2563EB 100%)`,
+            backgroundSize: "200% 200%",
+            animation: "gradient-drift 22s ease infinite",
           }}
         >
+          {/* Slowly drifting decorative blob — adds life without distracting */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-paper/10 blur-3xl animate-float motion-reduce:animate-none"
+          />
           <div className="relative flex h-full min-h-[440px] flex-col justify-between">
             {/* Avatar pile */}
             <div className="flex -space-x-3">
@@ -102,32 +110,33 @@ export function HeroPanel() {
 
             {/* Numbered service tiles */}
             <ul className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-              {tiles.map((s, i) => (
-                <li key={s.slug}>
-                  <Link
-                    href={`/services/${s.slug}`}
-                    className="group flex h-full items-center gap-3 rounded-card bg-paper/80 p-2.5 backdrop-blur-sm transition hover:bg-paper"
-                  >
-                    <span
-                      className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-[8px] text-2xl"
-                      style={{
-                        background: tileGradient(i),
-                      }}
-                      aria-hidden
+              {tiles.map((s, i) => {
+                const Icon = getServiceIcon(s.slug);
+                return (
+                  <li key={s.slug}>
+                    <Link
+                      href={`/services/${s.slug}`}
+                      className="group flex h-full items-center gap-3 rounded-card bg-paper/85 p-2.5 backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-paper hover:shadow-card-hover"
                     >
-                      {s.emoji}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[11px] font-semibold text-ink/55">
-                        ({String(i + 1).padStart(2, "0")})
+                      <span
+                        className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-[8px] text-paper transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+                        style={{ background: tileGradient(i) }}
+                        aria-hidden
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-semibold text-ink/55">
+                          ({String(i + 1).padStart(2, "0")})
+                        </div>
+                        <div className="truncate text-xs font-bold leading-tight text-ink md:text-sm">
+                          {s.shortName}
+                        </div>
                       </div>
-                      <div className="truncate text-xs font-bold leading-tight text-ink md:text-sm">
-                        {s.shortName}
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>

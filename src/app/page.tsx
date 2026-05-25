@@ -10,8 +10,10 @@ import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { Marquee } from "@/components/ui/Marquee";
+import { CountUp } from "@/components/ui/CountUp";
 import { HeroPanel } from "@/components/home/HeroPanel";
 import { SERVICES } from "@/lib/services";
+import { getServiceIcon } from "@/lib/icons";
 import { SITE } from "@/lib/site";
 import { getPublishedCaseStudies } from "@/lib/data/case-studies";
 
@@ -90,19 +92,21 @@ export default async function HomePage() {
           </div>
 
           <ul className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {SERVICES.map((s, i) => (
+            {SERVICES.map((s, i) => {
+              const Icon = getServiceIcon(s.slug);
+              return (
               <li key={s.slug}>
                 <ScrollReveal delayMs={Math.min(i, 5) * 50}>
                   <Link
                     href={`/services/${s.slug}`}
-                    className="group block h-full rounded-card border border-white/15 bg-ink-soft p-7 transition hover:border-brand-orange"
+                    className="group block h-full rounded-card border border-white/15 bg-ink-soft p-7 transition duration-300 hover:-translate-y-1 hover:border-brand-orange hover:bg-ink"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <span className="text-meta font-semibold uppercase text-white/45">
                         {String(i + 1).padStart(2, "0")}
                       </span>
-                      <span className="text-3xl" aria-hidden>
-                        {s.emoji}
+                      <span className="grid h-11 w-11 place-items-center rounded-card bg-brand-orange/15 text-brand-orange transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" aria-hidden>
+                        <Icon className="h-5 w-5" />
                       </span>
                     </div>
                     <h3 className="mt-6 text-h3 font-bold leading-tight">{s.name}</h3>
@@ -117,7 +121,8 @@ export default async function HomePage() {
                   </Link>
                 </ScrollReveal>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </Container>
       </section>
@@ -127,11 +132,15 @@ export default async function HomePage() {
         <Container>
           <ul className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 md:gap-x-8">
             {STATS.map((s, i) => (
-              <li key={s.label} className="border-l-2 border-ink pl-4 md:pl-6">
+              <li
+                key={s.label}
+                className="group border-l-2 border-ink pl-4 transition-colors duration-300 hover:border-brand-orange md:pl-6"
+              >
                 <ScrollReveal delayMs={i * 60}>
-                  <div className="text-[clamp(2.25rem,4vw+0.5rem,4rem)] font-extrabold leading-none tracking-tight text-ink">
-                    {s.number}
-                  </div>
+                  <CountUp
+                    value={s.number}
+                    className="block text-[clamp(2.25rem,4vw+0.5rem,4rem)] font-extrabold leading-none tracking-tight text-ink transition-colors duration-300 group-hover:text-brand-orange"
+                  />
                   <div className="mt-4 max-w-[12rem] text-meta uppercase text-ink/60">
                     {s.label}
                   </div>

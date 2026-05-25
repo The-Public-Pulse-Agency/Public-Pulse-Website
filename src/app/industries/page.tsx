@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { INDUSTRIES } from "@/lib/taxonomies/industries";
+import { getIndustryIcon } from "@/lib/icons";
 
 export const metadata: Metadata = buildMetadata({
   title: "Industries | Public Pulse Agency",
@@ -48,13 +49,20 @@ export default function IndustriesIndex() {
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>
           <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {INDUSTRIES.map((i) => (
+            {INDUSTRIES.map((i) => {
+              const Icon = getIndustryIcon(i.slug);
+              return (
               <li key={i.slug}>
                 <Link href={`/industries/${i.slug}`} className="card group flex h-full flex-col">
-                  <span className="text-meta font-semibold uppercase text-brand-orange">
-                    Industry
-                  </span>
-                  <h2 className="mt-3 text-h3 font-bold text-ink">{i.name}</h2>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="text-meta font-semibold uppercase text-brand-orange">
+                      Industry
+                    </span>
+                    <span className="grid h-11 w-11 place-items-center rounded-card bg-brand-orange/10 text-brand-orange transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" aria-hidden>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <h2 className="mt-5 text-h3 font-bold text-ink">{i.name}</h2>
                   <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">
                     {i.description}
                   </p>
@@ -67,7 +75,8 @@ export default function IndustriesIndex() {
                   </p>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </Container>
       </section>
