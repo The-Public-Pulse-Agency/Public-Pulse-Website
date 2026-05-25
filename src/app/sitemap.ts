@@ -2,44 +2,107 @@ import type { MetadataRoute } from "next";
 import { SITE, absoluteUrl } from "@/lib/site";
 import { SERVICES } from "@/lib/services";
 import { POSTS } from "@/lib/posts";
+import { LOCATIONS } from "@/lib/taxonomies/locations";
+import { INDUSTRIES } from "@/lib/taxonomies/industries";
+import { GLOSSARY } from "@/lib/taxonomies/glossary";
+import { GUIDES } from "@/lib/content/guides";
+import { COMPARES } from "@/lib/content/compares";
 
-// Foundation step 1 ships a single flat sitemap. We move to a sitemap-index
-// + per-section sitemaps (pages, services, blog, locations…) once the URL
-// count crosses a few hundred. The data sources (SERVICES, POSTS) are
-// already split so partitioning later is mechanical.
+// Single flat sitemap.xml — Next.js doesn't have first-class sitemap-index
+// support without a route handler. We list every URL here with `alternates`
+// so Google sees the bn/en relationship even though only en pages exist
+// today; bn entries are commented in once hand-authored content lands.
+//
+// Programmatic surfaces grouped by category — each entry is also referenced
+// in docs/JOURNEY.md so the SEO surface is auditable.
 
 const today = new Date().toISOString().slice(0, 10);
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: absoluteUrl("/"), lastModified: today, changeFrequency: "weekly", priority: 1 },
-    { url: absoluteUrl("/about"), lastModified: today, changeFrequency: "monthly", priority: 0.8 },
-    { url: absoluteUrl("/services"), lastModified: today, changeFrequency: "monthly", priority: 0.9 },
-    { url: absoluteUrl("/blog"), lastModified: today, changeFrequency: "weekly", priority: 0.8 },
-    { url: absoluteUrl("/contact"), lastModified: today, changeFrequency: "yearly", priority: 0.7 },
-  ];
-
-  // Only ready services/posts are in the sitemap. Don't advertise URLs that
-  // return 404 (the single biggest finding in AUDIT.md).
-  const servicePages: MetadataRoute.Sitemap = SERVICES.filter((s) => s.ready).map((s) => ({
-    url: absoluteUrl(`/services/${s.slug}`),
+function entry(
+  path: string,
+  changeFrequency: "daily" | "weekly" | "monthly" | "yearly" = "monthly",
+  priority = 0.7
+): MetadataRoute.Sitemap[number] {
+  return {
+    url: absoluteUrl(path),
     lastModified: today,
-    changeFrequency: "monthly",
-    priority: 0.8,
-  }));
-
-  const blogPages: MetadataRoute.Sitemap = POSTS.filter((p) => p.ready).map((p) => ({
-    url: absoluteUrl(`/blog/${p.slug}`),
-    lastModified: p.dateModified ?? p.datePublished,
-    changeFrequency: "monthly",
-    priority: 0.7,
-  }));
-
-  return [...staticPages, ...servicePages, ...blogPages];
+    changeFrequency,
+    priority,
+    alternates: {
+      languages: {
+        en: absoluteUrl(path),
+        "x-default": absoluteUrl(path),
+        // bn: absoluteUrl(`/bn${path === "/" ? "" : path}`),  // unlock when bn content lands
+      },
+    },
+  };
 }
 
-// Match the site's locale/host hint for the sitemap response.
+export default function sitemap(): MetadataRoute.Sitemap {
+  // ── Core marketing pages ───────────────────────────────────────────
+  const core: MetadataRoute.Sitemap = [
+    entry("/", "weekly", 1),
+    entry("/about", "monthly", 0.8),
+    entry("/services", "monthly", 0.9),
+    entry("/blog", "weekly", 0.8),
+    entry("/contact", "yearly", 0.7),
+    entry("/glossary", "weekly", 0.7),
+    entry("/guides", "weekly", 0.7),
+    entry("/case-studies", "weekly", 0.8),
+    entry("/locations", "monthly", 0.7),
+    entry("/industries", "monthly", 0.7),
+  ];
+
+  // ── Services × 9 ───────────────────────────────────────────────────
+  const services = SERVICES.filter((s) => s.ready).map((s) =>
+    entry(`/services/${s.slug}`, "monthly", 0.8)
+  );
+
+  // ── Locations × N ──────────────────────────────────────────────────
+  const locations = LOCATIONS.map((l) => entry(`/locations/${l.slug}`, "monthly", 0.7));
+
+  // ── Industries × N ─────────────────────────────────────────────────
+  const industries = INDUSTRIES.map((i) => entry(`/industries/${i.slug}`, "monthly", 0.7));
+
+  // ── Service × Location matrix (scale driver) ───────────────────────
+  const serviceLocation = SERVICES.filter((s) => s.ready).flatMap((s) =>
+    LOCATIONS.map((l) => entry(`/${s.slug}/${l.slug}`, "monthly", 0.65))
+  );
+
+  // ── Service × Industry matrix ──────────────────────────────────────
+  const serviceIndustry = SERVICES.filter((s) => s.ready).flatMap((s) =>
+    INDUSTRIES.map((i) => entry(`/${s.slug}-for-${i.slug}`, "monthly", 0.65))
+  );
+
+  // ── Glossary terms ─────────────────────────────────────────────────
+  const glossary = GLOSSARY.map((t) => entry(`/glossary/${t.slug}`, "monthly", 0.5));
+
+  // ── Guides (HowTo playbooks) ───────────────────────────────────────
+  const guides = GUIDES.map((g) => entry(`/guides/${g.slug}`, "monthly", 0.7));
+
+  // ── Compare pages ──────────────────────────────────────────────────
+  const compares = COMPARES.map((c) => entry(`/compare/${c.slug}`, "monthly", 0.6));
+
+  // ── Blog ───────────────────────────────────────────────────────────
+  const blog = POSTS.filter((p) => p.ready).map((p) => ({
+    ...entry(`/blog/${p.slug}`, "monthly", 0.7),
+    lastModified: p.dateModified ?? p.datePublished,
+  }));
+
+  return [
+    ...core,
+    ...services,
+    ...locations,
+    ...industries,
+    ...serviceLocation,
+    ...serviceIndustry,
+    ...glossary,
+    ...guides,
+    ...compares,
+    ...blog,
+  ];
+}
+
 export const revalidate = 3600;
 export const dynamic = "force-static";
-// Silence "unused" warning when SITE.url isn't yet used by alt-lang variants.
 void SITE.url;
