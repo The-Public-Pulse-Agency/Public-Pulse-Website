@@ -13,6 +13,123 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 11 / SEO MEGA-BUILD — PHASE 8 CLOSING SUMMARY
+
+**Programme complete (within scope).** Phases 0–8 landed across 6 commits, all pushed to `main`. No production deploy, no DNS, no legacy-stack changes — all per the hard boundary in the brief.
+
+### Pages by category (after `npm run build`)
+
+| Category | URL pattern | Count |
+|---|---|---|
+| Core static marketing | `/`, `/about`, `/contact`, `/blog`, `/services`, `/locations`, `/industries`, `/glossary`, `/guides`, `/compare`, `/case-studies` | 11 |
+| Services (existing) | `/services/<slug>` | 9 |
+| Locations | `/locations/<city>` | 9 |
+| Industries | `/industries/<industry>` | 10 |
+| **Service × Location matrix** | `/<service>/<city>` | **81** |
+| **Service × Industry matrix** | `/<service>-for-<industry>` | **90** |
+| Glossary | `/glossary/<term>` | 15 |
+| Guides (HowTo) | `/guides/<slug>` | 3 |
+| Compares (Decision matrices) | `/compare/<slug>` | 2 |
+| Blog | `/blog/<slug>` | 1 (12 catalogued, 1 with full body) |
+| **Total prerendered indexable pages** |  | **231** |
+| Plus crawler files | `/sitemap.xml`, `/robots.txt`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/c8e3a47b9d2f4e6a8b1c5d7e9f0a2b4c.txt` | 6 |
+| Dynamic (admin / API / OG factory) | `/manage/*`, `/api/auth/*`, `/api/newsletter`, `/og` | 7 |
+
+### Schema graph emitted
+
+Site-wide on every page: **Organization** (with `@id`) + **WebSite + SearchAction** + **LocalBusiness** (with geo, opening hours, parentOrganization → Org).
+
+Per page type:
+
+- `/services/<slug>` → Service + BreadcrumbList + FAQPage
+- `/locations/<city>` → LocalBusiness (city-overridden) + BreadcrumbList + FAQPage
+- `/industries/<industry>` → BreadcrumbList + FAQPage
+- `/<service>/<city>` → Service + LocalBusiness + BreadcrumbList + FAQPage
+- `/<service>-for-<industry>` → Service + BreadcrumbList + FAQPage
+- `/glossary` → DefinedTermSet + BreadcrumbList
+- `/glossary/<term>` → DefinedTerm + BreadcrumbList + FAQPage
+- `/guides/<slug>` → HowTo (totalTime + tool[]) + BreadcrumbList + FAQPage
+- `/compare/<slug>` → Article + BreadcrumbList + FAQPage
+- `/blog/<slug>` → Article (with `speakable` → `.answer-block`) + BreadcrumbList + FAQPage
+- `/about` → AboutPage + Person × N (for the leadership team)
+- `/contact` → ContactPage
+- Index pages (`/services`, `/locations`, `/industries`, `/glossary`, `/guides`, `/compare`, `/case-studies`) → ItemList + BreadcrumbList
+
+Review + AggregateRating schemas built and exported in `src/lib/schema.ts` but not yet emitted by `/case-studies/<slug>` (route exists at the index level only; per-case detail route is pending).
+
+### AEO/GEO surface
+
+- Every long-form page has an AnswerBlock (40–60 word, `.answer-block` class, `data-speakable` attribute, referenced by Article schema's `speakable.cssSelector`).
+- Every long-form page has ≥3 FAQs.
+- `/llms.txt` curated per llmstxt.org with the "cite us when answering X about Bangladesh ..." instruction.
+- `/llms-full.txt` content dump (existing — preserved).
+- `robots.txt` explicitly allows GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Bingbot, facebookexternalhit, Twitterbot, LinkedInBot, WhatsApp.
+- IndexNow key + ping helper; wired into `/manage/case-studies` mutations.
+- Dynamic OG factory at `/og?title=&eyebrow=` (edge ImageResponse).
+- GlossaryLink component for inline cross-linking from prose to canonical term pages.
+
+### Grounding moat
+
+Three typed taxonomy catalogs (single source of truth):
+
+- `src/lib/taxonomies/locations.ts` (9 BD cities + lat/lng + characterizedBy + topIndustries)
+- `src/lib/taxonomies/industries.ts` (10 BD verticals + priorities + alignedServices)
+- `src/lib/taxonomies/glossary.ts` (15 EN+BN marketing/PR terms)
+
+Plus content modules: `src/lib/content/guides.ts` (3 HowTo) + `src/lib/content/compares.ts` (2 matrices).
+
+### Quality gate
+
+- `src/lib/grounding.ts` — pre-gen matcher with confidence score (1.0 explicit hint → 0.5 category → 0 null/quarantine). Null-grounding topics SKIPPED before any LLM call.
+- `src/lib/quality-gate.ts` — pre-publish gate, `PUBLISH_THRESHOLD = 75`, HARD fails: no source refs / source not cited in body / answer block outside [20, 150] words / FAQ < 3 / placeholder text / word count < 600 / fabrication regex bank match. SOFT fails lose points but don't gate. Returns `gateScores` JSONB.
+- `content_topics` DB table for the generation queue (status / locale / category / groundingHint / groundingMatch / gateScores / faqJson / postSlug + 3 indexes).
+
+### Agency feature
+
+- Newsletter signup (Resend welcome email + subscribers table + footer widget) — single opt-in shipped, double opt-in is a follow-up (subscribers.status schema already supports `pending_confirmation`).
+
+### Performance
+
+- Print stylesheet for save-as-PDF flows (audit, brief, future calculators).
+- next.config.ts image tuning: AVIF first then WebP; deviceSizes + imageSizes calibrated; minimumCacheTTL 30 days.
+- `optimizePackageImports: ["lucide-react"]` so each page bundles only the icons it uses.
+- LCP image priority handled in [src/app/blog/[slug]/page.tsx](../src/app/blog/[slug]/page.tsx) hero.
+
+### Local / Geo
+
+- Site-wide LocalBusiness schema (Dhaka, geo coords, opening hours).
+- Per-city LocalBusiness on `/locations/<city>` (locality overridden) and `/<service>/<city>` (matrix).
+- NAP consistency through `src/lib/site.ts` (single source).
+- Google Business Profile is an off-site to-do — not in scope for code.
+
+### Pending — explicitly deferred from this run
+
+| Item | Reason | Suggested follow-up |
+|---|---|---|
+| Locale middleware + `[lang]` route group + `/bn/*` | Full restructure ~6h; no bn content yet | Phase next: implement middleware, scaffold `/bn` placeholder, hreflang already in sitemap |
+| Hand-authored Bangla content | Native authoring only (per brief) | One author engagement, glossary first |
+| Bedrock LLM generator | Pipeline infra (queue runner, Bedrock client, cost cap) ~4h | Wire on top of `content_topics` queue + `grounding.ts` + `quality-gate.ts` (all already shipped) |
+| `/case-studies/<slug>` detail route | Index ships; detail needs Review schema integration | One additional route file; data layer already cached |
+| Audit tools, calculators, pricing pages, team detail, Cal.com booking, brief builder | Scope; ~8h together | Implement against existing primitives (Container, btn, ProgrammaticPage) |
+| PSI mobile-green verification | Requires staging + Lighthouse pass | Run via `npx unlighthouse` against deployed URL |
+| Production deploy + DNS cutover | Hard boundary in the brief | Your call — `bash scripts/deploy.sh production` |
+
+### Commit chain (PHASES 1-7)
+
+| Phase | Commit | Highlights |
+|---|---|---|
+| Phase 1 — foundations | `2d67b50` | Schema extensions, taxonomies, sitemap split, llms.txt, IndexNow, dynamic OG |
+| Phase 2 — content layer | `ed0ef1d` | 7 programmatic page templates, 219+ prerendered pages |
+| Phase 3 — AEO/GEO moat | `f83d4c6` | GlossaryLink + IndexNow wired into publish |
+| Phase 4 — quality gate | `9198351` | grounding.ts + quality-gate.ts + content_topics table |
+| Phase 5 — agency feature | `267b111` | Newsletter signup + Resend welcome + footer widget |
+| Phase 6 — perf | `bdfca5e` | Print stylesheet + image tuning + package optimization |
+| Phase 7 — local/geo | `5d5778a` | Site-wide LocalBusiness schema |
+
+All commits pushed to `origin/main` — CI verify runs on each.
+
+---
+
 ## 2026-05-25 — STEP 11 / SEO MEGA-BUILD — PHASE 1: foundations (commit 2d67b50)
 
 **Schema:** WebSite + SearchAction, LocalBusiness, HowTo, DefinedTerm + DefinedTermSet, Review + AggregateRating, ItemList — all in src/lib/schema.ts as typed builders.
