@@ -13,6 +13,141 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 18 / MOTION SYSTEM + BRAND-FORWARD /about + ORG ENTITY UPGRADE
+
+**Build green. NOT deployed. Awaiting your `npm run dev` visual + your promote.** Four coupled workstreams shipped in four commits on `main`.
+
+### Hard guardrails honored (verified post-build)
+
+- **0 personal names in rendered HTML** (`grep "Moshiur\|Founder & MD" .next/server/app/*.html` → 0).
+- **0 `[bracket]` placeholders** in `/about` and `/bn/about` page sources.
+- **Single `<h1>`** on /about and /bn/about.
+- **`data-speakable` AnswerBlock** present on both /about pages.
+- **0 `"founder"`** + **0 `"@type":"Person"`** in homepage Org JSON-LD.
+- **transform + opacity only** for every keyframe and transition (CSS audited).
+- **`prefers-reduced-motion: reduce`** disables ALL keyframes/transitions/cursor-glow at the CSS layer.
+- **`pointer: coarse`** disables cursor-glow/magnetic/tilt at the CSS layer; JS hooks also short-circuit on the matchMedia query.
+- **`html.reveal-ready`** gate preserved + the 2.5s kill-switch — no-JS crawlers see the full final state.
+
+### PART 4 — Brand-only Organization entity (commit `35b187a`)
+
+`src/lib/schema.ts`:
+- `organizationSchema()` rebuilt as a knowledge-panel candidate: `legalName`, `alternateName`, `foundingLocation`, `slogan`, `knowsAbout` (9 service types + AEO/GEO/PR — entity disambiguation), `knowsLanguage: [en, bn]`, two `contactPoint` entries (sales + customer service with WhatsApp URL), `identifier` with BIN + TradeLicense as `PropertyValue`, `sameAs` (extensible), `parentOrganization` → Pulse Group with id reference, `image` as `ImageObject`. **NO `founder`, NO `employee`, NO Person.** Hard rule encoded in the file comment.
+- `articleSchema()` now uses Organization as `author` (via `@id` ref) — Person path removed entirely. `ArticleSchemaInput` lost `authorName` + `author`. New exported `BRAND_BYLINE` constant for visual bylines.
+- `aboutPageSchema()` extended to accept `{ path, inLanguage }` so EN + BN share the builder.
+
+`src/app/blog/[slug]/page.tsx`:
+- Top-of-body byline now reads "Public Pulse Agency · Editorial team" (BRAND_BYLINE), linked to /about.
+- Dropped `getAuthorBySlug`, the per-post `<Image>` of the author, and the Person schema emit.
+- PP monogram tile replaces the avatar visually.
+
+DB authors table + `/manage/team` UI stay functional for audit (not public).
+
+### PART 1 — Motion system (commit `1be0d54` ↔ `feat(motion): site-wide motion`)
+
+`src/components/motion/` (NEW): 8 primitives + shared internals.
+
+| File | Purpose | CWV guard |
+|---|---|---|
+| `_internal.ts` | `rafThrottle`, `usePrefersReducedMotion`, `usePointerCoarse`, `useInView`, `useLatestRef` | n/a (utilities) |
+| `CursorGlow.tsx` | Page-wide brand spotlight, mounted in root layout | rAF; rendered `null` on coarse/reduced |
+| `MagneticButton.tsx` | CTA pulls toward cursor; renders as `<button>` OR `<Link>` via `href` so Server Components can use it for nav | rAF; lazy-init on intersect; disabled on touch/reduced |
+| `TiltCard.tsx` | 3D tilt + sheen sweep on hover (CSS pseudo) | rAF; `will-change` toggled per hover; lazy IO; disabled on touch |
+| `AuroraGradient.tsx` | CSS-only conic+radial drift bg | pure CSS (no JS bundle); disabled by `@media (prefers-reduced-motion)` |
+| `GradientText.tsx` | CSS animated `background-position` sweep on display headlines | pure CSS; falls back to solid `--ink` on reduced motion |
+| `ScrollReveal.tsx` | v2 — directional (up/down/left/right) + CSS-var distance | opacity+transform only; defensive immediate-reveal-if-near-viewport + 1.5s timeout fallbacks preserved |
+| `Stagger.tsx` | Wraps direct children in ScrollReveal v2 with incrementing delays | inherits |
+| `Parallax.tsx` | Scroll-driven + optional mouse-driven `translate3d` | rAF; lazy-init via IO; mouse disabled on coarse |
+| `ScrollProgress.tsx` | Top-of-page progress bar, mounted in root layout | single passive scroll listener, rAF |
+
+`src/styles/globals.css`: new motion CSS layer — `.aurora`, `.gradient-text`, `.scroll-progress`, `.reveal-v2`, `.tilt-card`, `.cursor-glow`, `.magnetic`, `.link-sweep`, `.shimmer`. Two GLOBAL guards:
+- `@media (prefers-reduced-motion: reduce)` — disables EVERY new primitive (animation: none, transform: none, transition: none, `cursor-glow { display: none }`).
+- `@media (pointer: coarse)` — disables cursor-glow/magnetic/tilt for touch.
+
+`src/app/layout.tsx`: `<ScrollProgress />` + `<CursorGlow />` mounted near `<body>` root. Two mounts give every page (now and future) the polished motion feel without per-page wiring.
+
+### PART 3 — `/about` brand-forward + `/bn/about` (commit `8364b4a`)
+
+8 sections (matching the brief), no team, no people, no Person schema, no `[brackets]`:
+
+1. **HERO** — `AuroraGradient` + `GradientText` H1 + `Parallax` (mouse) sub-head + 4 `ProofTile` facts (real, scope-limited: founded 2024, 9 services, 2 languages, 100% BDT-billed).
+2. **ANSWER BLOCK** — entity-query tuned "Who is Public Pulse Agency?", 40–60w, `data-speakable`.
+3. **STORY** — the handoff thesis, brand-promise voice (no founder narrative).
+4. **PRINCIPLES** — four brand promises in `TiltCard`s with `lucide` icons (Senior brief, Built for Bangladesh, One accountable team, Honest reporting). Phrased as commitments, not "our team".
+5. **CAPABILITIES BAND** — the 9 services as one accountable team, drawn from the SERVICES catalog. Links to each `/services/<slug>`.
+6. **PROOF** — case-studies / blog / services cross-links. Real-only with TODO(user) markers where client logos / testimonials / case-study detail rows aren't entered yet. No fabricated proof.
+7. **PULSE GROUP** — parentOrganization context from `group.ts`.
+8. **CREDENTIALS** — BIN, Trade License, Dhaka office, EN+BN service.
+
+JSON-LD per page: `AboutPage` (mainEntity → site Org `@id`; isPartOf → WebSite) + `BreadcrumbList` + `FAQPage` (6 entity-questions — who/where/what services/registered/billing/Pulse Group; **NO** "who founded it").
+
+Bilingual: `/about` and `/bn/about` are hand-authored (not machine-translated), share the same shape, cross-linked via hreflang in `buildMetadata({ alternateLanguages })`.
+
+### PART 2 — Apply primitives site-wide tastefully (commit `796aae8`)
+
+The bulk of "site-wide motion" comes from the layout-mounted `<ScrollProgress>` + `<CursorGlow>` — every existing and future page gets them for free.
+
+Explicit per-page edits:
+- `src/app/services/page.tsx`: existing `ScrollReveal` stagger preserved; each service card now also rotates on hover (`TiltCard maxTilt={4}`, intentionally subtle).
+- `src/app/blog/page.tsx`: each blog card wrapped in `TiltCard`.
+- Homepage (`HeroPanel`) intentionally untouched — it already has its own gradient panel + tile design; stacking aurora on top would conflict with the BRAND.md "one aurora per page" budget.
+
+### docs/BRAND.md — motion language rewrite
+
+Full motion section rewritten. New content:
+- 6 hard constraints (numbered)
+- Per-primitive table (Use for / Constraints)
+- Performance budget (aurora 1/page, gradient-text 1-2/page, etc.)
+- Cadence values (every animation duration listed)
+- "Motion don'ts"
+
+### Commits
+
+| Commit | Scope |
+|---|---|
+| `35b187a` | PART 4 — schema + brand byline |
+| (motion commit) | PART 1 — 8 primitives + CSS layer + layout mount + BRAND.md |
+| `8364b4a` | PART 3 — /about EN + /bn/about |
+| `796aae8` | PART 2 — apply primitives to services + blog cards |
+
+All pushed to `main`. CI verify runs; no deploy.
+
+### Rollback target (in case of post-deploy regression)
+
+`10e9af0` (the previous good state — Bedrock per-call timeout + everything before). To roll back:
+
+```bash
+git checkout 10e9af0 && AWS_PROFILE=eventpulse npx sst deploy --stage production
+```
+
+Neon DB is unaffected; rollback is code-only.
+
+### How to verify before you promote
+
+```bash
+npm run dev
+# Visit:
+#   http://localhost:3000/                — homepage (CursorGlow + ScrollProgress live)
+#   http://localhost:3000/about           — brand-forward, AuroraGradient hero, GradientText
+#   http://localhost:3000/bn/about        — native BN variant
+#   http://localhost:3000/services        — TiltCard on cards
+#   http://localhost:3000/blog            — TiltCard on cards
+#   http://localhost:3000/blog/<any-slug> — brand byline ("Public Pulse Agency · Editorial team")
+# Test prefers-reduced-motion via Chrome DevTools → Rendering → Emulate CSS media feature
+# Test pointer:coarse via DevTools → toggle Mobile mode (iPhone/Android)
+```
+
+CWV recommended: Lighthouse on a built+started instance (`npm run build && npm start`) for `/`, `/about`, `/services/political-pr`, `/blog/political-pr-pricing-bangladesh`. LCP/CLS/INP should match or beat pre-pass baseline — motion is composite-layer only.
+
+### Deploy when ready
+
+```bash
+AWS_PROFILE=eventpulse npx sst deploy --stage production
+# Live at https://publicpulse.com.bd
+```
+
+---
+
 ## 2026-05-25 — STEP 17 / BEDROCK PER-CALL TIMEOUT (fail fast, retry once)
 
 **Follow-up to the STEP 16 stall.** The generator went silent for 6+ minutes mid-batch with the process in `STAT=SN` (interruptible sleep) — a hung Bedrock HTTPS socket with no per-call deadline. Killing + restarting recovered idempotently, but we shouldn't need to.
