@@ -1,0 +1,137 @@
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { Container } from "@/components/ui/Container";
+import { SERVICES } from "@/lib/services";
+
+// Avoora-style hero: massive wordmark, founder card top-right, gradient panel
+// with avatar pile, sub-headline, and 5 numbered service tiles along the bottom.
+
+const FOUNDER = {
+  name: "Moshiur Rahman",
+  role: "Founder & MD",
+  initial: "M",
+};
+
+const TEAM_AVATARS = [
+  { initial: "M", color: "bg-brand-orange" },
+  { initial: "S", color: "bg-blue-500" },
+  { initial: "A", color: "bg-teal-500" },
+  { initial: "R", color: "bg-pink-500" },
+];
+
+export function HeroPanel() {
+  const tiles = SERVICES.slice(0, 5);
+
+  return (
+    <section className="relative bg-paper">
+      <Container className="relative pt-6 pb-10 md:pt-10 md:pb-14">
+        {/* ── Top row: wordmark + founder card ─────────────────────────── */}
+        <div className="flex items-start gap-6">
+          <h1 className="flex-1 text-mega font-extrabold leading-[0.92] tracking-[-0.04em] text-ink">
+            Public<span className="text-ink/30">_</span>Pulse
+            <span className="text-ink/30">®</span>
+          </h1>
+          {/* Founder card — desktop only */}
+          <Link
+            href="/contact"
+            className="hidden md:flex items-center gap-3 rounded-panel border border-ink/15 bg-paper p-2.5 pr-3 transition hover:border-ink hover:shadow-card-hover"
+            aria-label={`${FOUNDER.name}, ${FOUNDER.role} — let's talk`}
+          >
+            <div
+              className="grid h-12 w-12 place-items-center rounded-card bg-gradient-to-br from-brand-orange to-pink-500 text-paper text-lg font-extrabold"
+              aria-hidden
+            >
+              {FOUNDER.initial}
+            </div>
+            <div className="text-left leading-tight">
+              <div className="text-sm font-bold text-ink">{FOUNDER.name}</div>
+              <div className="text-xs text-ink/55">{FOUNDER.role}</div>
+              <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-paper">
+                Let&rsquo;s talk
+                <span className="grid h-3.5 w-3.5 place-items-center rounded-full bg-brand-orange">
+                  <ArrowUpRight className="h-2.5 w-2.5" aria-hidden />
+                </span>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* ── Gradient panel ───────────────────────────────────────────── */}
+        <div
+          className="relative mt-8 overflow-hidden rounded-[20px] p-6 md:mt-10 md:p-10 lg:min-h-[560px]"
+          style={{
+            background: `radial-gradient(60% 50% at 75% 25%, #2563EB 0%, transparent 60%), radial-gradient(45% 55% at 20% 70%, #FF5C00 0%, transparent 60%), radial-gradient(50% 60% at 85% 85%, #0F766E 0%, transparent 55%), radial-gradient(40% 60% at 40% 30%, #14B8A6 0%, transparent 60%), linear-gradient(135deg, #FF7A2E 0%, #14B8A6 50%, #2563EB 100%)`,
+          }}
+        >
+          <div className="relative flex h-full min-h-[440px] flex-col justify-between">
+            {/* Avatar pile */}
+            <div className="flex -space-x-3">
+              {TEAM_AVATARS.map((a, i) => (
+                <div
+                  key={i}
+                  className={`grid h-10 w-10 place-items-center rounded-full border-2 border-paper text-sm font-bold text-paper ${a.color}`}
+                  aria-hidden
+                >
+                  {a.initial}
+                </div>
+              ))}
+            </div>
+
+            {/* Sub-headline */}
+            <div className="mt-12 md:mt-20">
+              <h2 className="max-w-[12ch] text-display font-extrabold leading-[1.05] tracking-tight text-paper md:max-w-none md:text-mega md:leading-[0.95]">
+                We build brands with <span className="text-paper/70">influence.</span>
+              </h2>
+              <p className="mt-5 max-w-xl text-sm text-paper/85 md:text-base">
+                A 360° digital marketing + political PR studio out of Dhaka — political campaigns,
+                hospitality launches, consumer brand builds, all under one accountable team.
+              </p>
+            </div>
+
+            {/* Numbered service tiles */}
+            <ul className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {tiles.map((s, i) => (
+                <li key={s.slug}>
+                  <Link
+                    href={`/services/${s.slug}`}
+                    className="group flex h-full items-center gap-3 rounded-card bg-paper/80 p-2.5 backdrop-blur-sm transition hover:bg-paper"
+                  >
+                    <span
+                      className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-[8px] text-2xl"
+                      style={{
+                        background: tileGradient(i),
+                      }}
+                      aria-hidden
+                    >
+                      {s.emoji}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold text-ink/55">
+                        ({String(i + 1).padStart(2, "0")})
+                      </div>
+                      <div className="truncate text-xs font-bold leading-tight text-ink md:text-sm">
+                        {s.shortName}
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+// Decorative gradient swatches for the 5 service tile thumbnails.
+function tileGradient(i: number): string {
+  const stops = [
+    "linear-gradient(135deg,#FF7A2E,#FF5C00)",
+    "linear-gradient(135deg,#60A5FA,#2563EB)",
+    "linear-gradient(135deg,#FBCFE8,#F472B6)",
+    "linear-gradient(135deg,#5EEAD4,#0D9488)",
+    "linear-gradient(135deg,#FCD34D,#F59E0B)",
+  ];
+  return stops[i % stops.length];
+}

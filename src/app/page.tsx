@@ -2,15 +2,14 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   ArrowRight,
-  Star,
   Sparkles,
   Phone,
-  MessageSquare,
 } from "lucide-react";
 import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { Marquee } from "@/components/ui/Marquee";
+import { HeroPanel } from "@/components/home/HeroPanel";
 import { SERVICES } from "@/lib/services";
 import { SITE } from "@/lib/site";
 import { getPublishedCaseStudies } from "@/lib/data/case-studies";
@@ -36,49 +35,12 @@ export default async function HomePage() {
   const caseStudies = await getPublishedCaseStudies();
   return (
     <>
-      {/* ═══════ HERO — paper / huge type / orange accent ════════════════ */}
-      <section className="relative overflow-hidden bg-paper">
-        <Container className="relative pt-16 pb-12 md:pt-24 md:pb-20">
-          <div className="mx-auto max-w-5xl">
-            <span className="chip chip-orange">
-              <Sparkles className="h-3 w-3" aria-hidden />
-              Dhaka · since 2024
-            </span>
-            <h1 className="mt-7 text-mega font-extrabold tracking-tight text-ink">
-              We build brands that <span className="text-brand-orange">refuse</span> to be ignored.
-            </h1>
-            <p className="mt-7 max-w-2xl text-lead text-ink/70">
-              A 360° creative + PR studio out of Dhaka. Political campaigns, hospitality launches,
-              consumer brand builds — under one accountable team.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link href="/contact" className="btn btn-primary">
-                Start a project
-                <ArrowUpRight className="h-4 w-4" aria-hidden />
-              </Link>
-              <a
-                href={SITE.contact.whatsapp}
-                rel="noopener noreferrer"
-                target="_blank"
-                className="btn btn-secondary"
-              >
-                <MessageSquare className="h-4 w-4" aria-hidden />
-                WhatsApp
-              </a>
-              <div className="ml-2 hidden items-center gap-2 sm:flex">
-                <div className="flex">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} className="h-3.5 w-3.5 fill-brand-orange text-brand-orange" aria-hidden />
-                  ))}
-                </div>
-                <span className="text-meta uppercase text-ink/55">50+ brands shipped</span>
-              </div>
-            </div>
-          </div>
-        </Container>
+      {/* ═══════ AVOORA-STYLE HERO (wordmark + gradient + tiles) ════════ */}
+      <HeroPanel />
 
-        {/* AnswerBlock for AEO — full width, below the fold area */}
-        <Container className="relative pb-20">
+      {/* ═══════ ANSWER BLOCK (AEO) ═════════════════════════════════════ */}
+      <section className="bg-paper">
+        <Container className="pb-14">
           <div className="mx-auto max-w-3xl">
             <AnswerBlock>
               Public Pulse Agency is a Dhaka-based 360° digital marketing and political PR studio.
@@ -108,7 +70,7 @@ export default async function HomePage() {
         </Marquee>
       </section>
 
-      {/* ═══════ SERVICES — dark section with cards ═══════════════════════ */}
+      {/* ═══════ SERVICES (full list) ═════════════════════════════════════ */}
       <section className="bg-ink py-24 text-paper md:py-32">
         <Container>
           <div className="grid items-end gap-10 md:grid-cols-12">
@@ -159,17 +121,17 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {/* ═══════ STATS — paper, huge numbers ══════════════════════════════ */}
+      {/* ═══════ STATS — paper, big-but-fits numbers ══════════════════════ */}
       <section className="border-y border-ink bg-paper py-20 md:py-28">
         <Container>
-          <ul className="grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 md:gap-x-8">
             {STATS.map((s, i) => (
-              <li key={s.label}>
+              <li key={s.label} className="border-l-2 border-ink pl-4 md:pl-6">
                 <ScrollReveal delayMs={i * 60}>
-                  <div className="text-mega font-extrabold leading-none tracking-tight text-ink">
+                  <div className="text-[clamp(2.25rem,4vw+0.5rem,4rem)] font-extrabold leading-none tracking-tight text-ink">
                     {s.number}
                   </div>
-                  <div className="mt-4 max-w-[10rem] text-meta uppercase text-ink/60">
+                  <div className="mt-4 max-w-[12rem] text-meta uppercase text-ink/60">
                     {s.label}
                   </div>
                 </ScrollReveal>
@@ -237,7 +199,7 @@ export default async function HomePage() {
                   <ScrollReveal delayMs={i * 70}>
                     <article className="card flex h-full flex-col">
                       <p className="text-meta uppercase tracking-wider text-ink/55">{c.industry}</p>
-                      <p className="mt-4 text-mega font-extrabold leading-none tracking-tight text-ink">
+                      <p className="mt-4 text-[clamp(2rem,3vw+1rem,3.5rem)] font-extrabold leading-none tracking-tight text-ink">
                         {c.metric}
                       </p>
                       <p className="mt-2 text-meta uppercase text-ink/55">Over {c.windowLabel}</p>

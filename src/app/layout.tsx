@@ -9,6 +9,7 @@ import { organizationSchema, websiteSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SocialSidebar } from "@/components/layout/SocialSidebar";
 import { WhatsAppFab } from "@/components/layout/WhatsAppFab";
 import { Tracking, TrackingNoscript } from "@/components/analytics/Tracking";
 
@@ -48,10 +49,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-BD" className={inter.variable}>
+    <html lang="en-BD" className={`${inter.variable} reveal-ready`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-paper text-ink">
-        <Script id="reveal-bootstrap" strategy="beforeInteractive">
-          {`document.documentElement.classList.add('reveal-ready');`}
+        {/* Safety kill-switch: 2.5s after load, drop reveal-ready so no element
+            can stay invisible if IntersectionObserver fails to fire. */}
+        <Script id="reveal-killswitch" strategy="afterInteractive">
+          {`setTimeout(function(){document.documentElement.classList.remove('reveal-ready')},2500);`}
         </Script>
         <Tracking />
         <TrackingNoscript />
@@ -64,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <Header />
         <main id="main">{children}</main>
+        <SocialSidebar />
         <Footer />
         <WhatsAppFab />
       </body>
