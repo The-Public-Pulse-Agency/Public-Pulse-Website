@@ -31,9 +31,9 @@ export async function GET(): Promise<Response> {
         csvEscape(r.email),
         csvEscape(r.status),
         csvEscape(r.source),
-        csvEscape(r.createdAt.toISOString()),
-        csvEscape(r.confirmedAt?.toISOString() ?? ""),
-        csvEscape(r.unsubscribedAt?.toISOString() ?? ""),
+        csvEscape(new Date(r.createdAt).toISOString()),
+        csvEscape(r.confirmedAt ? new Date(r.confirmedAt).toISOString() : ""),
+        csvEscape(r.unsubscribedAt ? new Date(r.unsubscribedAt).toISOString() : ""),
       ].join(",")
     )
     .join("\n");

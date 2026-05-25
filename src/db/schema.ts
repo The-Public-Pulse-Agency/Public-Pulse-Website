@@ -61,7 +61,7 @@ export const caseStudies = pgTable(
     /** Bilingual: one row per locale, slug+locale unique. */
     locale: text("locale").notNull().default("en"),
     /** Long form display title (e.g. "How a Cox's Bazar resort grew direct bookings 47% in 90 days"). */
-    title: text("title").notNull(),
+    title: text("title").notNull().default("Untitled case study"),
     /** Optional sector label when NDA prevents naming the client (e.g. "A Cox's Bazar resort"). */
     clientName: text("client_name"),
     /** Logo URL (only when client is named + has agreed). */

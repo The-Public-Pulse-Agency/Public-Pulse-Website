@@ -37,7 +37,7 @@ export const getPublishedCaseStudies = unstable_cache(
     }
   },
   ["case-studies:published-v2"],
-  { tags: [CASE_STUDIES_TAG], revalidate: false }
+  { tags: [CASE_STUDIES_TAG], revalidate: 60 }
 );
 
 /** Featured case studies for the homepage Selected results. Falls back to
@@ -77,7 +77,7 @@ export const getFeaturedCaseStudies = unstable_cache(
     }
   },
   ["case-studies:featured-v2"],
-  { tags: [CASE_STUDIES_TAG], revalidate: false }
+  { tags: [CASE_STUDIES_TAG], revalidate: 60 }
 );
 
 export const getCaseStudyBySlug = unstable_cache(
@@ -96,7 +96,7 @@ export const getCaseStudyBySlug = unstable_cache(
     }
   },
   ["case-studies:by-slug-v2"],
-  { tags: [CASE_STUDIES_TAG], revalidate: false }
+  { tags: [CASE_STUDIES_TAG], revalidate: 60 }
 );
 
 /** Related case studies by industry overlap. */
@@ -126,7 +126,7 @@ export const getRelatedCaseStudies = unstable_cache(
     }
   },
   ["case-studies:related-v2"],
-  { tags: [CASE_STUDIES_TAG], revalidate: false }
+  { tags: [CASE_STUDIES_TAG], revalidate: 60 }
 );
 
 // Admin-only — NOT cached. /manage routes are uncached anyway.

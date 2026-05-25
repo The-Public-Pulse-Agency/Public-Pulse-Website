@@ -31,7 +31,8 @@ async function getCutoff(): Promise<Date> {
     .where(and(eq(newsletterIssues.status, "sent"), isNotNull(newsletterIssues.sentAt)))
     .orderBy(desc(newsletterIssues.sentAt))
     .limit(1);
-  if (last?.sentAt) return last.sentAt;
+  // Neon HTTP driver returns timestamps as ISO strings in some paths.
+  if (last?.sentAt) return new Date(last.sentAt);
   return new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 }
 

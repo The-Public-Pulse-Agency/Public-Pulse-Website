@@ -142,7 +142,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const blogBnOnly: MetadataRoute.Sitemap = publishedBn.map((p) => ({
     url: absoluteUrl(`/bn/blog/${p.slug}`),
-    lastModified: p.publishedAt ? p.publishedAt.toISOString().slice(0, 10) : today,
+    // Neon HTTP driver returns timestamps as ISO strings on some code paths
+    // (cache rehydrate, JSONB serialization). Coerce defensively.
+    lastModified: p.publishedAt ? new Date(p.publishedAt).toISOString().slice(0, 10) : today,
     changeFrequency: "monthly",
     priority: 0.65,
     alternates: {

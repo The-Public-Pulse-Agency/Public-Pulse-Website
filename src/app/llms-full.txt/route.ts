@@ -188,7 +188,7 @@ async function postsSection(): Promise<string> {
         return [
           `## Post — ${p.title}`,
           `URL: ${SITE.url}/blog/${p.slug}`,
-          `Category: ${p.categorySlug}  ·  Published: ${p.publishedAt?.toISOString().slice(0, 10) ?? "—"}  ·  Reading time: ${p.readingTime} min`,
+          `Category: ${p.categorySlug}  ·  Published: ${p.publishedAt ? new Date(p.publishedAt).toISOString().slice(0, 10) : "—"}  ·  Reading time: ${p.readingTime} min`,
           ``,
           `Answer: ${p.answerFirst}`,
           ``,
