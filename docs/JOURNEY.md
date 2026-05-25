@@ -13,6 +13,132 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 16 / GLOSSARY GAP + BN EXPANSION + HERO-IMAGE FIX
+
+Three things this turn, against the same prod guardrails as STEP 15 (additive-only schema, review-first, no auto-publish, build green before deploy, rollback target preserved):
+
+1. **Closed the 6 null-grounding gaps** — added the missing glossary terms.
+2. **Bengali expansion** — 40 BN-heavy topics seeded across the strong categories; BN went from 5/120 (4%) to **45/166 (27%)** of the corpus.
+3. **Fixed the broken-looking hero on published posts** — every post now gets a unique gradient OG card with its own title.
+
+Plus a hotfix mid-stream when the image fix shipped a Lambda-side 500 (caught immediately in logs, fixed forward in ~12 min).
+
+### Glossary catalog (src/lib/taxonomies/glossary.ts)
+
+Added 6 entries that STEP 15 skipped pre-LLM as null-grounding:
+
+- `speakable-schema` — SpeakableSpecification cssSelector usage
+- `first-party-data` — strategic asset post-iOS ATT
+- `attribution-window` — Meta 7-day-click default trap
+- `engagement-rate` — organic vs paid ER separation
+- `core-web-vitals` — LCP/INP/CLS thresholds
+- `conversion-api` — Meta CAPI / Google Enhanced Conversions
+
+Each entry follows the existing shape: definition (1-2 sentences) + body (1 paragraph with BD-specific specifics: BDT, Dhaka, Bkash, Foodpanda, etc.) + Bengali translation + area + `see` cross-refs. Used by /glossary/<slug>, GlossaryLink, and now the generator's grounding resolver.
+
+### BN expansion (src/db/seed-topics.ts)
+
+Added 40 BN topics across the categories where BN was underweight:
+
+| Slot | Count | Grounding pattern |
+|---|---|---|
+| BN service × top-5-city | 20 | 4 strong services × 5 cities |
+| BN service × top-5-industry | 15 | 3 services × 5 industries |
+| BN location market overviews | 5 | top-5 cities standalone |
+
+Each carries `requires: native-bn` in groundingHint so the Bengali system prompt fires. Never machine-translated.
+
+Also added a **re-queue pass** at the end of `seed-topics.ts main()`: any topic previously `status=skipped` whose `groundingHint.glossary` slug now resolves against `GLOSSARY_CATALOG` flips back to `queued` automatically. So adding glossary entries + re-running the seed is a single command.
+
+### Generator results
+
+Two runs (had to kill+restart once mid-stream — see below):
+
+| Run | Considered | Generated | Gate-pass | Notes |
+|---|---|---|---|---|
+| Run 1 (silent stall after 25 posts) | 25+ | 25 | n/a (log lost on kill) | Process went SN-sleeping with no log output for 6+ min |
+| Run 2 (restart for remaining 21) | 21 | 21 | **20/21 = 95%** | Picked up where Run 1 left off (idempotent skip on `postSlug`) |
+
+Combined: **46 new posts** in `status=review`. All 166 topics now `review`/`published` (zero `queued`, zero `skipped`). Estimated combined cost: ~$1.30 (Haiku 4.5 list price). Cumulative for the day: ~$3.90 against the $25/mo Budget alarm.
+
+#### What stalled the first run (mid-stream)
+
+Process showed `STAT=SN` (interruptible sleep) and no DB writes for 6 minutes mid-batch. Bedrock itself was responsive (verified with a 4-token probe). Most likely cause: the AWS SDK's invoke-model call hung on a long-running socket without a per-call timeout. Killing + restarting fixed it. Adding an explicit timeout in `src/lib/bedrock.ts` is a follow-up worth doing.
+
+### New posts by category × locale (the 46 added this turn)
+
+| Category | EN | BN |
+|---|---|---|
+| ai-aeo-geo | **6** | 0 |
+| blog (BN location overviews) | 0 | 5 |
+| hospitality | 0 | 5 |
+| paid-media | 0 | 10 |
+| political-pr | 0 | 10 |
+| social-media | 0 | 10 |
+| **Total** | **6** | **40** |
+
+The 6 EN ai-aeo-geo posts are exactly the 6 glossary terms that null-grounded in STEP 15 — they now exist as deep-dive articles with their own grounding source.
+
+### Cumulative state on https://publicpulse.com.bd (166 posts)
+
+| Locale | published | review | total |
+|---|---|---|---|
+| EN | 115 | 6 | 121 |
+| BN | 5 | 40 | 45 |
+| **Total** | **120** | **46** | **166** |
+
+BN went from **5/120 = 4%** (after STEP 15) to **45/166 = 27%**. The moat now has actual depth.
+
+### Hero image fix (src/app/blog/[slug]/page.tsx + next.config.ts)
+
+**The problem.** Every published post was rendering the same generic `/og-image.jpg` as the hero (and the og:image meta), so the site looked like 120 articles sharing one placeholder. Root cause: generated posts have `hero_image_url = NULL` by design, and the page's fallback was the site-wide static OG.
+
+**The fix.** Re-use the existing `/og?title=&eyebrow=` dynamic factory (src/app/og/route.tsx, lands a 1200×630 PNG with a gradient + title baked in). Hero `<Image>` and the `og:image` meta both source from `/og?title=...&eyebrow=<category>` when `hero_image_url` is null. Each post now gets a unique gradient card. Same factory used by social-share previews.
+
+**The mid-stream 500 (and the hotfix).** Commit `1225190` deployed this change and immediately broke every `/blog/<slug>` page with HTTP 500. Lambda logs showed two distinct bugs:
+
+1. **Next 16 strict-mode rejected the query-string src.** Error: `Image with src "/og?title=…" is using a query string which is not configured in images.localPatterns`. Next 16 refuses query-string `src` on `<Image>` unless `images.localPatterns` explicitly allows the path.
+2. **`c.publishedAt?.toISOString is not a function`** — the Neon HTTP driver round-trips timestamps as ISO strings (not Dates) in some code paths (cache rehydrate, JSONB-serialised payloads). The page assumed `Date`.
+
+Both fixed forward in commit `ecc364c` (deployed 9 minutes after the break):
+
+- `next.config.ts` gets `images.localPatterns: [{ pathname: "/og", search: "" }]`.
+- The hero `<Image>` gets `unoptimized={!post.heroImageUrl}` — the `/og` factory already returns a correctly-sized 1200×630 PNG, so going through `next/image`'s optimizer is wasted work AND would still require localPatterns. Belt-and-braces fix.
+- Every `publishedAt?.toISOString()` / `updatedAt?.toISOString()` call coerced to `new Date(x).toISOString()` — works whether `x` is a `Date` or `string`. Three sites: `src/app/blog/[slug]/page.tsx` (generateMetadata + articleSchema), `src/app/sitemap.ts` (both EN + BN sitemap lanes), `src/app/manage/blog/page.tsx` (admin list rows).
+
+Verification post-hotfix:
+
+```bash
+$ curl -sI https://publicpulse.com.bd/blog/political-pr-pricing-bangladesh    HTTP/2 200
+$ curl -s   https://publicpulse.com.bd/blog/political-pr-pricing-bangladesh \
+    | grep -oE 'src="/og\?title=[^"]+"'
+  src="/og?title=What%20Political%20PR%20Actually%20Costs%20in%20Bangladesh…&amp;eyebrow=Political%20PR"
+$ curl -s   https://publicpulse.com.bd/blog/political-pr-pricing-bangladesh \
+    | grep -ioE 'og:image" content="[^"]+"'
+  og:image" content="https://publicpulse.com.bd/og?title=Political%20PR%20Pricing…&eyebrow=political-pr"
+$ curl -sI "https://publicpulse.com.bd/og?title=Test&eyebrow=cat"             HTTP/2 200  content-type: image/png
+```
+
+Per-post hero now unique. `og:image` social-share previews also unique per post.
+
+### Commit chain this turn
+
+| Commit | Purpose |
+|---|---|
+| `1225190` | feat: per-post hero + 6 glossary + BN seed (broke /blog/<slug>) |
+| `ecc364c` | fix: 500 hotfix (date coercion + next/image localPatterns + unoptimized) |
+
+Rollback target: `c41f7dc` (the STEP 15 working state). All commits pushed to `main` (CI verify only).
+
+### Status / awaiting you
+
+- **46 new posts in `review`** at `/manage/blog` (all 40 BN posts + 6 EN ai-aeo-geo). Bulk-publish in batches when ready.
+- **/blog public** still shows 120 (the previously-published set), each now with a unique gradient hero. Listing cards unchanged (they were already image-less by design).
+- **No outstanding queued/skipped topics** — the queue is fully drained.
+- **Follow-up worth doing**: add an explicit per-call timeout in `src/lib/bedrock.ts` so the generator never silently stalls on a hung Bedrock socket again (would've saved 6 wasted minutes today).
+
+---
+
 ## 2026-05-25 — STEP 15 / PROD DRAIN + DEPLOY — 120 posts in review on https://publicpulse.com.bd, 93% gate-pass
 
 **End-to-end against PROD (explicit user authorization).** Drizzle schema additive push → 5 new tables in prod Neon → seed → drain all 126 topics REVIEW-FIRST → SST deploy to publicpulse.com.bd → verify.
