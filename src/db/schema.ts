@@ -18,6 +18,7 @@ import {
   integer,
   uniqueIndex,
   index,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // ─── Lead capture ──────────────────────────────────────────────────────
@@ -83,6 +84,55 @@ export const caseStudies = pgTable(
 
 export type CaseStudy = typeof caseStudies.$inferSelect;
 export type NewCaseStudy = typeof caseStudies.$inferInsert;
+
+// ─── ContentTopic queue (LLM generation pipeline) ─────────────────────
+// PHASE 4 quality-gate pipeline. Each row is a topic for the generator to
+// drain: a target keyword, the grounding source it must cite, status
+// (queued/skipped/generated/published/review), and gateScores JSONB.
+
+export const contentTopics = pgTable(
+  "content_topics",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    /** Free-text topic the generator works from. */
+    topic: text("topic").notNull(),
+    /** "en" | "bn" — bn topics need native authoring, not machine translation. */
+    locale: text("locale").notNull().default("en"),
+    /** /blog, /guides, /compare, /case-studies, /glossary, etc. */
+    category: text("category").notNull(),
+    targetKeyword: text("target_keyword"),
+    /** Lower = higher priority. */
+    priority: integer("priority").notNull().default(100),
+    /** queued | generated | published | review | skipped (null grounding). */
+    status: text("status").notNull().default("queued"),
+    /** JSON-encoded grounding hint, matched by src/lib/grounding.ts. */
+    groundingHint: jsonb("grounding_hint"),
+    /** Grounding match result (after pre-gen guard runs). */
+    groundingMatch: jsonb("grounding_match"),
+    /** Quality gate result JSONB — per-category + hardFails/softFails. */
+    gateScores: jsonb("gate_scores"),
+    /** Once published, the post URL / slug it produced. */
+    postSlug: text("post_slug"),
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    /** FAQ snapshot at publish time (≥3 by quality gate). */
+    faqJson: jsonb("faq_json"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index("content_topics_status_idx").on(t.status, t.priority),
+    scheduledIdx: index("content_topics_scheduled_idx").on(t.scheduledFor),
+    localeCategoryIdx: index("content_topics_locale_category_idx").on(t.locale, t.category),
+  })
+);
+
+export type ContentTopic = typeof contentTopics.$inferSelect;
+export type NewContentTopic = typeof contentTopics.$inferInsert;
 
 // ─── BetterAuth tables ─────────────────────────────────────────────────
 // Shape matches BetterAuth's expected schema (v1.x, email+password adapter).
