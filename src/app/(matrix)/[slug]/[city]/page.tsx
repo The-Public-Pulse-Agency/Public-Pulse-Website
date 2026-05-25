@@ -13,7 +13,9 @@ import { ProgrammaticPage, CalloutList, Hl } from "@/components/seo/Programmatic
 import { SERVICES, getService } from "@/lib/services";
 import { LOCATIONS, getLocation } from "@/lib/taxonomies/locations";
 
-type Params = { service: string; city: string };
+// Folder must be named [slug] (not [service]) — Next.js requires consistent
+// dynamic-segment names at the same path depth as sibling /(matrix)/[slug]/.
+type Params = { slug: string; city: string };
 
 // SERVICE × LOCATION matrix — 9 services × 9 locations = 81 grounded pages.
 //
@@ -24,7 +26,7 @@ type Params = { service: string; city: string };
 
 export function generateStaticParams(): Params[] {
   return SERVICES.filter((s) => s.ready).flatMap((s) =>
-    LOCATIONS.map((l) => ({ service: s.slug, city: l.slug }))
+    LOCATIONS.map((l) => ({ slug: s.slug, city: l.slug }))
   );
 }
 
@@ -35,8 +37,8 @@ export async function generateMetadata({
 }: {
   params: Promise<Params>;
 }): Promise<Metadata> {
-  const { service, city } = await params;
-  const s = getService(service);
+  const { slug, city } = await params;
+  const s = getService(slug);
   const l = getLocation(city);
   if (!s || !l) return {};
   return buildMetadata({
@@ -51,8 +53,8 @@ export default async function ServiceLocationPage({
 }: {
   params: Promise<Params>;
 }) {
-  const { service, city } = await params;
-  const s = getService(service);
+  const { slug, city } = await params;
+  const s = getService(slug);
   const l = getLocation(city);
   if (!s || !s.ready || !l) notFound();
 
