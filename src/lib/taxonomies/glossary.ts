@@ -179,6 +179,72 @@ export const GLOSSARY: GlossaryTerm[] = [
       "Public Pulse pings IndexNow on every /manage publish action with the affected URLs. Google does not participate but the major Bing-backed engines do. Our key file lives at /indexnow-key.txt.",
     see: ["robots-txt"],
   },
+  {
+    slug: "speakable-schema",
+    name: "Speakable Schema",
+    nameBn: "স্পিকেবল স্কিমা",
+    area: "SEO",
+    definition:
+      "The schema.org SpeakableSpecification — placed on Article or WebPage JSON-LD with a cssSelector that points voice assistants at the prose they should read aloud as the answer.",
+    body:
+      "Speakable schema is the voice-assistant cousin of FAQPage. Google Assistant and Alexa pick the cssSelector you provide (Public Pulse uses ['.answer-block']) and read it verbatim. The selector should target a 40–60 word self-contained answer; longer passages get truncated mid-sentence on the device. We render every long-form page's answer block inside <section class='answer-block' data-speakable> so the selector matches deterministically.",
+    see: ["answer-block", "aeo", "schema-jsonld"],
+  },
+  {
+    slug: "first-party-data",
+    name: "First-Party Data",
+    nameBn: "ফার্স্ট-পার্টি ডেটা",
+    area: "Analytics",
+    definition:
+      "Customer data the business collected directly — from its own site, app, CRM, point-of-sale or call centre — as opposed to third-party data bought from data brokers or rented from ad platforms.",
+    body:
+      "First-party data is the strategic asset for Bangladeshi brands as Meta and Google narrow third-party signal (iOS ATT, third-party cookie deprecation). The unlock is a clean Customer ID linked across web, Bkash/Nagad transactions, and WhatsApp inbox so you can build audiences and lookalikes inside Meta CAPI / Google Enhanced Conversions without leaking PII. Public Pulse implements first-party data layers as the foundation of every analytics rebuild.",
+    see: ["meta-conversions-api", "attribution-window"],
+  },
+  {
+    slug: "attribution-window",
+    name: "Attribution Window",
+    nameBn: "অ্যাট্রিবিউশন উইন্ডো",
+    area: "Analytics",
+    definition:
+      "The look-back period an ad platform credits an ad with a conversion — e.g. a 7-day-click 1-day-view window means Meta will count a purchase as the ad's outcome if it happens within 7 days of a click or 1 day of a view.",
+    body:
+      "Attribution windows are the single most over-looked lever in Bangladeshi paid media reporting. Meta defaults to 7-day-click; a hospitality brand selling 30-day-booking-window resorts is invisible under that default. Public Pulse audits attribution windows before every reporting setup and reconciles to first-party booking data so ROAS reflects reality, not the platform's default look-back. Mixing windows across channels — Google's data-driven model vs Meta's 7-day-click — produces double-counting at the campaign-mix level; we normalize.",
+    see: ["roas", "first-party-data"],
+  },
+  {
+    slug: "engagement-rate",
+    name: "Engagement Rate",
+    nameBn: "এনগেজমেন্ট রেট",
+    area: "Digital Marketing",
+    definition:
+      "The fraction of an audience that interacted with a piece of content — likes, comments, shares, saves, click-throughs — usually expressed as engagements ÷ reach × 100.",
+    body:
+      "Engagement rate is the dominant proxy metric on Bangladeshi Facebook and Instagram for organic content health. Healthy benchmarks: 2–5% on Facebook, 3–6% on Instagram for branded posts in the BD market; influencer rates run higher (5–12%). The trap is using ER alone to evaluate paid creative — paid CTAs depress ER mechanically while driving the actual KPI. Public Pulse separates organic ER (community signal) from paid CTR / conversion rate (commercial signal) in every monthly report.",
+    see: ["ctr", "roas"],
+  },
+  {
+    slug: "core-web-vitals",
+    name: "Core Web Vitals",
+    nameBn: "কোর ওয়েব ভাইটালস",
+    area: "SEO",
+    definition:
+      "Google's three page-experience metrics — LCP (largest contentful paint, load speed), INP (interaction to next paint, responsiveness), and CLS (cumulative layout shift, visual stability) — used as a ranking signal and surfaced in Search Console.",
+    body:
+      "Core Web Vitals matter twice in Bangladesh: as a ranking signal Google demonstrably uses, and as a UX-on-3G signal that dominates conversion for hospitality, real estate, and e-commerce sites where buyers research on phones over patchy networks. Pass-thresholds: LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1. Public Pulse's standard build (Next.js + OpenNext + CloudFront with AVIF/WebP image responses) ships green CWV on a Bangladeshi 4G device out of the box; the failure mode is usually heavy embeds added later (chat widgets, slow Tag Manager containers).",
+    see: ["aeo", "geo"],
+  },
+  {
+    slug: "conversion-api",
+    name: "Conversion API",
+    nameBn: "কনভার্সন এপিআই",
+    area: "Paid Media",
+    definition:
+      "A server-to-server event protocol — Meta's Conversions API, Google's Enhanced Conversions, TikTok's Events API — that sends conversion data directly from the brand's server to the ad platform, bypassing browser tracking that iOS ATT and ad blockers degrade.",
+    body:
+      "Conversion API is one of two technical lifts every Bangladeshi e-commerce stack must do post-iOS-14.5 (the other is first-party data). Server-side events restore 30–50% of the conversion signal lost from browser-side pixels. Public Pulse implements Meta CAPI alongside the browser pixel (dedup by event_id), so the platform sees both signals and Meta's bidding has clean attribution. Without CAPI, Meta's algorithm optimizes against a partial dataset and CPA inflates 20–40% over a 6-month decay curve.",
+    see: ["meta-conversions-api", "first-party-data", "roas"],
+  },
 ];
 
 export function getGlossaryTerm(slug: string): GlossaryTerm | undefined {

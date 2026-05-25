@@ -44,12 +44,18 @@ export async function generateMetadata({
   const post = await getPostBySlug(slug, "en");
   if (!post) return {};
 
+  // Per-post OG image: prefer an explicit heroImageUrl when set; otherwise
+  // use the dynamic /og?title=&eyebrow= factory so each post gets a unique
+  // gradient card with its own title (instead of every post sharing the
+  // generic site-wide /og-image.jpg).
   return buildMetadata({
     title: post.seoTitle ?? post.title,
     description: post.seoDescription ?? post.excerpt,
     path: `/blog/${post.slug}`,
     ogType: "article",
     ogImage: post.heroImageUrl ?? undefined,
+    useDynamicOg: !post.heroImageUrl,
+    ogEyebrow: post.categorySlug,
     publishedTime: post.publishedAt?.toISOString(),
     modifiedTime: post.updatedAt?.toISOString(),
     section: post.categorySlug,
@@ -78,7 +84,12 @@ export default async function BlogPostPage({
   const faqs = ((post.faqJson as Faq[] | null) ?? []).filter((f) => f?.q && f?.a);
   const tags = (post.tags as string[] | null) ?? [];
   const sourceRefs = (post.sourceRefs as string[] | null) ?? [];
-  const heroImage = post.heroImageUrl ?? "/og-image.jpg";
+  // Hero image: if heroImageUrl is set in the row, use it. Otherwise generate
+  // a per-post gradient card via the existing /og factory so each post gets a
+  // unique hero with its own title (not the site-wide generic /og-image.jpg).
+  const heroImage =
+    post.heroImageUrl ??
+    `/og?title=${encodeURIComponent(post.title)}&eyebrow=${encodeURIComponent(category?.nameEn ?? post.categorySlug)}`;
 
   const publishedDate = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("en-GB", {
