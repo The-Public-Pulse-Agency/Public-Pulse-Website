@@ -6,6 +6,7 @@ import { breadcrumbSchema, collectionPageSchema, itemListSchema } from "@/lib/sc
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
+import { TiltCard } from "@/components/motion";
 import { getCategories, getPublishedPosts } from "@/lib/data/blog";
 import { SITE } from "@/lib/site";
 
@@ -135,6 +136,7 @@ export default async function BlogIndexPage({
                 const cat = categories.find((c) => c.slug === p.categorySlug);
                 return (
                   <li key={`${p.slug}-${p.locale}`}>
+                    <TiltCard maxTilt={4}>
                     <Link href={`/blog/${p.slug}`} className="card group flex h-full flex-col">
                       <div className="flex items-center justify-between gap-3">
                         <span className="chip chip-orange">{cat?.nameEn ?? p.categorySlug}</span>
@@ -168,6 +170,7 @@ export default async function BlogIndexPage({
                         </span>
                       </div>
                     </Link>
+                    </TiltCard>
                   </li>
                 );
               })}

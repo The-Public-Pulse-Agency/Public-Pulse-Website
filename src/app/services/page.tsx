@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { TiltCard } from "@/components/motion";
 import { SERVICES } from "@/lib/services";
 import { getServiceIcon } from "@/lib/icons";
 
@@ -47,6 +48,7 @@ export default function ServicesIndexPage() {
               return (
               <li key={s.slug}>
                 <ScrollReveal delayMs={Math.min(i, 5) * 50}>
+                  <TiltCard maxTilt={4}>
                   <Link href={`/services/${s.slug}`} className="card group flex h-full flex-col">
                     <div className="flex items-start justify-between gap-3">
                       <span className="text-meta font-semibold uppercase text-ink/45">
@@ -66,6 +68,7 @@ export default function ServicesIndexPage() {
                       />
                     </p>
                   </Link>
+                  </TiltCard>
                 </ScrollReveal>
               </li>
               );
