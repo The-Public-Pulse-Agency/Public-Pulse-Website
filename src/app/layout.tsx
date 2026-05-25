@@ -5,7 +5,7 @@ import "@/styles/globals.css";
 
 import { SITE } from "@/lib/site";
 import { buildMetadata } from "@/lib/seo";
-import { organizationSchema, websiteSchema } from "@/lib/schema";
+import { localBusinessSchema, organizationSchema, websiteSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -58,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
         <Tracking />
         <TrackingNoscript />
-        <JsonLd data={[organizationSchema(), websiteSchema()]} />
+        <JsonLd data={[organizationSchema(), websiteSchema(), localBusinessSchema()]} />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded focus:bg-ink focus:px-3 focus:py-2 focus:text-paper focus:shadow-lg"
