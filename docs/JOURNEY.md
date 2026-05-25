@@ -13,6 +13,56 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 10: avoora-faithful hero LIVE (gradient panel + founder card + service tiles + social sidebar), reliability fixes
+
+**`https://publicpulse.com.bd` redeployed via SST `d9186abb` after a real browser inspection of avoora.webflow.io revealed STEP 9's "avoora-inspired" pass had missed every signature element of the source.**
+
+### What was added vs STEP 9
+
+| Element | STEP 9 | STEP 10 |
+|---|---|---|
+| Massive wordmark | "We build brands that refuse to be ignored." | `Public_Pulse®` mega-sized as the dominant element |
+| Founder card top-right | none | photo-square + name + role + black "LET'S TALK" button with orange-arrow circle |
+| Gradient panel | none — just B&W sections | radial+linear gradient cloud (orange→teal→blue) holding everything |
+| Avatar pile | none | 4 overlapping circular team avatars |
+| Sub-headline inside gradient | none | "We build brands with **influence**." in mega white type |
+| Numbered service tiles | dark-section grid below the fold | 5 glassmorphic tiles `(01)–(05)` with per-tile gradient thumbnails at the bottom of the hero panel |
+| Sticky social sidebar | none | fixed right-edge column on md+ (IG / LinkedIn / FB / WhatsApp / X via inline SVGs — lucide-react dropped brand icons) |
+| Mobile hamburger | nav always visible | hamburger button at < md, drops down a stacked drawer |
+
+### Reliability fixes shipped with the redesign
+
+- **ScrollReveal** — three defensive layers: mount-time check now reveals anything within 2 viewport heights, IntersectionObserver `rootMargin: "0px 0px 100% 0px"` fires ~1 viewport early, per-element 1.5s timeout force-reveals as last resort.
+- **`<html>` `reveal-ready`** — now rendered server-side too so hydration matches; `suppressHydrationWarning` belt-and-braces; kill-switch is an `afterInteractive` 2.5s timeout that removes the class entirely — content can never stay invisible.
+- **Stats overflow** — number font dropped from `text-mega` (up to 7.5rem) to a custom `clamp(2.25rem, 4vw + 0.5rem, 4rem)` so "300%+" no longer overlaps "10+" in the 4-col grid; each stat gets a left ink-border accent.
+- **Results card metric** — same clamp treatment so case-study metrics never overflow card width.
+
+### Verified pre-deploy in local dev (Playwright)
+
+- Desktop 1440: gradient renders, founder card visible, avatars pile correctly, 5 tiles align in single row, sticky social sidebar pinned right edge.
+- Tablet 768: full nav visible, hero stacks gracefully, tiles wrap 3+2.
+- Mobile 375: hamburger replaces nav, founder card hidden, tiles wrap 2-col, social sidebar hidden.
+
+### Verified post-deploy on live apex
+
+```text
+$ curl -sI https://publicpulse.com.bd/  → HTTP/2 200, cache-control: s-maxage=31536000
+$ headless browser on https://publicpulse.com.bd/:
+  h1 = "Public_Pulse®"  (single h1, mega-sized)
+  JSON-LD = Organization, WebSite
+  heroPanel present, socialSidebar present, founderCard (Moshiur Rahman) present
+  GTM-TNK2J29K loaded, GA4 G-WVF3TSEL3Q loaded, Meta Pixel fbq function defined
+  console errors = 0
+```
+
+### Pending — none blocking
+
+- TODO(user) in `src/components/home/HeroPanel.tsx` (founder name "Moshiur Rahman" is a stub) and homepage stats
+- Real client avatars to swap M/S/A/R initials
+- Real client logos for the marquee (currently service-name placeholders)
+
+---
+
 ## 2026-05-25 — STEP 9: avoora-inspired redesign LIVE; Pulse Group removed; SEO mega-build cancelled
 
 **`https://publicpulse.com.bd` now serves the avoora-style redesign.** SST deploy `9b73145d` updated the live stack at ~23:30 UTC.
