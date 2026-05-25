@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Users } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { SERVICES } from "@/lib/services";
 
-// Avoora-style hero: massive wordmark, founder card top-right, gradient panel
-// with avatar pile, sub-headline, and 5 numbered service tiles along the bottom.
+// Avoora-style hero: massive wordmark, sales-team card top-right (filled
+// gradient), gradient panel with avatar pile, sub-headline, and 5 numbered
+// service tiles along the bottom.
 
-const FOUNDER = {
-  name: "Moshiur Rahman",
-  role: "Founder & MD",
-  initial: "M",
+const SALES_CARD = {
+  label: "Sales team",
+  availability: "Available 09:00–21:00 BD",
 };
 
 const TEAM_AVATARS = [
@@ -31,21 +31,30 @@ export function HeroPanel() {
             Public<span className="text-ink/30">_</span>Pulse
             <span className="text-ink/30">®</span>
           </h1>
-          {/* Founder card — desktop only */}
+          {/* Sales team card — filled gradient, desktop only */}
           <Link
             href="/contact"
-            className="hidden md:flex items-center gap-3 rounded-panel border border-ink/15 bg-paper p-2.5 pr-3 transition hover:border-ink hover:shadow-card-hover"
-            aria-label={`${FOUNDER.name}, ${FOUNDER.role} — let's talk`}
+            aria-label={`${SALES_CARD.label} — ${SALES_CARD.availability}`}
+            className="group relative hidden md:flex items-center gap-3 overflow-hidden rounded-panel p-2.5 pr-3 transition hover:shadow-card-hover"
+            style={{
+              background: `radial-gradient(80% 100% at 100% 0%, #2563EB 0%, transparent 60%), radial-gradient(70% 100% at 0% 100%, #FF5C00 0%, transparent 60%), radial-gradient(60% 80% at 60% 60%, #0F766E 0%, transparent 55%), linear-gradient(135deg, #FF7A2E 0%, #14B8A6 50%, #2563EB 100%)`,
+            }}
           >
             <div
-              className="grid h-12 w-12 place-items-center rounded-card bg-gradient-to-br from-brand-orange to-pink-500 text-paper text-lg font-extrabold"
+              className="grid h-12 w-12 place-items-center rounded-card bg-paper/95 text-ink"
               aria-hidden
             >
-              {FOUNDER.initial}
+              <Users className="h-5 w-5" />
             </div>
             <div className="text-left leading-tight">
-              <div className="text-sm font-bold text-ink">{FOUNDER.name}</div>
-              <div className="text-xs text-ink/55">{FOUNDER.role}</div>
+              <div className="text-sm font-bold text-paper">{SALES_CARD.label}</div>
+              <div className="text-[11px] font-medium text-paper/80">
+                <span
+                  aria-hidden
+                  className="mr-1 inline-block h-1.5 w-1.5 -translate-y-[1px] rounded-full bg-emerald-400 align-middle ring-2 ring-emerald-400/30"
+                />
+                {SALES_CARD.availability}
+              </div>
               <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-paper">
                 Let&rsquo;s talk
                 <span className="grid h-3.5 w-3.5 place-items-center rounded-full bg-brand-orange">
