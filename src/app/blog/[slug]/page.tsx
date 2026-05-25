@@ -23,6 +23,10 @@ import {
   getRelatedPosts,
 } from "@/lib/data/blog";
 import { PostBody } from "@/components/blog/PostBody";
+import { SERVICES } from "@/lib/services";
+import { LOCATIONS } from "@/lib/taxonomies/locations";
+import { INDUSTRIES } from "@/lib/taxonomies/industries";
+import { GLOSSARY } from "@/lib/taxonomies/glossary";
 
 type Params = { slug: string };
 type Faq = { q: string; a: string };
@@ -87,6 +91,43 @@ export default async function BlogPostPage({
   const faqs = ((post.faqJson as Faq[] | null) ?? []).filter((f) => f?.q && f?.a);
   const tags = (post.tags as string[] | null) ?? [];
   const sourceRefs = (post.sourceRefs as string[] | null) ?? [];
+
+  // Backlinks block: resolve each grounding ref to its canonical page so the
+  // post links into the rest of the site (good for SEO + reader navigation).
+  // Order: most-specific first (service/location/industry/glossary) → broader.
+  type Backlink = { href: string; label: string; eyebrow: string };
+  const backlinks: Backlink[] = [];
+  for (const ref of sourceRefs) {
+    const svc = SERVICES.find((s) => s.slug === ref && s.ready);
+    if (svc) {
+      backlinks.push({ href: `/services/${svc.slug}`, label: svc.shortName, eyebrow: "Service" });
+      continue;
+    }
+    const loc = LOCATIONS.find((l) => l.slug === ref);
+    if (loc) {
+      backlinks.push({ href: `/locations/${loc.slug}`, label: loc.name, eyebrow: "Location" });
+      continue;
+    }
+    const ind = INDUSTRIES.find((i) => i.slug === ref);
+    if (ind) {
+      backlinks.push({ href: `/industries/${ind.slug}`, label: ind.name, eyebrow: "Industry" });
+      continue;
+    }
+    const term = GLOSSARY.find((g) => g.slug === ref);
+    if (term) {
+      backlinks.push({ href: `/glossary/${term.slug}`, label: term.name, eyebrow: "Glossary" });
+    }
+  }
+  // Always add a category-filtered insights link + the global insights hub.
+  if (category) {
+    backlinks.push({
+      href: `/blog?category=${category.slug}`,
+      label: `More ${category.nameEn.toLowerCase()} guides`,
+      eyebrow: "Category",
+    });
+  }
+  backlinks.push({ href: "/services", label: "All services", eyebrow: "Browse" });
+  backlinks.push({ href: "/contact", label: "Book a free consultation", eyebrow: "Contact" });
   // Hero image: if heroImageUrl is set in the row, use it. Otherwise generate
   // a per-post gradient card via the existing /og factory so each post gets a
   // unique hero with its own title (not the site-wide generic /og-image.jpg).
@@ -328,52 +369,35 @@ export default async function BlogPostPage({
                 </section>
               )}
 
-              {/* Author bio — E-E-A-T */}
-              {author && (
+              {/* Keep exploring — internal backlinks to grounded pages */}
+              {backlinks.length > 0 && (
                 <section className="mt-14 rounded-panel border border-ink/15 bg-paper-tint p-6">
-                  <div className="flex flex-wrap items-start gap-5">
-                    {author.image && (
-                      <Image
-                        src={author.image}
-                        alt={author.name}
-                        width={72}
-                        height={72}
-                        className="h-18 w-18 rounded-full border border-ink/15 object-cover"
-                      />
-                    )}
-                    <div className="flex-1 min-w-[200px]">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/55">
-                        Written by
-                      </p>
-                      <h3 className="mt-1 text-h3 font-bold text-ink">
-                        <Link href={`/about#${author.slug}`} className="hover:text-brand-orange">
-                          {author.name}
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/55">
+                    Keep exploring
+                  </p>
+                  <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {backlinks.map((b) => (
+                      <li key={b.href}>
+                        <Link
+                          href={b.href}
+                          className="group flex items-center justify-between gap-3 rounded-card border border-ink/15 bg-paper px-4 py-3 transition hover:border-ink"
+                        >
+                          <span>
+                            <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink/45">
+                              {b.eyebrow}
+                            </span>
+                            <span className="mt-0.5 block text-sm font-semibold text-ink group-hover:text-brand-orange">
+                              {b.label}
+                            </span>
+                          </span>
+                          <ArrowUpRight
+                            className="h-4 w-4 shrink-0 text-ink/40 transition group-hover:text-brand-orange group-hover:translate-x-0.5"
+                            aria-hidden
+                          />
                         </Link>
-                      </h3>
-                      <p className="text-sm text-ink/60">{author.role}</p>
-                      {author.bio && <p className="mt-3 text-sm leading-relaxed text-ink/75">{author.bio}</p>}
-                      {author.credentials && (
-                        <p className="mt-2 text-xs text-ink/55">{author.credentials}</p>
-                      )}
-                      {(author.sameAs as string[] | null)?.length ? (
-                        <ul className="mt-3 flex flex-wrap gap-2">
-                          {(author.sameAs as string[]).map((u) => (
-                            <li key={u}>
-                              <a
-                                href={u}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 rounded-full border border-ink/15 px-2.5 py-1 text-[11px] font-medium text-ink/70 hover:border-ink hover:text-ink"
-                              >
-                                <ExternalLink className="h-3 w-3" aria-hidden />
-                                {new URL(u).hostname.replace(/^www\./, "")}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  </div>
+                      </li>
+                    ))}
+                  </ul>
                 </section>
               )}
             </div>
