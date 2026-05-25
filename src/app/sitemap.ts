@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const hasBn = bnSlugSet.has(p.slug);
     return {
       url: absoluteUrl(path),
-      lastModified: p.publishedAt ? p.publishedAt.toISOString().slice(0, 10) : today,
+      lastModified: p.publishedAt ? new Date(p.publishedAt).toISOString().slice(0, 10) : today,
       changeFrequency: "monthly",
       priority: 0.7,
       alternates: {

@@ -111,8 +111,8 @@ export default async function BlogAdminPage({
             locale: r.locale,
             categorySlug: r.categorySlug,
             authorSlug: r.authorSlug,
-            publishedAt: r.publishedAt?.toISOString() ?? null,
-            updatedAt: r.updatedAt.toISOString(),
+            publishedAt: r.publishedAt ? new Date(r.publishedAt).toISOString() : null,
+            updatedAt: new Date(r.updatedAt).toISOString(),
             readingTime: r.readingTime,
           }))}
           actions={{

@@ -56,8 +56,11 @@ export async function generateMetadata({
     ogImage: post.heroImageUrl ?? undefined,
     useDynamicOg: !post.heroImageUrl,
     ogEyebrow: post.categorySlug,
-    publishedTime: post.publishedAt?.toISOString(),
-    modifiedTime: post.updatedAt?.toISOString(),
+    // Neon HTTP driver returns timestamps as ISO strings in some code paths
+    // (cache-rehydration, JSONB round-trips). Coerce via new Date(...) so
+    // .toISOString() always works regardless of source type.
+    publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
+    modifiedTime: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
     section: post.categorySlug,
     tags: (post.tags as string[] | null) ?? [],
     authors: [SITE.name],
@@ -127,8 +130,10 @@ export default async function BlogPostPage({
       headline: post.title,
       description: post.excerpt,
       image: heroImage,
-      datePublished: post.publishedAt?.toISOString() ?? new Date(post.createdAt).toISOString(),
-      dateModified: post.updatedAt?.toISOString(),
+      datePublished: post.publishedAt
+        ? new Date(post.publishedAt).toISOString()
+        : new Date(post.createdAt).toISOString(),
+      dateModified: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
       inLanguage: post.locale === "bn" ? "bn" : "en",
       section: category?.nameEn ?? post.categorySlug,
       tags,
@@ -181,6 +186,12 @@ export default async function BlogPostPage({
               priority
               sizes="(max-width: 768px) 100vw, 1024px"
               className="h-auto w-full"
+              // The dynamic /og?title= factory already returns a 1200x630 PNG
+              // sized exactly for this slot. Skip the next/image optimizer
+              // (which also rejects query-string srcs without an explicit
+              // images.localPatterns entry). Static heroImageUrls still flow
+              // through this same prop with no harm.
+              unoptimized={!post.heroImageUrl}
             />
           </div>
         </Container>
