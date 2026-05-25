@@ -15,6 +15,7 @@ import { absoluteUrl, SITE } from "@/lib/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
+import { InlineBlock } from "@/components/lead-capture";
 import {
   getCategories,
   getPostBySlug,
@@ -261,6 +262,14 @@ export default async function BlogPostPage({
                 <PostBody body={post.bodyMdx} />
               </div>
 
+              {/* Mid-post lead capture (only for posts > ~4 min — gives the
+                  reader a quiet pause before the next section). */}
+              {post.readingTime >= 4 && (
+                <div className="my-12">
+                  <InlineBlock context="blog-mid" align="center" />
+                </div>
+              )}
+
               {/* Tags + share */}
               <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-6">
                 <div className="flex flex-wrap gap-2">
@@ -314,6 +323,11 @@ export default async function BlogPostPage({
                   </ul>
                 </aside>
               )}
+
+              {/* End-of-post lead capture — the strongest position on the page */}
+              <div className="mt-14">
+                <InlineBlock context="blog-end" variant="dark" />
+              </div>
 
               {/* FAQ accordion */}
               {faqs.length > 0 && (

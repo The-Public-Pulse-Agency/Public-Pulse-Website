@@ -163,6 +163,34 @@ export async function togglePublishPost(id: string, nextValue: boolean): Promise
   revalidatePath("/manage/blog");
 }
 
+/** Flip every post matching a filter to a new status — the "Publish all in
+ *  current filter" admin shortcut. Avoids needing to manually select
+ *  hundreds of checkboxes. Only allows fromStatus ∈ {review, draft, scheduled}
+ *  so a misclick can't accidentally flip the entire blog. */
+export async function bulkUpdateStatusByFilter(args: {
+  fromStatus: "review" | "draft" | "scheduled";
+  toStatus: "published" | "draft" | "review";
+  locale?: string;
+  categorySlug?: string;
+}): Promise<{ updated: number }> {
+  await requireSession();
+  const where = [eq(blogPosts.status, args.fromStatus)];
+  if (args.locale) where.push(eq(blogPosts.locale, args.locale));
+  if (args.categorySlug) where.push(eq(blogPosts.categorySlug, args.categorySlug));
+  const result = await db
+    .update(blogPosts)
+    .set({
+      status: args.toStatus,
+      publishedAt: args.toStatus === "published" ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(and(...where))
+    .returning({ slug: blogPosts.slug });
+  refreshPublic();
+  revalidatePath("/manage/blog");
+  return { updated: result.length };
+}
+
 export async function bulkUpdateStatus(ids: string[], nextStatus: "published" | "draft" | "review"): Promise<void> {
   await requireSession();
   if (ids.length === 0) return;
@@ -199,4 +227,16 @@ export async function bulkDeleteAction(formData: FormData) {
   const ids = formData.getAll("ids").map(String);
   await bulkDelete(ids);
 }
-void and;
+
+/** Form-action wrapper: publishes every row currently matching the listing
+ *  filters. Used by the "Publish all reviewed" admin shortcut. */
+export async function publishAllReviewedAction(formData: FormData): Promise<void> {
+  const locale = String(formData.get("locale") ?? "") || undefined;
+  const categorySlug = String(formData.get("category") ?? "") || undefined;
+  await bulkUpdateStatusByFilter({
+    fromStatus: "review",
+    toStatus: "published",
+    locale,
+    categorySlug,
+  });
+}

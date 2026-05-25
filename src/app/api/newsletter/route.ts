@@ -1,22 +1,28 @@
-// Newsletter signup endpoint.
-//   POST /api/newsletter { email, source? }  → 200 { ok: true }
+// Newsletter signup — double opt-in.
 //
-// - Validates the email (Zod).
-// - Inserts a subscribers row (onConflictDoNothing keeps the request idempotent).
-// - Sends a welcome email via Resend (best-effort; failure doesn't break signup).
-// - Never returns DB-level errors to the client (information leakage).
+//   POST /api/newsletter { email, source?, locale?, page?, website? }
 //
-// Cache-Control: no-store. Single write path.
+//   • Validates input (Zod) + honeypot.
+//   • Inserts a `pending` subscriber with confirmToken + unsubscribeToken
+//     (onConflictDoNothing keeps repeat clicks idempotent for existing rows).
+//   • Sends ConfirmEmail (best-effort; failure surfaces a generic 200 so
+//     bots learn nothing about the row's status).
+//
+// The actual subscription is created when the user clicks the link in
+// ConfirmEmail and hits /confirm — see src/app/confirm/page.tsx.
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { z } from "zod";
-import { Resend } from "resend";
+import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { subscribers } from "@/db/schema";
 import { SITE } from "@/lib/site";
+import { newToken } from "@/lib/email/tokens";
+import { sendEmail } from "@/lib/email/send";
+import ConfirmEmail from "@/emails/ConfirmEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,18 +30,12 @@ export const dynamic = "force-dynamic";
 const schema = z.object({
   email: z.string().email().min(3).max(254),
   source: z.string().max(120).optional(),
+  /** "/blog", "/services/political-pr", etc. */
+  page: z.string().max(200).optional(),
+  locale: z.enum(["en", "bn"]).optional(),
   /** Honeypot — must be empty. */
   website: z.string().max(0).optional(),
 });
-
-let _resend: Resend | null = null;
-function resend(): Resend | null {
-  if (_resend) return _resend;
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return null; // best-effort; signup still proceeds without email
-  _resend = new Resend(key);
-  return _resend;
-}
 
 function hashIp(ip: string): string {
   const dayKey = new Date().toISOString().slice(0, 10);
@@ -54,9 +54,9 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
-  const { email, source, website } = parsed.data;
+  const { email, source, page, locale, website } = parsed.data;
 
-  // Honeypot — silent success to avoid telling bots they were caught.
+  // Honeypot — silent success.
   if (website && website.length > 0) {
     return NextResponse.json({ ok: true });
   }
@@ -69,53 +69,71 @@ export async function POST(req: Request): Promise<Response> {
     "unknown";
   const userAgent = h.get("user-agent") ?? null;
 
-  const unsubscribeToken = randomUUID();
   const normalizedEmail = email.toLowerCase().trim();
+  const confirmToken = newToken(24);
+  const unsubscribeToken = newToken(24);
 
+  let row: { email: string; confirmToken: string | null; status: string } | null = null;
   try {
-    await db
+    const inserted = await db
       .insert(subscribers)
       .values({
         email: normalizedEmail,
         source: source ?? null,
-        status: "subscribed",
+        status: "pending",
+        locale: locale ?? "en",
+        capturePage: page ?? null,
+        confirmToken,
         unsubscribeToken,
         ipHash: hashIp(ip),
         userAgent,
-        confirmedAt: new Date(),
       })
-      .onConflictDoNothing({ target: subscribers.email });
+      .onConflictDoNothing({ target: subscribers.email })
+      .returning({
+        email: subscribers.email,
+        confirmToken: subscribers.confirmToken,
+        status: subscribers.status,
+      });
+
+    if (inserted.length > 0) {
+      row = inserted[0];
+    } else {
+      // Row already exists — look it up. For pending rows we resend the
+      // existing confirm token; for confirmed/unsubscribed we silently 200.
+      const [existing] = await db
+        .select({
+          email: subscribers.email,
+          confirmToken: subscribers.confirmToken,
+          status: subscribers.status,
+        })
+        .from(subscribers)
+        .where(eq(subscribers.email, normalizedEmail))
+        .limit(1);
+      row = existing ?? null;
+    }
   } catch (err) {
-    console.error("[newsletter] db insert failed", err);
-    // Continue — we still try to send the welcome (idempotent for the user).
+    console.error("[newsletter] insert failed", err);
+    return NextResponse.json({ ok: true }); // generic OK — never leak DB errors
   }
 
-  // Best-effort welcome email.
-  const r = resend();
-  if (r) {
-    try {
-      const fromAddr = process.env.RESEND_FROM_EMAIL ?? SITE.contact.email;
-      await r.emails.send({
-        from: `Public Pulse <${fromAddr}>`,
-        to: [normalizedEmail],
-        subject: "You're on the Public Pulse list",
-        text: [
-          `Welcome — you're signed up for the Public Pulse newsletter.`,
-          ``,
-          `We send one email roughly every 2 weeks. Insights from Bangladesh's`,
-          `digital marketing and political PR work: real playbooks, channel`,
-          `experiments, what worked and what didn't.`,
-          ``,
-          `If you change your mind, unsubscribe in one click:`,
-          `${SITE.url}/newsletter/unsubscribe?t=${unsubscribeToken}`,
-          ``,
-          `— Public Pulse`,
-          `${SITE.url}`,
-        ].join("\n"),
-      });
-    } catch (err) {
-      console.warn("[newsletter] welcome email failed", err);
-    }
+  // Send ConfirmEmail ONLY for pending rows that still have a token.
+  // Already-confirmed and already-unsubscribed rows get a silent 200 — no
+  // resend, no info leak about whether the email is on the list.
+  if (row && row.status === "pending" && row.confirmToken) {
+    const confirmUrl = `${SITE.url}/confirm?t=${encodeURIComponent(row.confirmToken)}`;
+    void sendEmail({
+      to: row.email,
+      subject: "Confirm your Public Pulse subscription",
+      react: ConfirmEmail({ email: row.email, confirmUrl, locale: locale ?? "en" }),
+      unsubscribeToken: null, // Pre-confirmation — no unsubscribe needed
+      transactional: true,
+      tags: [
+        { name: "type", value: "newsletter-confirm" },
+        { name: "source", value: (source ?? "unknown").replace(/[^a-z0-9-]/gi, "").slice(0, 40) || "unknown" },
+      ],
+    }).then((r) => {
+      if (!r.ok) console.warn("[newsletter] confirm send failed", r.error);
+    });
   }
 
   return NextResponse.json({ ok: true });

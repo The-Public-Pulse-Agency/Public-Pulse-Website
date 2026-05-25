@@ -15,7 +15,8 @@ import { HeroPanel } from "@/components/home/HeroPanel";
 import { SERVICES } from "@/lib/services";
 import { getServiceIcon } from "@/lib/icons";
 import { SITE } from "@/lib/site";
-import { getPublishedCaseStudies } from "@/lib/data/case-studies";
+import { getFeaturedCaseStudies } from "@/lib/data/case-studies";
+import { InlineBlock } from "@/components/lead-capture";
 
 // JSON-LD Organization + WebSite emit site-wide from app/layout.tsx.
 
@@ -35,7 +36,10 @@ const PROCESS = [
 ];
 
 export default async function HomePage() {
-  const caseStudies = await getPublishedCaseStudies();
+  // Featured case studies for the homepage Selected results — curated set
+  // (max 4). Falls back to most-recent published when none are featured;
+  // returns [] if DB unreachable (homepage hides the section gracefully).
+  const caseStudies = await getFeaturedCaseStudies("en", 4);
   return (
     <>
       {/* ═══════ AVOORA-STYLE HERO (wordmark + gradient + tiles) ════════ */}
@@ -342,6 +346,13 @@ export default async function HomePage() {
               </div>
             </figure>
           </ScrollReveal>
+        </Container>
+      </section>
+
+      {/* ═══════ NEWSLETTER — homepage value block ════════════════════════ */}
+      <section className="border-t border-ink bg-paper py-20 md:py-28">
+        <Container>
+          <InlineBlock context="homepage" />
         </Container>
       </section>
 

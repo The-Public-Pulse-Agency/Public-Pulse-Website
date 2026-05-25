@@ -13,6 +13,127 @@ Entry format:
 
 ---
 
+## 2026-05-26 — STEP 19 / NEWSLETTER AUTOMATION + SITE-WIDE LEAD CAPTURE + CASE STUDIES SHOWCASE
+
+Three coupled workstreams shipped in one cohesive push. Build green, NOT deployed. Awaiting `npm run dev` visual + promote.
+
+### A. /blog (0) bug — diagnosed + fix surfaced
+
+The user flagged "blog content not found" with every category chip reading `(0)`. Page is rendering correctly — that IS the empty state. Root cause: STEP 16 backlog — **166 posts exist in `status=review` in prod Neon, never bulk-published.**
+
+Code fixes (no DB mutations from this agent):
+
+- [src/app/manage/blog/actions.ts](../src/app/manage/blog/actions.ts): new `publishAllReviewedAction` + `bulkUpdateStatusByFilter`. Safe-by-default: only `fromStatus ∈ {review, draft, scheduled}`.
+- [src/app/manage/blog/page.tsx](../src/app/manage/blog/page.tsx): "Publish all N in review" green button — one-click bulk publish of all 166.
+- [src/app/blog/page.tsx](../src/app/blog/page.tsx): visitor-friendly empty state ("New guides are being prepared") + cross-links.
+
+### B. Newsletter automation pipeline (PART 1–4 of the brief)
+
+End-to-end double opt-in → confirmation → welcome → bi-weekly digest → unsubscribe.
+
+**Schema (additive)** — [src/db/schema.ts](../src/db/schema.ts):
+- `subscribers` extended: `pending → confirmed → unsubscribed`; added `confirm_token`, `locale`, `capture_page`.
+- `whatsapp_optin` (NEW): phone capture path with verbatim consent text.
+- `newsletter_issues` (NEW): drafts/sends with snapshot of posts JSONB.
+- `newsletter_sends` (NEW): per-recipient audit log; unique `(issueId, subscriberId)` makes retries idempotent.
+
+**Email pipeline:**
+- [src/lib/email/send.ts](../src/lib/email/send.ts): Resend wrapper. Always sets `List-Unsubscribe: <mailto:>, <https:>` + `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058). Gmail/Apple/Outlook render their native unsubscribe alongside the subtle in-body link.
+- [src/lib/email/tokens.ts](../src/lib/email/tokens.ts): crypto-random tokens + constant-time compare.
+- [src/emails/_brand.tsx](../src/emails/_brand.tsx): shared brand shell. **640 px container** (bigger than typical 600), navy header band, bold PUBLIC PULSE wordmark, oversized issue motif `№ NN` (~44 px) + red rule, navy footer with Pulse Group sister concerns + Dhaka address + BIN + Trade License + small muted clickable unsubscribe.
+- [ConfirmEmail.tsx](../src/emails/ConfirmEmail.tsx) / [WelcomeEmail.tsx](../src/emails/WelcomeEmail.tsx) / [DigestEmail.tsx](../src/emails/DigestEmail.tsx): all bold/big/branded, EN + native BN. Digest has 38 px headline + red underline + featured-post panel (1200×630 image + bulletproof RED CTA, VML-friendly) + "More from the studio" list. Dark-mode aware via `color-scheme` meta. Hidden preheader.
+
+**HTTP routes:** `/api/newsletter` (POST → pending+ConfirmEmail), `/confirm` (GET → confirm+WelcomeEmail), `/unsubscribe` (browser), `/api/unsubscribe` (POST one-click, GET redirect), `/api/cron/digest` (CRON_SECRET-protected), `/api/whatsapp-optin` (POST).
+
+**Cron** — [sst.config.ts](../sst.config.ts):
+- New `sst.aws.Cron("NewsletterDigest")` on production only — `cron(0 9 1,15 * ? *)` = 09:00 UTC on the 1st + 15th ≈ 15:00 Dhaka prime inbox.
+- Lambda at [src/cron/trigger-digest.ts](../src/cron/trigger-digest.ts) just hits `/api/cron/digest` — digest logic stays in Next.
+- New `CRON_SECRET` SST secret required.
+
+**Digest builder** — [src/lib/newsletter/digest.ts](../src/lib/newsletter/digest.ts):
+- `buildAndPossiblySendDigest()`: snapshots posts since last sent issue, drafts subject/preheader/intro from actual posts, writes the issue row. Drafts unless `GENERATOR_AUTOSEND_DIGEST=true`.
+- `sendIssue()`: 5-way concurrent send to all `confirmed` subscribers; per-recipient `newsletter_sends` rows for idempotency.
+
+**Admin** — [/manage/newsletter](../src/app/manage/newsletter/page.tsx) + [/[id]](../src/app/manage/newsletter/[id]/page.tsx):
+- Stats (confirmed/pending/unsubscribed) + issue list + per-row Send/Delete/Review.
+- Detail: editable subject/preheader/intro (draft only), posts grid (featured highlighted), test-send, "Send live now".
+- Manage nav: added "Newsletter".
+
+**Compliance:** ✅ double opt-in ✅ one-click unsubscribe (in-body + List-Unsubscribe header + RFC 8058 POST) ✅ physical address in every footer ✅ confirmed-only sends.
+
+### C. Site-wide smart lead capture (PART 4)
+
+[src/components/lead-capture/](../src/components/lead-capture/) — 5 files:
+
+- `copy.ts`: 7 contexts (sitewide / homepage / service / blog-mid / blog-end / exit-intent / footer) × EN + BN. Insider, value-led voice.
+- `state.ts`: per-browser localStorage suppression. Global subscribe = 1 year quiet; dismiss = 30 days (exit-intent = 7 days). Once subscribed, EVERY surface stops asking.
+- `CaptureForm.tsx`: core form. Email/WhatsApp tab switch (single field at a time), honeypot, `markSubscribed()` on success. Light/dark/ink variants.
+- `InlineBlock.tsx`: server-rendered drop-in with red accent stripe.
+- `StickyBar.tsx`: desktop-only slim sticky bar. 4 s delay. `fixed bottom:0` — zero CLS. Path-suppressed on /manage, /contact, /confirm, /unsubscribe, /api.
+- `ExitIntent.tsx`: desktop-only modal. Top-edge `mouseleave` + `clientY < 10`. 5 s arm delay. Focus trap + ESC + background click + body scroll lock. Suppressed by `prefers-reduced-motion` + `pointer:coarse` + path list.
+
+**Site-wide application:**
+- Root layout mounts `<StickyBar />` + `<ExitIntent />`.
+- Footer: replaced `NewsletterSignup` with `<CaptureForm context="footer" variant="dark" />`.
+- Homepage: new `<InlineBlock context="homepage" />` section.
+- Services: `<InlineBlock context="service" />` ("free audit").
+- Blog post: mid-post (≥4 min) + end-of-post (dark variant).
+- /case-studies index + each detail: free-audit InlineBlock.
+
+**UX/compliance guardrails:**
+- ✅ **NO mobile full-screen interstitials** — StickyBar `md:` + ExitIntent gated on `(pointer:coarse)`. Google intrusive-interstitial-safe.
+- ✅ Frequency cap; subscribers never re-asked.
+- ✅ Always dismissible; honeypot on both endpoints.
+- ✅ Explicit WhatsApp consent stored verbatim.
+- ✅ A11y: focus trap, ARIA dialog, `aria-pressed` tabs, `sr-only` labels.
+- ✅ Zero CLS.
+
+### D. Case studies showcase — modern, compact, REAL ONLY
+
+**Schema** — [src/db/schema.ts](../src/db/schema.ts): `case_studies` extended with `locale`, `title`, `clientName`, `logoUrl`, `location`, `services[]`, `outcomeStatement`, `challenge`/`approach`/`result`, `metrics[]`, `testimonialQuote`+`testimonialAttribution`, `faqJson[]`, `heroImageUrl`, `featured`, `status`, `seoTitle`/`seoDescription`. Legacy `published` preserved. Unique `(slug, locale)`.
+
+**Admin** — [actions.ts](../src/app/manage/case-studies/actions.ts) + [CaseStudyForm.tsx](../src/app/manage/case-studies/CaseStudyForm.tsx):
+- Full CRUD; draft/review/published flow; featured drives homepage.
+- **"Write from facts"** polish helper: drafts narrative paragraphs strictly from structured fields (sector / location / services / metric / window) — NO invented specifics, NEVER auto-publishes. The hard "real content only" rule operationalized.
+
+**Public pages:**
+- [/case-studies](../src/app/case-studies/page.tsx): modern compact filterable grid; chips derived from real data only (no empty facets). Each card has ONE big CountUp metric, title, summary, services tags, TiltCard hover.
+- [/case-studies/[slug]](../src/app/case-studies/[slug]/page.tsx): compact metrics-forward detail. Hero with `<AnswerBlock>` (`data-speakable`) + sidebar with big CountUp metric + services as internal links to `/services/<slug>`. Optional hero image. Dark metric callout band (up to 6 CountUps). 3-column challenge→approach→result. Testimonial (ONLY if real). FAQ accordion (only if real). Related (same industry). CTA.
+- [/bn/case-studies](../src/app/bn/case-studies/page.tsx) + [/[slug]](../src/app/bn/case-studies/[slug]/page.tsx): native BN; falls back to EN canonical (with hreflang) when no BN row exists; never machine-translates.
+
+**SEO/AEO/GEO:** unique `buildMetadata` per page; single `<h1>`; `Article + BreadcrumbList + (FAQPage if any) + (Review only if real testimonial)`; hreflang via `alternateLanguages`; internal links to services/locations/industries; sitemap partitioned (`/case-studies/[slug]` × EN + BN with hreflang); `/llms-full.txt` gains a `# Case studies` section appended after each publish.
+
+**Homepage Selected Results** — [src/app/page.tsx](../src/app/page.tsx): swapped to `getFeaturedCaseStudies("en", 4)` with fallback to most-recent published. Section hides entirely if no case study published — no fabricated cards.
+
+### E. Verification
+
+- `npx tsc --noEmit`: zero errors.
+- `npm run build`: green. **245 prerendered pages**. New routes:
+  - Public: `/case-studies/[slug]`, `/bn/case-studies`, `/bn/case-studies/[slug]`, `/confirm`, `/unsubscribe`
+  - API: `/api/cron/digest`, `/api/unsubscribe`, `/api/whatsapp-optin`
+  - Admin: `/manage/newsletter`, `/manage/newsletter/[id]`
+
+### F. Required user actions before live
+
+1. Apply schema (additive only, no destructive ALTERs):
+   ```bash
+   DATABASE_URL_DIRECT=… npx drizzle-kit push --force
+   ```
+2. Set new SST secret:
+   ```bash
+   sst secret set CRON_SECRET "$(openssl rand -hex 32)" --stage production
+   ```
+3. Optional Lambda env: `GENERATOR_AUTOSEND_DIGEST=true` to flip cron from draft-only → autosend.
+4. **Bulk-publish the 166 reviewed posts** so the blog has content: `/manage/blog?status=review` → green button → one click.
+5. Deploy: `AWS_PROFILE=eventpulse npx sst deploy --stage production`.
+6. End-to-end smoke: footer subscribe → ConfirmEmail (Gmail + Apple + dark mode + mobile) → confirm → WelcomeEmail → unsubscribe (in-body + Gmail native unsubscribe) → `/manage/newsletter` "Build new draft" → "Send test" → live-send. Plus: add a real case study via /manage → publish → verify it appears on /case-studies + homepage + sitemap + llms-full.txt.
+
+### Rollback target
+
+`72d1495` (STEP 18 deploy state). Code-only rollback; new tables/columns stay in DB but the code won't reference them.
+
+---
+
 ## 2026-05-25 — STEP 18 / MOTION SYSTEM + BRAND-FORWARD /about + ORG ENTITY UPGRADE
 
 **Build green. NOT deployed. Awaiting your `npm run dev` visual + your promote.** Four coupled workstreams shipped in four commits on `main`.

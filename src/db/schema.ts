@@ -58,13 +58,57 @@ export const caseStudies = pgTable(
   {
     id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
     slug: text("slug").notNull(),
-    industry: text("industry").notNull(), // e.g. "Cox's Bazar resort"
-    metric: text("metric").notNull(), // e.g. "+47% direct bookings"
-    windowLabel: text("window_label").notNull(), // e.g. "90 days"
+    /** Bilingual: one row per locale, slug+locale unique. */
+    locale: text("locale").notNull().default("en"),
+    /** Long form display title (e.g. "How a Cox's Bazar resort grew direct bookings 47% in 90 days"). */
+    title: text("title").notNull(),
+    /** Optional sector label when NDA prevents naming the client (e.g. "A Cox's Bazar resort"). */
+    clientName: text("client_name"),
+    /** Logo URL (only when client is named + has agreed). */
+    logoUrl: text("logo_url"),
+    /** Loose categorisation — drives filter chips on /case-studies. */
+    industry: text("industry").notNull(),
+    /** Location slug from taxonomies/locations.ts (optional). */
+    location: text("location"),
+    /** Services involved (slugs). */
+    services: jsonb("services").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    /** Headline metric — kept for back-compat + featured-card fast read. */
+    metric: text("metric").notNull(),
+    /** Time window the metric was measured over. */
+    windowLabel: text("window_label").notNull(),
+    /** Legacy summary — short marketing sentence. */
     summary: text("summary").notNull(),
-    serviceSlug: text("service_slug"), // loose ref to src/lib/services.ts
+    /** Loose ref to a single primary service (back-compat with homepage rail). */
+    serviceSlug: text("service_slug"),
+    /** AEO/GEO answer-first: 40–60 word self-contained outcome statement that
+     *  engines can lift verbatim. Rendered with class="answer-block"
+     *  data-speakable at the top of the detail page. */
+    outcomeStatement: text("outcome_statement"),
+    /** Long narrative — challenge → approach → result. Each is a short
+     *  paragraph (~80–140 words each). Optional; the marketing summary is
+     *  the back-compat fallback. */
+    challenge: text("challenge"),
+    approach: text("approach"),
+    result: text("result"),
+    /** Quantified metrics callout band — each item: {label, value, timeframe?}. */
+    metrics: jsonb("metrics").$type<CaseStudyMetric[]>().notNull().default(sql`'[]'::jsonb`),
+    /** ≥0 testimonial blocks. When present + real, drives Review schema. */
+    testimonialQuote: text("testimonial_quote"),
+    testimonialAttribution: text("testimonial_attribution"),
+    /** ≥0 FAQs. When present, drives FAQPage schema. */
+    faqJson: jsonb("faq_json").$type<{ q: string; a: string }[]>().notNull().default(sql`'[]'::jsonb`),
+    /** 1200×630 hero image (file-served). */
+    heroImageUrl: text("hero_image_url"),
+    /** SEO overrides. */
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    /** Featured on homepage Selected results. */
+    featured: boolean("featured").notNull().default(false),
     displayOrder: integer("display_order").notNull().default(0),
+    /** Legacy back-compat — true means status="published". */
     published: boolean("published").notNull().default(false),
+    /** "draft" | "review" | "published". */
+    status: text("status").notNull().default("draft"),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -74,16 +118,30 @@ export const caseStudies = pgTable(
       .defaultNow(),
   },
   (t) => ({
-    slugIdx: uniqueIndex("case_studies_slug_idx").on(t.slug),
+    slugLocaleIdx: uniqueIndex("case_studies_slug_locale_idx").on(t.slug, t.locale),
     publishedIdx: index("case_studies_published_idx").on(
       t.published,
       t.displayOrder
     ),
+    statusIdx: index("case_studies_status_idx").on(t.status, t.publishedAt.desc()),
+    featuredIdx: index("case_studies_featured_idx").on(t.featured, t.displayOrder),
   })
 );
 
 export type CaseStudy = typeof caseStudies.$inferSelect;
 export type NewCaseStudy = typeof caseStudies.$inferInsert;
+
+export type CaseStudyMetric = {
+  /** Display label like "Direct bookings". */
+  label: string;
+  /** Display value like "+47%". When numeric (e.g. "47"), the detail page
+   *  uses CountUp; when it has a sign or suffix, renders as plain text. */
+  value: string;
+  /** Optional time window override (defaults to row.windowLabel). */
+  timeframe?: string;
+  /** Optional unit suffix (e.g. "%", "BDT"). */
+  unit?: string;
+};
 
 // ─── ContentTopic queue (LLM generation pipeline) ─────────────────────
 // PHASE 4 quality-gate pipeline. Each row is a topic for the generator to
@@ -134,20 +192,28 @@ export const contentTopics = pgTable(
 export type ContentTopic = typeof contentTopics.$inferSelect;
 export type NewContentTopic = typeof contentTopics.$inferInsert;
 
-// ─── Newsletter subscribers (single opt-in for now, double-opt-in TODO) ─
+// ─── Newsletter subscribers (DOUBLE OPT-IN) ────────────────────────────
+// status flow: pending → confirmed → unsubscribed.
+// confirm_token is one-time; consumed when the user clicks the confirmation
+// link. unsubscribe_token is durable; same token is included in every send.
 
 export const subscribers = pgTable(
   "subscribers",
   {
     id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
     email: text("email").notNull(),
-    /** "subscribed" | "unsubscribed" — for now we accept on form submit and
-     *  trust the verification email to confirm. Full double-opt-in adds
-     *  "pending_confirmation" and a verification token here. */
-    status: text("status").notNull().default("subscribed"),
-    /** Source attribution — e.g. "footer-cta", "blog-bottom", "/contact". */
+    /** "pending" | "confirmed" | "unsubscribed". Legacy "subscribed" rows
+     *  are treated as "confirmed" for backwards-compat. */
+    status: text("status").notNull().default("pending"),
+    /** Source attribution — e.g. "footer", "blog-end", "exit-intent", "sticky". */
     source: text("source"),
-    /** Surrogate token used by the unsubscribe link in the welcome email. */
+    /** Locale of the signup form — drives email language (en|bn). */
+    locale: text("locale").notNull().default("en"),
+    /** Path/variant of the capture site (e.g. "/blog/<slug>"). */
+    capturePage: text("capture_page"),
+    /** Single-use confirm token. Null once confirmed. */
+    confirmToken: text("confirm_token"),
+    /** Durable unsubscribe token — included in every send. */
     unsubscribeToken: text("unsubscribe_token").notNull(),
     ipHash: text("ip_hash"),
     userAgent: text("user_agent"),
@@ -160,11 +226,133 @@ export const subscribers = pgTable(
   (t) => ({
     emailIdx: uniqueIndex("subscribers_email_idx").on(t.email),
     statusIdx: index("subscribers_status_idx").on(t.status),
+    confirmTokenIdx: index("subscribers_confirm_token_idx").on(t.confirmToken),
+    unsubscribeTokenIdx: index("subscribers_unsubscribe_token_idx").on(t.unsubscribeToken),
   })
 );
 
 export type Subscriber = typeof subscribers.$inferSelect;
 export type NewSubscriber = typeof subscribers.$inferInsert;
+
+// ─── WhatsApp opt-in (phone leads) ─────────────────────────────────────
+// Separate table from `leads` (contact form) and `subscribers` (email): a
+// WhatsApp opt-in is an explicit consent to be messaged on WhatsApp, captured
+// via the site-wide LeadCapture component when the user picks phone. We treat
+// the number itself as PII — never reuse it for anything but WhatsApp outreach.
+
+export const whatsappOptin = pgTable(
+  "whatsapp_optin",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    /** E.164-ish; we store what the user typed and normalize at read time. */
+    phone: text("phone").notNull(),
+    /** "active" | "revoked". */
+    status: text("status").notNull().default("active"),
+    /** Source attribution — same scheme as subscribers.source. */
+    source: text("source"),
+    capturePage: text("capture_page"),
+    locale: text("locale").notNull().default("en"),
+    /** Free-text context the user typed (optional, never required). */
+    note: text("note"),
+    /** Consent text the user agreed to — stored verbatim for audit. */
+    consentText: text("consent_text").notNull(),
+    ipHash: text("ip_hash"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    /** Admin workflow — has the team reached out yet? */
+    contacted: boolean("contacted").notNull().default(false),
+    archived: boolean("archived").notNull().default(false),
+  },
+  (t) => ({
+    phoneIdx: index("whatsapp_optin_phone_idx").on(t.phone),
+    statusIdx: index("whatsapp_optin_status_idx").on(t.status, t.contacted),
+    createdIdx: index("whatsapp_optin_created_idx").on(t.createdAt.desc()),
+  })
+);
+
+export type WhatsappOptin = typeof whatsappOptin.$inferSelect;
+export type NewWhatsappOptin = typeof whatsappOptin.$inferInsert;
+
+// ─── Newsletter issues (digest drafts) ─────────────────────────────────
+// One row per digest. status flow: draft → sent. The bi-weekly Cron creates
+// a row in `draft` status with a snapshot of posts since last send; admin
+// reviews / edits in /manage/newsletter, then sends. If AUTOSEND env is on,
+// the cron sends immediately and writes the row as `sent`.
+
+export const newsletterIssues = pgTable(
+  "newsletter_issues",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    /** Display number — auto-incremented from the previous issue. */
+    issueNumber: integer("issue_number").notNull(),
+    /** Subject line (editable). */
+    subject: text("subject").notNull(),
+    /** Pre-header (hidden snippet shown next to subject in inbox). */
+    preheader: text("preheader").notNull(),
+    /** Body intro paragraph above the featured post (editable). */
+    intro: text("intro").notNull(),
+    /** Snapshot of posts included, in display order. */
+    posts: jsonb("posts").$type<DigestPostRef[]>().notNull().default(sql`'[]'::jsonb`),
+    /** "draft" | "sent" | "sending". */
+    status: text("status").notNull().default("draft"),
+    /** Counts after a send completes. */
+    sentCount: integer("sent_count").notNull().default(0),
+    failedCount: integer("failed_count").notNull().default(0),
+    /** "cron-auto" | "cron-draft" | "manual". */
+    createdBy: text("created_by").notNull().default("manual"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (t) => ({
+    statusIdx: index("newsletter_issues_status_idx").on(t.status, t.createdAt.desc()),
+    issueIdx: uniqueIndex("newsletter_issues_issue_idx").on(t.issueNumber),
+  })
+);
+
+export type NewsletterIssue = typeof newsletterIssues.$inferSelect;
+export type NewNewsletterIssue = typeof newsletterIssues.$inferInsert;
+
+/** Reference shape for the snapshot of posts inside a digest. */
+export type DigestPostRef = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  url: string;
+  readingTime: number;
+  heroUrl: string;
+};
+
+// ─── Newsletter sends (per-issue audit log) ────────────────────────────
+// One row per recipient per issue — used to detect/skip duplicates if a
+// send retries, and to compute open/click stats later if we add tracking.
+
+export const newsletterSends = pgTable(
+  "newsletter_sends",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    issueId: uuid("issue_id").notNull(),
+    subscriberId: uuid("subscriber_id").notNull(),
+    /** "queued" | "sent" | "failed". */
+    status: text("status").notNull().default("queued"),
+    /** Resend message id, when known. */
+    providerId: text("provider_id"),
+    error: text("error"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (t) => ({
+    issueIdx: index("newsletter_sends_issue_idx").on(t.issueId),
+    subscriberIdx: index("newsletter_sends_subscriber_idx").on(t.subscriberId),
+    issueSubIdx: uniqueIndex("newsletter_sends_issue_sub_idx").on(t.issueId, t.subscriberId),
+  })
+);
+
+export type NewsletterSend = typeof newsletterSends.$inferSelect;
+export type NewNewsletterSend = typeof newsletterSends.$inferInsert;
 
 // ─── Blog: categories + authors + posts ───────────────────────────────
 

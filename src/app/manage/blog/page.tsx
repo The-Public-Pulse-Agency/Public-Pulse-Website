@@ -5,6 +5,7 @@ import {
   bulkPublishAction,
   bulkUnpublishAction,
   bulkDeleteAction,
+  publishAllReviewedAction,
 } from "./actions";
 import { BulkForm } from "./BulkForm";
 
@@ -53,12 +54,27 @@ export default async function BlogAdminPage({
             {counts.draft} draft · {counts.scheduled} scheduled
           </p>
         </div>
-        <Link
-          href="/manage/blog/new"
-          className="inline-flex items-center rounded-full bg-brand-orange px-5 py-2.5 text-sm font-semibold text-white"
-        >
-          + New post
-        </Link>
+        <div className="flex items-center gap-3">
+          {counts.review > 0 && (
+            <form action={publishAllReviewedAction}>
+              {sp.locale && <input type="hidden" name="locale" value={sp.locale} />}
+              {sp.category && <input type="hidden" name="category" value={sp.category} />}
+              <button
+                type="submit"
+                className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                title="Publishes EVERY post in current filter that is currently in review status"
+              >
+                Publish all {counts.review} in review
+              </button>
+            </form>
+          )}
+          <Link
+            href="/manage/blog/new"
+            className="inline-flex items-center rounded-full bg-brand-orange px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            + New post
+          </Link>
+        </div>
       </header>
 
       {/* Filter bar */}

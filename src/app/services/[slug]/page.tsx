@@ -12,6 +12,7 @@ import {
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
+import { InlineBlock } from "@/components/lead-capture";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SERVICES, getService } from "@/lib/services";
 import { getServiceContent } from "@/content/services";
@@ -188,6 +189,13 @@ export default async function ServiceDetailPage({
               </div>
             ))}
           </dl>
+        </Container>
+      </section>
+
+      {/* ═══ FREE AUDIT — service-specific lead capture ══════════════════ */}
+      <section className="border-t border-ink bg-paper py-20 md:py-24">
+        <Container>
+          <InlineBlock context="service" />
         </Container>
       </section>
 

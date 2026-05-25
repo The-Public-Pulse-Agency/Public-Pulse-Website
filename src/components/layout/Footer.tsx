@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SITE } from "@/lib/site";
 import { SERVICES } from "@/lib/services";
-import { NewsletterSignup } from "@/components/marketing/NewsletterSignup";
+import { CaptureForm } from "@/components/lead-capture";
 
 export function Footer() {
   return (
@@ -94,14 +94,16 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="max-w-container mx-auto flex flex-col gap-6 px-5 py-10 md:flex-row md:items-center md:justify-between md:px-8">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">
-              Newsletter
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-orange">
+              The Pulse Digest
             </p>
             <p className="mt-2 max-w-sm text-sm text-white/85">
-              One email every ~2 weeks. Real playbooks from Bangladesh marketing &amp; PR work.
+              Bi-weekly playbooks from Bangladesh campaigns. Paid, social, PR. The real numbers.
             </p>
           </div>
-          <NewsletterSignup source="footer" variant="dark" />
+          <div className="w-full md:max-w-md">
+            <CaptureForm context="footer" variant="dark" hideChannelTabs />
+          </div>
         </div>
       </div>
 

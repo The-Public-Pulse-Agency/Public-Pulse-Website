@@ -16,6 +16,7 @@ import { COMPARES } from "@/lib/content/compares";
 import { db } from "@/db/client";
 import { blogPosts } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
+import { getPublishedCaseStudies } from "@/lib/data/case-studies";
 
 // Was force-static; now reads published posts from Neon at the data layer.
 // unstable_cache holds the result so we don't hit the DB on every request.
@@ -206,8 +207,46 @@ async function postsSection(): Promise<string> {
   }
 }
 
+async function caseStudiesSection(): Promise<string> {
+  try {
+    const rows = await getPublishedCaseStudies("en");
+    if (rows.length === 0) return "_No published case studies yet._";
+    return rows
+      .map((c) => {
+        const url = `${SITE.url}/case-studies/${c.slug}`;
+        const outcome =
+          c.outcomeStatement ?? `${c.metric} in ${c.windowLabel}. ${c.summary}`;
+        const services = (c.services ?? []).length > 0
+          ? `Services: ${(c.services ?? []).join(", ")}.`
+          : null;
+        const metrics =
+          (c.metrics ?? []).length > 0
+            ? `Metrics: ${(c.metrics ?? [])
+                .map((m) => `${m.label} ${m.value}${m.unit ?? ""}${m.timeframe ? ` (${m.timeframe})` : ""}`)
+                .join("; ")}.`
+            : null;
+        return [
+          `## Case study — ${c.title}`,
+          `URL: ${url}`,
+          c.clientName ? `Client: ${c.clientName}` : null,
+          `Industry: ${c.industry}${c.location ? ` · ${c.location}` : ""}`,
+          `Headline: ${c.metric} in ${c.windowLabel}`,
+          ``,
+          `Outcome: ${outcome}`,
+          services,
+          metrics,
+        ]
+          .filter(Boolean)
+          .join("\n");
+      })
+      .join(HR);
+  } catch {
+    return "_Case studies section unavailable — DB unreachable._";
+  }
+}
+
 export async function GET(): Promise<Response> {
-  const posts = await postsSection();
+  const [posts, cases] = await Promise.all([postsSection(), caseStudiesSection()]);
   const body = [
     header(),
     `# Services`,
@@ -222,6 +261,8 @@ export async function GET(): Promise<Response> {
     guidesSection(),
     `# Comparisons`,
     comparesSection(),
+    `# Case studies`,
+    cases,
     `# Blog posts`,
     posts,
     `\n# End of Public Pulse full-text dump.`,

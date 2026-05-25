@@ -127,9 +127,26 @@ export default async function BlogIndexPage({
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>
           {filtered.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-ink/20 bg-paper p-10 text-center text-ink/55">
-              No posts match these filters yet. {posts.length === 0 ? "Once /manage/blog has published rows, they'll appear here." : "Try removing filters above."}
-            </p>
+            <div className="rounded-2xl border border-dashed border-ink/20 bg-paper p-10 text-center">
+              <p className="text-ink/55">
+                {posts.length === 0
+                  ? "New guides are being prepared — check back soon."
+                  : "No posts match these filters yet. Try removing them above."}
+              </p>
+              {posts.length === 0 && (
+                <p className="mt-4 text-meta text-ink/45">
+                  In the meantime, browse our{" "}
+                  <Link href="/services" className="underline hover:text-brand-orange">
+                    services
+                  </Link>
+                  {" "}or{" "}
+                  <Link href="/contact" className="underline hover:text-brand-orange">
+                    talk to the team
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
           ) : (
             <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((p) => {

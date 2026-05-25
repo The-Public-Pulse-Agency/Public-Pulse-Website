@@ -18,6 +18,7 @@ import { SocialSidebar } from "@/components/layout/SocialSidebar";
 import { WhatsAppFab } from "@/components/layout/WhatsAppFab";
 import { Tracking, TrackingNoscript } from "@/components/analytics/Tracking";
 import { CursorGlow, ScrollProgress } from "@/components/motion";
+import { StickyBar, ExitIntent } from "@/components/lead-capture";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -85,6 +86,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SocialSidebar />
         <Footer />
         <WhatsAppFab />
+        <StickyBar />
+        <ExitIntent />
       </body>
     </html>
   );

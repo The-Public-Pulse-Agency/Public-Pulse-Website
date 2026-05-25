@@ -7,6 +7,7 @@ import { GLOSSARY } from "@/lib/taxonomies/glossary";
 import { GUIDES } from "@/lib/content/guides";
 import { COMPARES } from "@/lib/content/compares";
 import { getPublishedPosts } from "@/lib/data/blog";
+import { getPublishedCaseStudies } from "@/lib/data/case-studies";
 
 // Single flat sitemap.xml — Next.js doesn't have first-class sitemap-index
 // support without a route handler. We list every URL here with `alternates`
@@ -104,6 +105,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     };
   });
+  // ── Case studies (DB-backed, EN + BN with hreflang) ─────────────────
+  const caseEn = await getPublishedCaseStudies("en");
+  const caseBn = await getPublishedCaseStudies("bn");
+  const caseBnSlugs = new Set(caseBn.map((c) => c.slug));
+  const cases: MetadataRoute.Sitemap = caseEn.map((c) => {
+    const path = `/case-studies/${c.slug}`;
+    const hasBn = caseBnSlugs.has(c.slug);
+    return {
+      url: absoluteUrl(path),
+      lastModified: c.publishedAt ? new Date(c.publishedAt).toISOString().slice(0, 10) : today,
+      changeFrequency: "monthly",
+      priority: 0.75,
+      alternates: {
+        languages: {
+          en: absoluteUrl(path),
+          "x-default": absoluteUrl(path),
+          ...(hasBn ? { "bn-BD": absoluteUrl(`/bn/case-studies/${c.slug}`) } : {}),
+        },
+      },
+    };
+  });
+  const casesBnOnly: MetadataRoute.Sitemap = caseBn.map((c) => ({
+    url: absoluteUrl(`/bn/case-studies/${c.slug}`),
+    lastModified: c.publishedAt ? new Date(c.publishedAt).toISOString().slice(0, 10) : today,
+    changeFrequency: "monthly",
+    priority: 0.7,
+    alternates: {
+      languages: {
+        "bn-BD": absoluteUrl(`/bn/case-studies/${c.slug}`),
+        en: absoluteUrl(`/case-studies/${c.slug}`),
+        "x-default": absoluteUrl(`/case-studies/${c.slug}`),
+      },
+    },
+  }));
+
   const blogBnOnly: MetadataRoute.Sitemap = publishedBn.map((p) => ({
     url: absoluteUrl(`/bn/blog/${p.slug}`),
     lastModified: p.publishedAt ? p.publishedAt.toISOString().slice(0, 10) : today,
@@ -130,6 +166,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...compares,
     ...blog,
     ...blogBnOnly,
+    ...cases,
+    ...casesBnOnly,
   ];
 }
 

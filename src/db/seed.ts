@@ -20,6 +20,7 @@ async function main() {
     .insert(caseStudies)
     .values({
       slug: "seed-coxs-bazar-resort",
+      title: "Cox's Bazar resort — 47% growth in direct bookings (seed placeholder)",
       industry: "Cox's Bazar resort",
       metric: "+47% direct bookings",
       windowLabel: "90 days",

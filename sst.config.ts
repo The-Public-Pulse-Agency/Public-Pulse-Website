@@ -66,6 +66,8 @@ export default $config({
     // letting BetterAuth's own hashPassword() run on the Lambda guarantees the
     // verifier sees what it expects. See src/lib/admin-bootstrap.ts.
     const ADMIN_PASSWORD = new sst.Secret("ADMIN_PASSWORD");
+    // CRON_SECRET protects /api/cron/* endpoints. Generate with `openssl rand -hex 32`.
+    const CRON_SECRET = new sst.Secret("CRON_SECRET");
 
     // ─── Next.js (OpenNext) ────────────────────────────────────────────
     // The Nextjs component handles CloudFront + S3 (static + ISR cache) +
@@ -80,6 +82,7 @@ export default $config({
         BETTER_AUTH_SECRET,
         ADMIN_EMAIL,
         ADMIN_PASSWORD,
+        CRON_SECRET,
       ],
       // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
       // Resend is called over public HTTPS — no IAM permissions needed.
@@ -145,6 +148,31 @@ export default $config({
         },
       }),
     });
+
+    // ─── Newsletter digest cron ────────────────────────────────────────
+    // EventBridge schedule firing the /api/cron/digest endpoint on the
+    // production stack. Bi-weekly (every 2 weeks on Thursday 09:00 UTC ≈
+    // 15:00 Dhaka — primary inbox window). On non-prod stages the schedule
+    // is disabled so dev never inadvertently mails subscribers.
+    //
+    // Cron drafts an issue by default. Set env GENERATOR_AUTOSEND_DIGEST=true
+    // on the Lambda to autosend instead (writes "sent" rows directly).
+    if (isProd) {
+      // Day-of-month "1,15" runs on the 1st + 15th — gives a stable
+      // ~14-day cadence without the complexity of weekday math.
+      new sst.aws.Cron("NewsletterDigest", {
+        schedule: "cron(0 9 1,15 * ? *)",
+        job: {
+          handler: "src/cron/trigger-digest.handler",
+          link: [CRON_SECRET],
+          environment: {
+            DIGEST_URL: $interpolate`${web.url}api/cron/digest`,
+          },
+          runtime: "nodejs22.x",
+          timeout: "120 seconds",
+        },
+      });
+    }
 
     // ─── AWS Budgets alarm (cost guardrail) ────────────────────────────
     // Two thresholds: $5 (warning) and $25 (action) per month.
