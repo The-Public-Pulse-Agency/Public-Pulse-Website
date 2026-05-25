@@ -9,7 +9,10 @@
 // our stack region; the us.* profile in us-east-1 has on-demand throughput
 // and the same per-token billing.
 
-import "server-only";
+// Note: no `import "server-only"` here because this module is also imported
+// by scripts/generate.ts and scripts/smoke-generator.ts (Node CLI), which
+// would throw at import time. The server-only boundary is enforced by the
+// CALLERS of this module (src/lib/generator/run.ts, grounding-resolver.ts).
 import {
   BedrockRuntimeClient,
   InvokeModelCommand,

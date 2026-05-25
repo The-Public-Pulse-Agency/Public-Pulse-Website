@@ -9,7 +9,10 @@
 //   • If a topic returns ungroundable refs (resolver returns null), it flips
 //     to "skipped" without spending tokens.
 
-import "server-only";
+// Note: no `import "server-only"` — this module is also called by the CLI
+// (scripts/generate.ts). Server-only behavior is enforced by the dependency
+// chain (db client, next/cache) and by the surrounding admin auth check
+// when invoked from a Server Action.
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { blogPosts, contentTopics, type ContentTopic } from "@/db/schema";

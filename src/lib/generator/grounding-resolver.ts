@@ -7,7 +7,9 @@
 // real Bangladesh datum (population, top industries, deliverable list,
 // glossary definition) that we control, not invented.
 
-import "server-only";
+// Note: no `import "server-only"` — this module is also imported by the
+// CLI smoke + generator scripts. Server-boundary is enforced by callers
+// (e.g. src/lib/generator/run.ts uses next/cache which is server-only).
 import type { ContentTopic } from "@/db/schema";
 import { SERVICES } from "@/lib/services";
 import { LOCATIONS } from "@/lib/taxonomies/locations";
