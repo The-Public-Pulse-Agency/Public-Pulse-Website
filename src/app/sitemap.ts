@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 import { SITE, absoluteUrl } from "@/lib/site";
 import { SERVICES } from "@/lib/services";
-import { POSTS } from "@/lib/posts";
 import { LOCATIONS } from "@/lib/taxonomies/locations";
 import { INDUSTRIES } from "@/lib/taxonomies/industries";
 import { GLOSSARY } from "@/lib/taxonomies/glossary";
 import { GUIDES } from "@/lib/content/guides";
 import { COMPARES } from "@/lib/content/compares";
+import { getPublishedPosts } from "@/lib/data/blog";
 
 // Single flat sitemap.xml — Next.js doesn't have first-class sitemap-index
 // support without a route handler. We list every URL here with `alternates`
@@ -38,7 +38,7 @@ function entry(
   };
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Core marketing pages ───────────────────────────────────────────
   const core: MetadataRoute.Sitemap = [
     entry("/", "weekly", 1),
@@ -83,10 +83,39 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // ── Compare pages ──────────────────────────────────────────────────
   const compares = COMPARES.map((c) => entry(`/compare/${c.slug}`, "monthly", 0.6));
 
-  // ── Blog ───────────────────────────────────────────────────────────
-  const blog = POSTS.filter((p) => p.ready).map((p) => ({
-    ...entry(`/blog/${p.slug}`, "monthly", 0.7),
-    lastModified: p.dateModified ?? p.datePublished,
+  // ── Blog (DB-backed; published posts in EN + BN with hreflang) ────
+  const publishedEn = await getPublishedPosts("en");
+  const publishedBn = await getPublishedPosts("bn");
+  const bnSlugSet = new Set(publishedBn.map((p) => p.slug));
+  const blog: MetadataRoute.Sitemap = publishedEn.map((p) => {
+    const path = `/blog/${p.slug}`;
+    const hasBn = bnSlugSet.has(p.slug);
+    return {
+      url: absoluteUrl(path),
+      lastModified: p.publishedAt ? p.publishedAt.toISOString().slice(0, 10) : today,
+      changeFrequency: "monthly",
+      priority: 0.7,
+      alternates: {
+        languages: {
+          en: absoluteUrl(path),
+          "x-default": absoluteUrl(path),
+          ...(hasBn ? { "bn-BD": absoluteUrl(`/bn/blog/${p.slug}`) } : {}),
+        },
+      },
+    };
+  });
+  const blogBnOnly: MetadataRoute.Sitemap = publishedBn.map((p) => ({
+    url: absoluteUrl(`/bn/blog/${p.slug}`),
+    lastModified: p.publishedAt ? p.publishedAt.toISOString().slice(0, 10) : today,
+    changeFrequency: "monthly",
+    priority: 0.65,
+    alternates: {
+      languages: {
+        "bn-BD": absoluteUrl(`/bn/blog/${p.slug}`),
+        en: absoluteUrl(`/blog/${p.slug}`),
+        "x-default": absoluteUrl(`/blog/${p.slug}`),
+      },
+    },
   }));
 
   return [
@@ -100,6 +129,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...guides,
     ...compares,
     ...blog,
+    ...blogBnOnly,
   ];
 }
 

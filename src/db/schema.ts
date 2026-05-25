@@ -166,6 +166,114 @@ export const subscribers = pgTable(
 export type Subscriber = typeof subscribers.$inferSelect;
 export type NewSubscriber = typeof subscribers.$inferInsert;
 
+// ─── Blog: categories + authors + posts ───────────────────────────────
+
+export const blogCategories = pgTable(
+  "blog_categories",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    slug: text("slug").notNull(),
+    nameEn: text("name_en").notNull(),
+    nameBn: text("name_bn"),
+    description: text("description"),
+    /** Tailwind color token like "cat-red" — drives the chip border on cards. */
+    colorToken: text("color_token").notNull().default("cat-navy"),
+    displayOrder: integer("display_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugIdx: uniqueIndex("blog_categories_slug_idx").on(t.slug),
+  })
+);
+
+export type BlogCategory = typeof blogCategories.$inferSelect;
+export type NewBlogCategory = typeof blogCategories.$inferInsert;
+
+// authors moved from hardcoded /about + blog bylines to DB. Person schema
+// on the published surface reads from here. /manage/team is the CRUD UI.
+export const authors = pgTable(
+  "authors",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    role: text("role").notNull(),
+    /** 1-paragraph public bio. */
+    bio: text("bio").notNull(),
+    /** Credentials (e.g. "MBA, IBA Dhaka", "8 years political PR") — used in E-E-A-T. */
+    credentials: text("credentials"),
+    /** Public profile photo. Stored as path or absolute URL. */
+    image: text("image"),
+    /** External profile URLs — fed into schema.org Person sameAs. */
+    sameAs: jsonb("same_as").$type<string[]>(),
+    /** Optional email shown on byline. */
+    email: text("email"),
+    /** Display order on /about. */
+    displayOrder: integer("display_order").notNull().default(0),
+    /** When false, hidden from /about and post bylines. */
+    visible: boolean("visible").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugIdx: uniqueIndex("authors_slug_idx").on(t.slug),
+  })
+);
+
+export type Author = typeof authors.$inferSelect;
+export type NewAuthor = typeof authors.$inferInsert;
+
+export const blogPosts = pgTable(
+  "blog_posts",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    slug: text("slug").notNull(),
+    /** "en" | "bn" — bilingual is one row per locale, slug is per-locale-unique. */
+    locale: text("locale").notNull().default("en"),
+    title: text("title").notNull(),
+    excerpt: text("excerpt").notNull(),
+    /** Raw MDX (or markdown) body. Compiled at request time, ISR-cached. */
+    bodyMdx: text("body_mdx").notNull(),
+    heroImageUrl: text("hero_image_url"),
+    /** Slug of a blog_categories row. */
+    categorySlug: text("category_slug").notNull(),
+    tags: jsonb("tags").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    /** Slug of an authors row. */
+    authorSlug: text("author_slug").notNull(),
+    /** Workflow: draft / review / scheduled / published. */
+    status: text("status").notNull().default("draft"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }),
+    /** ≥3 FAQs after the gate. {q, a}[] */
+    faqJson: jsonb("faq_json").$type<{ q: string; a: string }[]>().notNull().default(sql`'[]'::jsonb`),
+    /** AnswerBlock body: 40–60 word self-contained answer. */
+    answerFirst: text("answer_first").notNull(),
+    /** Slugs of grounding refs (services, locations, industries, glossary, case-study ids). */
+    sourceRefs: jsonb("source_refs").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    /** Quality gate output (per category + hardFails/softFails). */
+    gateScores: jsonb("gate_scores"),
+    /** Overrides for OG image factory. */
+    ogTitle: text("og_title"),
+    readingTime: integer("reading_time").notNull().default(5),
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    /** Primary keyword from the originating content_topic (used in title/H1/answer). */
+    targetKeyword: text("target_keyword"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugLocaleIdx: uniqueIndex("blog_posts_slug_locale_idx").on(t.slug, t.locale),
+    statusIdx: index("blog_posts_status_idx").on(t.status, t.publishedAt.desc()),
+    localeCategoryIdx: index("blog_posts_locale_category_idx").on(t.locale, t.categorySlug),
+    publishedAtIdx: index("blog_posts_published_at_idx").on(t.publishedAt.desc()),
+  })
+);
+
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type NewBlogPost = typeof blogPosts.$inferInsert;
+
 // ─── BetterAuth tables ─────────────────────────────────────────────────
 // Shape matches BetterAuth's expected schema (v1.x, email+password adapter).
 // Generated by `npx @better-auth/cli generate` and inlined here so Drizzle

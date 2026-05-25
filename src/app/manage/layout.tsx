@@ -40,7 +40,7 @@ export default async function ManageLayout({
     redirect("/manage/sign-in");
   }
   if (session && isSignIn) {
-    redirect("/manage/leads");
+    redirect("/manage");
   }
 
   return (
@@ -54,8 +54,13 @@ export default async function ManageLayout({
               </span>
               <nav aria-label="Admin">
                 <ul className="flex items-center gap-5 text-sm font-medium text-slate-700">
-                  <li><Link href="/manage/leads" className="hover:text-brand-red">Leads</Link></li>
-                  <li><Link href="/manage/case-studies" className="hover:text-brand-red">Case studies</Link></li>
+                  <li><Link href="/manage" className="hover:text-brand-orange">Overview</Link></li>
+                  <li><Link href="/manage/leads" className="hover:text-brand-orange">Leads</Link></li>
+                  <li><Link href="/manage/blog" className="hover:text-brand-orange">Blog</Link></li>
+                  <li><Link href="/manage/content-topics" className="hover:text-brand-orange">Topics</Link></li>
+                  <li><Link href="/manage/case-studies" className="hover:text-brand-orange">Case studies</Link></li>
+                  <li><Link href="/manage/subscribers" className="hover:text-brand-orange">Subscribers</Link></li>
+                  <li><Link href="/manage/team" className="hover:text-brand-orange">Team</Link></li>
                 </ul>
               </nav>
             </div>

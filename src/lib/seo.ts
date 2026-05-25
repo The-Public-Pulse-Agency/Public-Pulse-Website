@@ -17,6 +17,8 @@ type BuildMetadataInput = {
   ogEyebrow?: string;
   /** When set, uses the dynamic /og?title=&eyebrow= factory instead of the static OG. */
   useDynamicOg?: boolean;
+  /** Extra hreflang entries merged into alternates.languages (e.g. bn-BD pointing at /bn/...). */
+  alternateLanguages?: Record<string, string>;
 };
 
 const DEFAULT_OG = "/og-image.jpg";
@@ -47,6 +49,7 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
     // returns a per-title PNG, but on first request it can cold-start slowly;
     // opt-in per page if you want the dynamic image.
     useDynamicOg = false,
+    alternateLanguages,
   } = input;
 
   warnIfLong("title", title, 60);
@@ -78,6 +81,7 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
       languages: {
         en: canonical,
         "x-default": canonical,
+        ...(alternateLanguages ?? {}),
       },
     },
     robots: noIndex

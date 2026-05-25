@@ -5,6 +5,7 @@ import { buildMetadata } from "@/lib/seo";
 import { aboutPageSchema, breadcrumbSchema, personSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
+import { getAuthors } from "@/lib/data/blog";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SITE } from "@/lib/site";
@@ -21,31 +22,11 @@ const crumbs = [
   { name: "Studio", path: "/about" },
 ];
 
-// TODO(user): replace with the actual leadership team — real names, real
-// roles, ideally a one-paragraph bio per person and a 400×400 head-and-shoulders
-// photo. Each person here emits Person JSON-LD for E-E-A-T.
-const TEAM = [
-  {
-    name: "[Founder Name]",
-    role: "Founder & MD",
-    bio: "Leads strategy across the studio. Background in political PR and brand-building for Bangladesh consumer brands.",
-    image: undefined as string | undefined,
-    sameAs: [] as string[],
-  },
-  {
-    name: "[Head of Strategy]",
-    role: "Head of Strategy",
-    bio: "Sets the playbook for political PR engagements and major brand launches. Multiple election cycles, constituency-level.",
-    image: undefined as string | undefined,
-    sameAs: [] as string[],
-  },
-  {
-    name: "[Creative Director]",
-    role: "Creative Director",
-    bio: "Owns the bar for production — brand films, photography, motion. Bangla and English creative across hospitality, political and consumer.",
-    image: undefined as string | undefined,
-    sameAs: [] as string[],
-  },
+// Hardcoded fallback used only when the authors table is empty (cold-start
+// before /manage/team has rows). When the DB has rows the page reads from
+// it via the cached getAuthors() data layer.
+const FALLBACK_TEAM = [
+  { slug: "founder", name: "[Founder Name]", role: "Founder & MD", bio: "Leads strategy across the studio. Background in political PR and brand-building for Bangladesh consumer brands.", image: null as string | null, sameAs: [] as string[], credentials: null as string | null },
 ];
 
 const VALUES = [
@@ -55,7 +36,19 @@ const VALUES = [
   { title: "Honest reporting", body: "Monthly business review covers what worked, what didn't and what we're killing. No vanity dashboards." },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const dbTeam = await getAuthors();
+  const TEAM = dbTeam.length > 0
+    ? dbTeam.map((a) => ({
+        slug: a.slug,
+        name: a.name,
+        role: a.role,
+        bio: a.bio,
+        image: a.image,
+        sameAs: (a.sameAs as string[] | null) ?? [],
+        credentials: a.credentials,
+      }))
+    : FALLBACK_TEAM;
   return (
     <>
       <JsonLd data={[aboutPageSchema(), breadcrumbSchema(crumbs)]} />
@@ -128,7 +121,7 @@ export default function AboutPage() {
         <Container>
           <JsonLd
             data={TEAM.map((p) =>
-              personSchema({ name: p.name, jobTitle: p.role, image: p.image, sameAs: p.sameAs })
+              personSchema({ name: p.name, jobTitle: p.role, image: p.image ?? undefined, sameAs: p.sameAs })
             )}
           />
           <div className="max-w-3xl">
@@ -139,8 +132,8 @@ export default function AboutPage() {
           </div>
           <ul className="mt-12 grid gap-5 md:grid-cols-3">
             {TEAM.map((p) => (
-              <li key={p.name}>
-                <article className="h-full rounded-card border border-white/15 bg-ink-soft p-6 transition hover:border-brand-orange">
+              <li key={p.slug}>
+                <article id={p.slug} className="h-full scroll-mt-24 rounded-card border border-white/15 bg-ink-soft p-6 transition hover:border-brand-orange">
                   <div
                     className="grid h-14 w-14 place-items-center rounded-full bg-brand-orange text-paper text-xl font-bold"
                     aria-hidden="true"
@@ -150,6 +143,11 @@ export default function AboutPage() {
                   <h3 className="mt-5 text-h3 font-bold">{p.name}</h3>
                   <p className="mt-1 text-meta uppercase tracking-wider text-brand-orange">{p.role}</p>
                   <p className="mt-3 text-sm leading-relaxed text-white/70">{p.bio}</p>
+                  {p.credentials && (
+                    <p className="mt-3 text-[11px] uppercase tracking-wider text-white/55">
+                      {p.credentials}
+                    </p>
+                  )}
                 </article>
               </li>
             ))}

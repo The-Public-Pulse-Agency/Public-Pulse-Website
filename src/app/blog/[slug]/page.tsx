@@ -2,26 +2,38 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { ArrowUpRight, CalendarDays, Clock } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Clock, ExternalLink, MessageCircleMore, Share2 } from "lucide-react";
 
 import { buildMetadata } from "@/lib/seo";
 import {
   articleSchema,
   breadcrumbSchema,
   faqPageSchema,
+  personSchema,
 } from "@/lib/schema";
+import { absoluteUrl, SITE } from "@/lib/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
-import { POSTS, getPost, DIGITAL_MARKETING_2026_CONTENT } from "@/lib/posts";
+import {
+  getAuthorBySlug,
+  getCategories,
+  getPostBySlug,
+  getPublishedPosts,
+  getRelatedPosts,
+} from "@/lib/data/blog";
+import { PostBody } from "@/components/blog/PostBody";
 
 type Params = { slug: string };
+type Faq = { q: string; a: string };
 
-export function generateStaticParams(): Params[] {
-  return POSTS.filter((p) => p.ready).map((p) => ({ slug: p.slug }));
+export const revalidate = false;
+export const dynamicParams = true;
+
+export async function generateStaticParams(): Promise<Params[]> {
+  const posts = await getPublishedPosts("en");
+  return posts.map((p) => ({ slug: p.slug }));
 }
-
-export const dynamicParams = false;
 
 export async function generateMetadata({
   params,
@@ -29,20 +41,21 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPostBySlug(slug, "en");
   if (!post) return {};
 
   return buildMetadata({
-    title: post.title,
-    description: post.description,
+    title: post.seoTitle ?? post.title,
+    description: post.seoDescription ?? post.excerpt,
     path: `/blog/${post.slug}`,
     ogType: "article",
-    ogImage: post.hero,
-    publishedTime: post.datePublished,
-    modifiedTime: post.dateModified,
-    section: post.category,
-    tags: post.tags,
-    authors: ["Public Pulse Agency"],
+    ogImage: post.heroImageUrl ?? undefined,
+    publishedTime: post.publishedAt?.toISOString(),
+    modifiedTime: post.updatedAt?.toISOString(),
+    section: post.categorySlug,
+    tags: (post.tags as string[] | null) ?? [],
+    authors: [SITE.name],
+    alternateLanguages: { "bn-BD": absoluteUrl(`/bn/blog/${post.slug}`) },
   });
 }
 
@@ -52,62 +65,105 @@ export default async function BlogPostPage({
   params: Promise<Params>;
 }) {
   const { slug } = await params;
-  const post = getPost(slug);
-  if (!post || !post.ready) notFound();
+  const post = await getPostBySlug(slug, "en");
+  if (!post) notFound();
 
-  const content = DIGITAL_MARKETING_2026_CONTENT;
+  const [categories, author, related] = await Promise.all([
+    getCategories(),
+    post.authorSlug ? getAuthorBySlug(post.authorSlug) : Promise.resolve(null),
+    getRelatedPosts(post.slug, post.categorySlug, "en", 3),
+  ]);
+
+  const category = categories.find((c) => c.slug === post.categorySlug);
+  const faqs = ((post.faqJson as Faq[] | null) ?? []).filter((f) => f?.q && f?.a);
+  const tags = (post.tags as string[] | null) ?? [];
+  const sourceRefs = (post.sourceRefs as string[] | null) ?? [];
+  const heroImage = post.heroImageUrl ?? "/og-image.jpg";
+
+  const publishedDate = post.publishedAt
+    ? new Date(post.publishedAt).toLocaleDateString("en-GB", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+  const updatedDate = post.updatedAt
+    ? new Date(post.updatedAt).toLocaleDateString("en-GB", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+  const updatedIsNewer =
+    post.publishedAt &&
+    post.updatedAt &&
+    new Date(post.updatedAt).getTime() - new Date(post.publishedAt).getTime() > 24 * 60 * 60 * 1000;
 
   const crumbs = [
     { name: "Home", path: "/" },
     { name: "Insights", path: "/blog" },
-    { name: post.category, path: "/blog" },
+    ...(category ? [{ name: category.nameEn, path: `/blog?category=${category.slug}` }] : []),
     { name: post.title, path: `/blog/${post.slug}` },
   ];
 
-  const wordCount =
-    content.sections.reduce((n, s) => n + s.body.split(/\s+/).length, 0) +
-    content.answer.split(/\s+/).length;
+  const wordCount = post.bodyMdx.split(/\s+/).filter(Boolean).length;
+  const shareUrl = absoluteUrl(`/blog/${post.slug}`);
+  const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`${post.title} — ${shareUrl}`)}`;
 
-  const dateStr = new Date(post.datePublished).toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  const schemas: object[] = [
+    articleSchema({
+      slug: post.slug,
+      headline: post.title,
+      description: post.excerpt,
+      image: heroImage,
+      datePublished: post.publishedAt?.toISOString() ?? new Date(post.createdAt).toISOString(),
+      dateModified: post.updatedAt?.toISOString(),
+      inLanguage: post.locale === "bn" ? "bn" : "en",
+      section: category?.nameEn ?? post.categorySlug,
+      tags,
+      wordCount,
+      ...(author && {
+        author: {
+          name: author.name,
+          url: `/about#${author.slug}`,
+          jobTitle: author.role,
+          sameAs: (author.sameAs as string[] | null) ?? undefined,
+        },
+      }),
+    }),
+    breadcrumbSchema(crumbs),
+  ];
+  if (faqs.length > 0) schemas.push(faqPageSchema(faqs));
+  if (author) {
+    schemas.push(
+      personSchema({
+        name: author.name,
+        jobTitle: author.role,
+        image: author.image ?? undefined,
+        sameAs: (author.sameAs as string[] | null) ?? undefined,
+      })
+    );
+  }
 
   return (
     <article>
-      <JsonLd
-        data={[
-          articleSchema({
-            slug: post.slug,
-            headline: post.title,
-            description: post.description,
-            image: post.hero,
-            datePublished: post.datePublished,
-            dateModified: post.dateModified,
-            section: post.category,
-            tags: post.tags,
-            wordCount,
-          }),
-          breadcrumbSchema(crumbs),
-          faqPageSchema(content.faqs),
-        ]}
-      />
+      <JsonLd data={schemas} />
 
       <GradientHero
         crumbs={crumbs}
-        chip={`${post.category} · ${dateStr} · ${post.readMinutes} min`}
+        chip={`${category?.nameEn ?? post.categorySlug} · ${publishedDate ?? "Draft"} · ${post.readingTime} min read`}
         title={post.title}
-        lead={post.description}
-        answer={content.answer}
+        lead={post.excerpt}
+        answer={post.answerFirst}
         answerQuestion={post.title}
+        variant="compact"
       />
 
       <section className="bg-paper">
-        <Container className="pt-8">
+        <Container className="pt-2">
           <div className="mx-auto max-w-4xl overflow-hidden rounded-panel border border-ink">
             <Image
-              src={post.hero}
+              src={heroImage}
               alt={post.title}
               width={1200}
               height={630}
@@ -121,26 +177,251 @@ export default async function BlogPostPage({
 
       <section className="bg-paper py-12 md:py-16">
         <Container>
-          <div className="mx-auto max-w-3xl">
-            <div className="space-y-10">
-              {content.sections.map((s) => (
-                <section key={s.heading}>
-                  <h2 className="text-h2 font-extrabold tracking-tight text-ink">{s.heading}</h2>
-                  <p className="mt-4 text-base leading-relaxed text-ink/80">{s.body}</p>
-                </section>
-              ))}
-            </div>
-            <section className="mt-14">
-              <h2 className="text-h2 font-extrabold tracking-tight text-ink">FAQs</h2>
-              <dl className="mt-6 space-y-4">
-                {content.faqs.map((f) => (
-                  <div key={f.q} className="rounded-card border border-ink/15 bg-paper p-5">
-                    <dt className="font-semibold text-ink">{f.q}</dt>
-                    <dd className="mt-2 text-sm leading-relaxed text-ink/70">{f.a}</dd>
+          <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              {/* Author / meta byline */}
+              {author && (
+                <div className="flex flex-wrap items-center gap-4 border-b border-ink/10 pb-6">
+                  {author.image && (
+                    <Image
+                      src={author.image}
+                      alt={author.name}
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 rounded-full border border-ink/15 object-cover"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-ink">
+                      <Link href={`/about#${author.slug}`} className="hover:text-brand-orange">
+                        {author.name}
+                      </Link>
+                    </p>
+                    <p className="text-xs text-ink/55">{author.role}</p>
                   </div>
-                ))}
-              </dl>
-            </section>
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-wider text-ink/55">
+                    {publishedDate && (
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                        Published {publishedDate}
+                      </span>
+                    )}
+                    {updatedIsNewer && updatedDate && (
+                      <span className="inline-flex items-center gap-1">
+                        · Updated {updatedDate}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" aria-hidden />
+                      {post.readingTime} min
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Body */}
+              <div className="mt-8">
+                <PostBody body={post.bodyMdx} />
+              </div>
+
+              {/* Tags + share */}
+              <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 pt-6">
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full border border-ink/15 bg-paper-tint px-2.5 py-1 text-[11px] font-medium text-ink/70"
+                    >
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+                <a
+                  href={whatsappShare}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 px-3 py-1.5 text-[11px] font-semibold text-ink/70 hover:border-ink hover:text-ink"
+                >
+                  <Share2 className="h-3.5 w-3.5" aria-hidden />
+                  Share
+                </a>
+              </div>
+
+              {/* Source references — for AEO/GEO trust signal */}
+              {sourceRefs.length > 0 && (
+                <aside className="mt-10 rounded-panel border border-ink/15 bg-paper-tint p-6">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/55">
+                    Sources & further reading
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {sourceRefs.map((ref, i) => {
+                      const isUrl = /^https?:\/\//.test(ref);
+                      return (
+                        <li key={`${ref}-${i}`} className="text-ink/75">
+                          {isUrl ? (
+                            <a
+                              href={ref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-start gap-1.5 hover:text-brand-orange"
+                            >
+                              <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                              <span className="break-all">{ref}</span>
+                            </a>
+                          ) : (
+                            <span>{ref}</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </aside>
+              )}
+
+              {/* FAQ accordion */}
+              {faqs.length > 0 && (
+                <section className="mt-14">
+                  <h2 className="text-h2 font-extrabold tracking-tight text-ink">
+                    Frequently asked questions
+                  </h2>
+                  <div className="mt-6 space-y-3">
+                    {faqs.map((f, i) => (
+                      <details
+                        key={`${f.q}-${i}`}
+                        className="group rounded-card border border-ink/15 bg-paper p-5 open:border-ink"
+                      >
+                        <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+                          <span className="font-semibold text-ink">{f.q}</span>
+                          <span
+                            aria-hidden
+                            className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/20 text-ink/60 transition group-open:rotate-45 group-open:border-brand-orange group-open:text-brand-orange"
+                          >
+                            +
+                          </span>
+                        </summary>
+                        <p className="mt-3 text-sm leading-relaxed text-ink/75">{f.a}</p>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Author bio — E-E-A-T */}
+              {author && (
+                <section className="mt-14 rounded-panel border border-ink/15 bg-paper-tint p-6">
+                  <div className="flex flex-wrap items-start gap-5">
+                    {author.image && (
+                      <Image
+                        src={author.image}
+                        alt={author.name}
+                        width={72}
+                        height={72}
+                        className="h-18 w-18 rounded-full border border-ink/15 object-cover"
+                      />
+                    )}
+                    <div className="flex-1 min-w-[200px]">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/55">
+                        Written by
+                      </p>
+                      <h3 className="mt-1 text-h3 font-bold text-ink">
+                        <Link href={`/about#${author.slug}`} className="hover:text-brand-orange">
+                          {author.name}
+                        </Link>
+                      </h3>
+                      <p className="text-sm text-ink/60">{author.role}</p>
+                      {author.bio && <p className="mt-3 text-sm leading-relaxed text-ink/75">{author.bio}</p>}
+                      {author.credentials && (
+                        <p className="mt-2 text-xs text-ink/55">{author.credentials}</p>
+                      )}
+                      {(author.sameAs as string[] | null)?.length ? (
+                        <ul className="mt-3 flex flex-wrap gap-2">
+                          {(author.sameAs as string[]).map((u) => (
+                            <li key={u}>
+                              <a
+                                href={u}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 rounded-full border border-ink/15 px-2.5 py-1 text-[11px] font-medium text-ink/70 hover:border-ink hover:text-ink"
+                              >
+                                <ExternalLink className="h-3 w-3" aria-hidden />
+                                {new URL(u).hostname.replace(/^www\./, "")}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Sticky-ish sidebar with related posts */}
+            <aside className="lg:col-span-4">
+              <div className="lg:sticky lg:top-24 space-y-6">
+                {related.length > 0 && (
+                  <div className="rounded-panel border border-ink/15 bg-paper p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/55">
+                      Related reads
+                    </p>
+                    <ul className="mt-4 space-y-4">
+                      {related.map((r) => (
+                        <li key={`${r.slug}-${r.locale}`}>
+                          <Link
+                            href={`/blog/${r.slug}`}
+                            className="group block"
+                          >
+                            <p className="text-sm font-semibold text-ink group-hover:text-brand-orange">
+                              {r.title}
+                            </p>
+                            <p className="mt-1 line-clamp-2 text-xs text-ink/60">{r.excerpt}</p>
+                            <p className="mt-2 text-[10px] uppercase tracking-wider text-ink/45">
+                              {r.readingTime} min · {r.categorySlug}
+                            </p>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* CTA card */}
+                <div
+                  className="overflow-hidden rounded-panel p-6 text-paper"
+                  style={{
+                    background: `radial-gradient(60% 80% at 80% 20%, #FF5C00 0%, transparent 60%), radial-gradient(80% 80% at 20% 80%, #2563EB 0%, transparent 60%), linear-gradient(135deg, #14B8A6 0%, #0A0A0A 100%)`,
+                  }}
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-paper/80">
+                    Need help executing?
+                  </p>
+                  <p className="mt-3 text-h3 font-bold leading-tight">
+                    Talk to the team.
+                  </p>
+                  <p className="mt-1 text-sm text-paper/80">
+                    Free 30-minute consultation · Reply under 2 hours on WhatsApp.
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <Link
+                      href="/contact"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-paper px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-ink"
+                    >
+                      Book a call
+                      <ArrowUpRight className="h-3 w-3" aria-hidden />
+                    </Link>
+                    <a
+                      href={SITE.contact.whatsapp}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-paper/40 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-paper hover:bg-paper/10"
+                    >
+                      <MessageCircleMore className="h-3 w-3" aria-hidden />
+                      WhatsApp
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
         </Container>
       </section>

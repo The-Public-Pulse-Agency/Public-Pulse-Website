@@ -165,14 +165,42 @@ export type ArticleSchemaInput = {
   image: string;
   datePublished: string;
   dateModified?: string;
+  /** Locale path prefix — e.g. "/bn/blog" for the Bengali variant. */
+  pathPrefix?: string;
+  /** Article language (defaults to site default). */
+  inLanguage?: string;
+  /** Legacy: simple author name (falls back to Organization). */
   authorName?: string;
+  /** Preferred: Person reference for E-E-A-T. Set when post has a known author. */
+  author?: {
+    name: string;
+    /** Public profile URL — usually /authors/<slug>. */
+    url?: string;
+    jobTitle?: string;
+    sameAs?: string[];
+  };
   section: string;
   tags?: string[];
   wordCount?: number;
 };
 
 export function articleSchema(input: ArticleSchemaInput) {
-  const url = absoluteUrl(`/blog/${input.slug}`);
+  const prefix = input.pathPrefix ?? "/blog";
+  const url = absoluteUrl(`${prefix}/${input.slug}`);
+  const author = input.author
+    ? {
+        "@type": "Person",
+        name: input.author.name,
+        ...(input.author.url && { url: absoluteUrl(input.author.url) }),
+        ...(input.author.jobTitle && { jobTitle: input.author.jobTitle }),
+        ...(input.author.sameAs && input.author.sameAs.length > 0 && { sameAs: input.author.sameAs }),
+        worksFor: { "@id": ORG_ID },
+      }
+    : {
+        "@type": "Organization",
+        name: input.authorName ?? SITE.name,
+        url: SITE.url,
+      };
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -184,16 +212,12 @@ export function articleSchema(input: ArticleSchemaInput) {
     image: input.image.startsWith("http") ? input.image : absoluteUrl(input.image),
     datePublished: input.datePublished,
     dateModified: input.dateModified ?? input.datePublished,
-    author: {
-      "@type": "Organization",
-      name: input.authorName ?? SITE.name,
-      url: SITE.url,
-    },
+    author,
     publisher: { "@id": ORG_ID },
     articleSection: input.section,
     keywords: input.tags?.join(", "),
     wordCount: input.wordCount,
-    inLanguage: SITE.language,
+    inLanguage: input.inLanguage ?? SITE.language,
     speakable: {
       "@type": "SpeakableSpecification",
       cssSelector: [".answer-block"],

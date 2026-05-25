@@ -13,6 +13,122 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 12 / BLOG PROGRAMME (DB-backed, bilingual-ready, admin CRUD, AEO/GEO loop)
+
+**Status: code complete, pushed. STAGING deploy + Neon schema push are user actions (per the hard "no production deploy" rule).**
+
+End-to-end: pivots the blog from typed `src/lib/posts.ts` files to a Neon-backed system with full admin CRUD, an LLM-generation queue (Bedrock pipeline stubbed, gate documented), per-post auto OG, bilingual hreflang in the sitemap, /llms-full.txt auto-including published bodies, and an admin overview dashboard reading first-party stats from Neon. All public reads still go through `unstable_cache` + tag invalidation (zero DB on visitor GETs).
+
+### PART A — Data model + admin CRUD
+
+- **Drizzle schema** ([src/db/schema.ts](../src/db/schema.ts)): three new tables.
+  - `blog_categories` (slug unique, nameEn, nameBn, colorToken, displayOrder).
+  - `authors` (slug unique, name, role, bio, credentials, image, `sameAs jsonb`, email, visible, displayOrder) — used by /about + blog bylines, emits `Person` JSON-LD.
+  - `blog_posts` (id, **slug+locale unique together**, title, excerpt, `bodyMdx`, heroImageUrl, categorySlug, `tags jsonb`, authorSlug, status `draft|review|scheduled|published`, publishedAt, scheduledFor, `faqJson jsonb[{q,a}]`, answerFirst, `sourceRefs jsonb[]` for grounding cluster, `gateScores jsonb`, ogTitle, readingTime, seoTitle, seoDescription, targetKeyword). Indexes: status×publishedAt desc, locale×categorySlug, publishedAt desc.
+- **Cached read layer** [src/lib/data/blog.ts](../src/lib/data/blog.ts): `getCategories`, `getAuthors`, `getAuthorBySlug`, `getPublishedPosts(locale)`, `getPostBySlug`, `getRelatedPosts`, `getPostsBySourceRef` (topical cluster — drives the per-service "From the blog" rail). Every function wrapped in `unstable_cache` with tag `blog` / `authors` / `blog-categories`. Try/catch returns `[]` on DB failure — resilience contract preserved (public pages still prerender).
+- **Admin reads** [src/lib/data/blog-admin.ts](../src/lib/data/blog-admin.ts) bypass cache.
+- **/manage/blog** ([page.tsx](../src/app/manage/blog/page.tsx) + [BulkForm.tsx](../src/app/manage/blog/BulkForm.tsx) + [PostForm.tsx](../src/app/manage/blog/PostForm.tsx) + [actions.ts](../src/app/manage/blog/actions.ts) + `new`, `[id]`): full CRUD, status workflow, schedule, dynamic FAQ editor, tags+sourceRefs CSV, bulk publish/unpublish/delete. Every mutation calls `updateTag('blog')` + `revalidatePath('/blog')` + `revalidatePath('/bn/blog')` + `revalidatePath('/blog/<slug>')` + `pingIndexNow()`. Zod-validated; auth-gated.
+- **/manage/content-topics** ([page.tsx](../src/app/manage/content-topics/page.tsx) + [actions.ts](../src/app/manage/content-topics/actions.ts)): grounded-queue UI. Add a topic with a JSON `groundingHint` (or `service:political-pr` shortcut) — null grounding never enters `queued`, it goes straight to `skipped` so **no LLM tokens are spent on it**. Per-row Skip / Re-queue / Delete; "Generate now" is a stub that flips status to `review` (the real Bedrock generator pipeline is to be wired — documented below).
+- **content_topics schema**: pre-existed; this PART exercises it.
+
+### PART B — Topic queue seed (Bedrock generator: stubbed)
+
+- **[src/db/seed-topics.ts](../src/db/seed-topics.ts)** (idempotent — `npx tsx`): seeds **126 grounded topics**:
+  - 45 service × location guides (5 services × 9 cities) — `{service, location}` grounding
+  - 40 service × industry guides (4 services × 10 industries) — `{service, industry}`
+  - 9 service pricing/fundamentals — `{service}`
+  - 9 location market overviews — `{location}`
+  - 10 industry playbooks — `{industry}`
+  - 8 glossary deep-dives — `{glossary}`
+  - 5 native-Bengali variants (`locale: bn`, `requires: native-bn`) — top priority, **never machine-translated**
+- **Bedrock generator pipeline (pending)**: the spec is — pick highest-priority `queued`, resolve grounding via `src/lib/grounding.ts`, compose EN body + native BN if requested, run quality gate (PUBLISH_THRESHOLD = 75), insert into `blog_posts` and flip topic to `generated`, else `review`. Hard-skip null grounding rows pre-LLM-call. Cost guardrail: this stage is the budget hot-spot; we'll cap concurrency and use Haiku-class models.
+
+### PART C — Public blog front-end (DB-backed, hreflang, AEO/GEO complete)
+
+- **[/blog](../src/app/blog/page.tsx)**: rewritten to read `getPublishedPosts("en")` + `getCategories()`. Category chip filter (with facet counts), search form, language pill on cards, schemas: `BreadcrumbList` + `CollectionPage` + `ItemList`.
+- **[/blog/[slug]](../src/app/blog/[slug]/page.tsx)** (the big one): `generateStaticParams` over published posts + `dynamicParams = true` so new posts work without a redeploy. `generateMetadata` reads SEO overrides per post and emits hreflang `bn-BD → /bn/blog/<slug>` via the new [`alternateLanguages`](../src/lib/seo.ts) option.
+  - Hero: `GradientHero` with chip = category · date · reading time, `answerQuestion = title`, `answer = post.answerFirst` (the AEO `data-speakable` block).
+  - Body: new **[PostBody](../src/components/blog/PostBody.tsx)** component — light-touch markdown (no MDX runtime weight): `##`/`###`, `-`/`*`/`1.` lists, inline `**bold**` / `*italic*` / `` `code` `` / `[link](url)`, **plus auto-linking glossary terms** in body prose to `/glossary/<slug>` for internal-link SEO.
+  - Author byline (linked to `/about#<slug>`), Published / Updated dates (E-E-A-T), reading time, tags + WhatsApp share, source-refs sidebar (clickable URLs), FAQ accordion as `<details>` (no client JS), full author bio panel with credentials + `sameAs` chips, related-posts rail (same category), CTA sidebar.
+  - **JSON-LD**: `Article` (now with `Person` author when known — `worksFor` cross-refs the site Organization `@id`), `BreadcrumbList`, `FAQPage` (only when ≥1 FAQ), `Person` (when known). `speakable.cssSelector = [".answer-block"]`.
+- **[opengraph-image.tsx](../src/app/blog/[slug]/opengraph-image.tsx)** (file-convention): per-post auto OG via `next/og` `ImageResponse`. Runtime `nodejs` (OpenNext-on-Lambda doesn't ship edge entrypoints reliably — same constraint that bit us in [/og/route.tsx](../src/app/og/route.tsx)). 1200×630, gradient panel + post title + category eyebrow + reading-time chip. Cache-long (`revalidate = 86400`). Deterministic per post.
+- **Schema extension** [src/lib/schema.ts](../src/lib/schema.ts): `articleSchema()` gained `author?: { name, url, jobTitle, sameAs }` (preferred Person form) — Organization fallback retained for legacy callers (`/compare/[slug]` still uses it). Added `pathPrefix` so BN article schema can point at `/bn/blog/...`. `inLanguage` is now overridable per call.
+
+### PART D — Expanded admin
+
+- **/manage** (NEW [page.tsx](../src/app/manage/page.tsx)): first-party analytics overview from Neon, single page, **no third-party SDK**. KPI cards (leads / subscribers / published posts), bar lists for leads-by-service-interest, subscribers-by-source, posts-by-category, and the content-topics funnel with computed gate-pass %. Falls back gracefully when DB is unreachable.
+- **/manage/subscribers** + actions + `export.csv` (Node runtime, auth-gated, dated filename, content-disposition attachment).
+- **/manage/team**: CRUD over the `authors` table. `/about` reads from DB via `getAuthors()` and falls back to a single in-code entry only if the table is empty. Each team card now has `id={slug}` + `scroll-mt-24` so blog bylines deep-linking `/about#<slug>` actually anchor.
+- **Manage layout**: nav extended to include Overview + Topics; sign-in success now redirects to `/manage` (the overview), not `/manage/leads`.
+
+### PART E — SEO / AEO / GEO loop closure
+
+- **[/llms-full.txt](../src/app/llms-full.txt/route.ts)**: posts section added. Reads published EN posts from Neon (try/catch — section reports unavailable if DB is down). Each post entry: title + URL + category + date + reading time + answerFirst + excerpt + full `bodyMdx` + sourceRefs + FAQs. The full-text dump now grows with the blog automatically — no manual edit on each post.
+- **robots.txt**: pre-existing — confirmed allows GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Bingbot; disallows `/manage`, `/api/auth`.
+- **Sitemap** ([src/app/sitemap.ts](../src/app/sitemap.ts)): is now `async`, reads `getPublishedPosts("en")` + `getPublishedPosts("bn")`. Each EN entry includes `hreflang bn-BD → /bn/blog/<slug>` when the BN row exists. BN-only entries also emitted (so Search Console accepts the pairing).
+- **Internal linking — service pages** ([src/app/services/[slug]/page.tsx](../src/app/services/[slug]/page.tsx)): inserts a "Practitioner guides on \<service\>" rail above the Related services block, populated via `getPostsBySourceRef(service.slug)`. Section is omitted entirely when no posts cite that service slug. Same pattern can be added to location / industry pages in a follow-up.
+- **Internal linking — body prose**: `PostBody` auto-links any glossary term name (EN + BN aliases) to `/glossary/<slug>` with a dotted underline. Zero author effort, deterministic, builds a real internal-link graph.
+- **E-E-A-T**: blog post pages now show visible Published / Updated dates above the body, author bio + credentials below the body, with profile links + `sameAs` chips. `Article` schema's `author` is now a `Person` (when known) and `dateModified` reflects the row's `updated_at`.
+
+### Build verification (`npm run build`)
+
+- ✅ TypeScript strict — green (`npx tsc --noEmit` zero errors).
+- ✅ Next build — green. 22+ public routes prerendered SSG/Static, all admin + auth + blog index `ƒ` (dynamic). New routes:
+  - `/manage` (overview)
+  - `/manage/content-topics`
+  - `/blog/-/opengraph-image` (per-post OG factory route)
+  - `/blog/[slug]` still SSG (DB read at build time + ISR with tag invalidation)
+- Only build-time warning: BetterAuth complaining about missing `BETTER_AUTH_URL` at build (it's set in SSM for the deployed Lambda — harmless).
+
+### What's required from the user (cannot be agent-run)
+
+These three actions all touch live infra and were explicitly off-limits or require credentials the agent doesn't hold:
+
+1. **Apply schema to Neon** — run once per environment:
+   ```bash
+   DATABASE_URL_DIRECT=$(grep DATABASE_URL_DIRECT .env.staging | cut -d= -f2- | tr -d \") \
+     npx drizzle-kit push
+   ```
+2. **Seed categories + authors + topic queue**:
+   ```bash
+   npx tsx src/db/seed-blog.ts      # 10 categories + 3 authors
+   npx tsx src/db/seed-topics.ts    # 126 grounded topics
+   ```
+3. **Deploy to STAGING** (no DNS, no Route53, separate CloudFront URL):
+   ```bash
+   bash scripts/deploy-staging.sh   # needs .env.staging populated first
+   ```
+   `.env.staging` is **not** present — copy from `.env.staging.example`, then either re-use prod Neon or spin a Neon branch.
+
+### Acceptance verification (post-staging)
+
+```bash
+URL="<staging cloudfront url>"
+curl -sI "$URL/blog" | grep -iE 'x-cache|cache-control'                 # MISS, then HIT
+curl -sI "$URL/blog/<published-slug>" | grep -i x-robots-tag             # no noindex
+curl -s "$URL/blog/<slug>" | grep -c "answer-block"                      # ≥1
+curl -s "$URL/blog/<slug>" | grep -c '"@type":"Article"'                 # =1
+curl -s "$URL/blog/<slug>" | grep -c '"@type":"FAQPage"'                 # =1 if FAQs
+curl -s "$URL/sitemap.xml" | grep -c '/blog/'                            # =N published
+curl -s "$URL/llms-full.txt" | grep -c "## Post —"                       # =N published
+curl -sI "$URL/manage" | grep -iE 'cache-control|x-robots-tag'           # no-store, noindex
+curl -s "$URL/robots.txt" | grep -iE 'GPTBot|ClaudeBot|PerplexityBot'    # all 3 Allow
+```
+
+### Bedrock generator pipeline — NEXT
+
+The 126-topic queue is loaded but the generator is a stub. The real component to wire (separate session — it's the budget hot-spot):
+
+- Lambda triggered on schedule (1 / hour, cap 20 / day).
+- Pull highest-priority `queued`, resolve grounding via `src/lib/grounding.ts` (matches `{service,location,industry,glossary}` against the typed catalogs and pulls real specifics — populations, BIN/Trade-License, deliverables, etc.).
+- Call Bedrock Haiku-class model with a prompt template that REQUIRES citing the resolved grounding (refuses to write generic content). EN body + native BN if locale=bn.
+- Quality gate scores answerFirst length, FAQ count ≥3, presence of grounding facts, internal-link density. Hard-fail on threshold or missing grounding → flip to `review` and stop.
+- Pass → insert into `blog_posts` (status: `published` or `scheduled`), flip topic to `generated`/`published`, IndexNow ping.
+
+**Never:** auto-publish without grounding match; auto-translate EN→BN; let null-grounding rows reach Bedrock.
+
+---
+
 ## 2026-05-25 — STEP 11 / SEO MEGA-BUILD — PHASE 8 CLOSING SUMMARY
 
 **Programme complete (within scope).** Phases 0–8 landed across 6 commits, all pushed to `main`. No production deploy, no DNS, no legacy-stack changes — all per the hard boundary in the brief.

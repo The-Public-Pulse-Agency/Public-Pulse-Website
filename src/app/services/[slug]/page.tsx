@@ -15,6 +15,7 @@ import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SERVICES, getService } from "@/lib/services";
 import { getServiceContent } from "@/content/services";
+import { getPostsBySourceRef } from "@/lib/data/blog";
 
 type Params = { slug: string };
 
@@ -49,6 +50,9 @@ export default async function ServiceDetailPage({
   const service = getService(slug);
   const content = service && service.ready ? getServiceContent(service.slug) : undefined;
   if (!service || !service.ready || !content) notFound();
+
+  // Topical cluster: blog posts whose grounding cites this service slug.
+  const relatedPosts = await getPostsBySourceRef(service.slug, "en", 3);
 
   const crumbs = [
     { name: "Home", path: "/" },
@@ -186,6 +190,39 @@ export default async function ServiceDetailPage({
           </dl>
         </Container>
       </section>
+
+      {/* ═══ RELATED POSTS (topical cluster — only if posts cite this service) ══ */}
+      {relatedPosts.length > 0 && (
+        <section className="border-t border-ink bg-paper-alt py-16 md:py-20">
+          <Container>
+            <div className="grid items-end gap-10 md:grid-cols-12">
+              <div className="md:col-span-7">
+                <p className="text-eyebrow uppercase text-brand-orange">From the blog</p>
+                <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+                  Practitioner guides on {service.shortName.toLowerCase()}.
+                </h2>
+              </div>
+            </div>
+            <ul className="mt-10 grid gap-5 md:grid-cols-3">
+              {relatedPosts.map((p) => (
+                <li key={`${p.slug}-${p.locale}`}>
+                  <Link href={`/blog/${p.slug}`} className="card group flex h-full flex-col">
+                    <span className="text-meta font-semibold uppercase text-brand-orange">
+                      {p.categorySlug}
+                    </span>
+                    <h3 className="mt-3 text-h3 font-bold text-ink">{p.title}</h3>
+                    <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">{p.excerpt}</p>
+                    <p className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange">
+                      Read · {p.readingTime} min
+                      <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" aria-hidden />
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+      )}
 
       {/* ═══ RELATED ═════════════════════════════════════════════════════ */}
       <section className="border-t border-ink bg-paper py-20 md:py-24">

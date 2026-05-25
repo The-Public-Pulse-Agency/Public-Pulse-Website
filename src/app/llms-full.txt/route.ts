@@ -13,8 +13,12 @@ import { INDUSTRIES } from "@/lib/taxonomies/industries";
 import { GLOSSARY } from "@/lib/taxonomies/glossary";
 import { GUIDES } from "@/lib/content/guides";
 import { COMPARES } from "@/lib/content/compares";
+import { db } from "@/db/client";
+import { blogPosts } from "@/db/schema";
+import { and, desc, eq } from "drizzle-orm";
 
-export const dynamic = "force-static";
+// Was force-static; now reads published posts from Neon at the data layer.
+// unstable_cache holds the result so we don't hit the DB on every request.
 export const revalidate = 86400; // 24h
 const HR = "\n\n---\n\n";
 
@@ -156,7 +160,54 @@ function comparesSection(): string {
     .join(HR);
 }
 
+async function postsSection(): Promise<string> {
+  try {
+    const rows = await db
+      .select({
+        slug: blogPosts.slug,
+        title: blogPosts.title,
+        excerpt: blogPosts.excerpt,
+        answerFirst: blogPosts.answerFirst,
+        bodyMdx: blogPosts.bodyMdx,
+        categorySlug: blogPosts.categorySlug,
+        publishedAt: blogPosts.publishedAt,
+        readingTime: blogPosts.readingTime,
+        faqJson: blogPosts.faqJson,
+        sourceRefs: blogPosts.sourceRefs,
+      })
+      .from(blogPosts)
+      .where(and(eq(blogPosts.status, "published"), eq(blogPosts.locale, "en")))
+      .orderBy(desc(blogPosts.publishedAt))
+      .limit(200);
+    if (rows.length === 0) return "_No published posts yet._";
+    return rows
+      .map((p) => {
+        const faqs = ((p.faqJson as { q: string; a: string }[] | null) ?? []).filter((f) => f?.q && f?.a);
+        const refs = ((p.sourceRefs as string[] | null) ?? []).filter(Boolean);
+        return [
+          `## Post — ${p.title}`,
+          `URL: ${SITE.url}/blog/${p.slug}`,
+          `Category: ${p.categorySlug}  ·  Published: ${p.publishedAt?.toISOString().slice(0, 10) ?? "—"}  ·  Reading time: ${p.readingTime} min`,
+          ``,
+          `Answer: ${p.answerFirst}`,
+          ``,
+          p.excerpt,
+          ``,
+          p.bodyMdx,
+          refs.length > 0 ? `\nGrounding refs: ${refs.join(", ")}` : "",
+          faqs.length > 0 ? `\n### FAQ\n${faqs.map((f) => `**${f.q}** — ${f.a}`).join("\n\n")}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
+      })
+      .join(HR);
+  } catch {
+    return "_Posts section unavailable — DB unreachable._";
+  }
+}
+
 export async function GET(): Promise<Response> {
+  const posts = await postsSection();
   const body = [
     header(),
     `# Services`,
@@ -171,6 +222,8 @@ export async function GET(): Promise<Response> {
     guidesSection(),
     `# Comparisons`,
     comparesSection(),
+    `# Blog posts`,
+    posts,
     `\n# End of Public Pulse full-text dump.`,
   ].join(HR);
 
