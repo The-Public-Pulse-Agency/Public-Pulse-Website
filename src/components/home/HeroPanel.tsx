@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Users } from "lucide-react";
+import { ArrowUpRight, MessageCircleMore } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { SERVICES } from "@/lib/services";
 
@@ -41,10 +41,13 @@ export function HeroPanel() {
             }}
           >
             <div
-              className="grid h-12 w-12 place-items-center rounded-card bg-paper/95 text-ink"
+              className="relative grid h-12 w-12 place-items-center rounded-card bg-paper/95 text-ink"
               aria-hidden
             >
-              <Users className="h-5 w-5" />
+              {/* Pulsing ring — telegraphs "live sales team" */}
+              <span className="pointer-events-none absolute inset-0 rounded-card ring-2 ring-emerald-400/70 animate-ping motion-reduce:hidden" />
+              <span className="pointer-events-none absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-paper" />
+              <MessageCircleMore className="h-5 w-5" />
             </div>
             <div className="text-left leading-tight">
               <div className="text-sm font-bold text-paper">{SALES_CARD.label}</div>
