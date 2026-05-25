@@ -31,12 +31,16 @@ import { GLOSSARY } from "@/lib/taxonomies/glossary";
 type Params = { slug: string };
 type Faq = { q: string; a: string };
 
-export const revalidate = false;
+export const revalidate = 300;
 export const dynamicParams = true;
 
+// Defer all post rendering to runtime ISR. Build-time prerender of 100+
+// posts was exhausting Neon HTTP connection limits (each post calls
+// getRelatedPosts which queries Neon). At runtime, the first request per
+// slug pays the ~500ms render cost; CloudFront caches it for everyone
+// else for 5 min then stale-while-revalidate.
 export async function generateStaticParams(): Promise<Params[]> {
-  const posts = await getPublishedPosts("en");
-  return posts.map((p) => ({ slug: p.slug }));
+  return [];
 }
 
 export async function generateMetadata({

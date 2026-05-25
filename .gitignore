@@ -40,3 +40,8 @@ next-env.d.ts
 .aws/
 *.pem
 credentials
+
+# MCP / agent dev artifacts
+.playwright-mcp/
+tmp-*.mjs
+tmp-*.ts

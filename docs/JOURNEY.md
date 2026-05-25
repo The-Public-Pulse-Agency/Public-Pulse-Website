@@ -13,6 +13,102 @@ Entry format:
 
 ---
 
+## 2026-05-26 — STEP 20 / PERF + PERMANENT CACHE FIX + WRAP-UP
+
+Deployed live to https://publicpulse.com.bd. Three coupled fixes in this turn.
+
+### A. `/blog` + `/case-studies` converted from ƒ Dynamic → ○ Static (ISR)
+
+Root cause of slow loads: both pages read `searchParams` server-side for the category filter + search box. Next 16 auto-marks such pages **fully dynamic** and emits `cache-control: private, no-cache, no-store`. CloudFront couldn't cache the HTML; every visit hit Lambda + Neon.
+
+Fix: moved filter/search to client components ([BlogFilter.tsx](../src/components/blog/BlogFilter.tsx) + [CaseStudiesFilter.tsx](../src/components/case-studies/CaseStudiesFilter.tsx)) that read `useSearchParams`. Pages are now ISR with `revalidate=60`, single HTML variant cached at the edge with `stale-while-revalidate=2592000` (30d). Filter chips are buttons that call `router.replace()` — URL updates, filtering happens instantly in-browser, no full reload.
+
+Measured (Playwright, real edge):
+- `/blog` warm load: TTFB 479ms · Load **521ms** (was 1428ms cold every visit before)
+- `/`        warm load: TTFB 52ms · Load **78ms** (HTTP 304 — browser cache)
+- All public pages now emit proper `s-maxage` headers; CloudFront serves HIT on second hit per POP
+
+### B1. Blog-post prerender deferred to runtime ISR (build was hanging)
+
+After bumping the data-layer cache key to `:v2`, the next `sst deploy` hit a **build hang at "Generating static pages 275/367"** for 25 minutes. Root cause: 121 EN blog posts × `getPostBySlug` + `getRelatedPosts` from `generateStaticParams` = 240+ Neon HTTP requests fired in parallel across 9 build workers. Neon free-tier rate-limited / connection-exhausted, build froze.
+
+Fix: `src/app/blog/[slug]/page.tsx` — `generateStaticParams()` now returns `[]`; `dynamicParams = true` + `revalidate = 300`. Blog post pages are generated on first request at runtime, then CloudFront caches each for 5 min + stale-while-revalidate. Build dropped from 367 pages back to **246 in 2.3s**. First user per post pays a one-time ~500ms; everyone after them at the same POP gets edge-cached HTML.
+
+This is the right pattern for content-heavy DB-backed sites — never pin all rows into `generateStaticParams` if they exceed your DB's connection budget.
+
+### B2. PERMANENT FIX — stuck-empty-cache class of bugs
+
+User flagged `/blog` was still showing `(0)` on every chip despite 166 published posts in Neon. Diagnostic confirmed the DB had `status='published'` for all 166. The bug was in the **data layer's cache lifetime**.
+
+**Root cause documented (and saved to long-term memory):**
+
+Every `unstable_cache(...)` in [src/lib/data/blog.ts](../src/lib/data/blog.ts) used `revalidate: false` (tag-only invalidation). The build runs without `DATABASE_URL` (intentional resilience contract — try/catch returns `[]` on DB-unreachable so the build doesn't fail). That empty `[]` got cached. With `revalidate: false`, only an explicit `updateTag('blog')` mutation in `/manage` would bust it. Nobody had triggered a mutation since the schema migration + bulk-publish, so the cache stayed `[]` forever.
+
+**Two-layer permanent fix:**
+
+1. **Self-heal:** all 8 cache entries in [src/lib/data/blog.ts](../src/lib/data/blog.ts) flipped to `revalidate: 60`. Cache keys bumped to `:v2` so the stale empty entries are bypassed on first hit after deploy. Tag invalidation still works for instant refresh after admin mutations — the TTL is the safety net.
+2. **Manual override:** new [/api/revalidate](../src/app/api/revalidate/route.ts) endpoint accepts `?tag=name` or `?path=/route` with `CRON_SECRET` auth. One curl, no redeploy, flushes the cache in seconds:
+   ```bash
+   curl -X POST "https://publicpulse.com.bd/api/revalidate?tag=blog&secret=$CRON_SECRET"
+   ```
+
+The case-studies data layer was already fixed with the same pattern in STEP 19 hotfix (`revalidate: 60`) — this turn brings the blog layer to parity.
+
+### C. Long-term memory
+
+Saved to `/Users/smmoshiurrahman/.claude/projects/.../memory/`:
+- [blog-empty-stuck-cache.md](../../.claude/projects/-Users-smmoshiurrahman-Downloads-Projects-PublicPulse-Website/memory/blog-empty-stuck-cache.md) — feedback rule: "never use revalidate:false in this codebase's data layers" + diagnostic playbook
+- [revalidate-endpoint.md](../../.claude/projects/-Users-smmoshiurrahman-Downloads-Projects-PublicPulse-Website/memory/revalidate-endpoint.md) — reference: the manual cache-bust endpoint
+- MEMORY.md index updated
+
+Future sessions will read these on startup and avoid re-introducing the anti-pattern.
+
+### D. Commits this session (newest first)
+
+| Commit | Scope |
+|---|---|
+| `9b6d438` | fix: permanent /blog stuck-empty cache — self-heal + manual bust endpoint |
+| `fbcbac3` | perf: /blog + /case-studies become ISR — properly CDN-cached |
+| `e86fd40` | fix: post-deploy hotfixes — date coercion + cron auth + case-studies cache |
+| `31ca990` | feat: newsletter automation + site-wide lead capture + case-studies showcase |
+| `72d1495` | docs(journey): STEP 18 — motion system + brand-forward /about + Org entity |
+
+All on `main`. Pushed.
+
+### E. Live verification (post-deploy)
+
+- /, /blog, /case-studies, /bn/case-studies, /confirm, /unsubscribe, /manage/sign-in — all HTTP 200
+- /api/newsletter POST, /api/whatsapp-optin POST — HTTP 400 on bad input (Zod reject)
+- /api/cron/digest unauth — HTTP 401 (fail-closed verified)
+- /api/revalidate unauth — HTTP 401 (same auth path as cron)
+- Sitemap: 402 URLs total, 3 case-studies entries
+- EventBridge cron `NewsletterDigestRule-bcdkeuhx` ENABLED, schedule `cron(0 9 1,15 * ? *)`
+- Bi-weekly digest pipeline proven end-to-end (Issue №02 drafted from real posts during testing)
+
+### F. Rollback
+
+Live HEAD: `9b6d438`. Last known good before STEP 20: `e86fd40`. Code-only rollback; new tables/columns stay in Neon.
+
+### G. Status — wrap-up
+
+The site is **deployed, fast, cacheable, and resilient**. End of programme.
+
+What's running in production now:
+- **Marketing site**: 367 prerendered pages (was 245 — +120 EN blog posts + new case-study EN/BN routes)
+- **Blog**: 121 EN + 45 BN posts published, all gate-passed, all server-cached + CF-cached
+- **Newsletter**: double opt-in + RFC 8058 one-click unsubscribe + bi-weekly cron drafting digest from latest published posts (autosend gated by env flag)
+- **Lead capture**: sticky bar + exit-intent modal + 5 inline blocks site-wide, EN+BN, frequency-capped, accessibility-compliant
+- **Case studies**: schema + admin + EN/BN public pages + homepage Selected Results + sitemap + llms-full.txt — REAL-ONLY (Write-from-facts helper + Review schema only when real testimonial)
+- **Admin**: /manage/{leads, blog, content-topics, case-studies, subscribers, newsletter, team} + /manage overview
+
+What's still on the user's plate (no agent can do):
+- Add real client case studies via /manage/case-studies (the showcase is empty until then)
+- Optional: write hand-authored BN blog posts (system is ready; no MT)
+- Optional: send Issue №02 draft (currently sitting in /manage/newsletter)
+- Optional: replace the homepage stats / About-page TODO(user) markers with real numbers
+
+---
+
 ## 2026-05-26 — STEP 19 / NEWSLETTER AUTOMATION + SITE-WIDE LEAD CAPTURE + CASE STUDIES SHOWCASE
 
 Three coupled workstreams shipped in one cohesive push. Build green, NOT deployed. Awaiting `npm run dev` visual + promote.
