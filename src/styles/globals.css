@@ -185,10 +185,201 @@ html.reveal-ready .reveal.is-visible {
   }
 }
 
-/* ─── Reduced motion ─────────────────────────────────────────────────── */
+/* ─── Motion v2 primitives (CSS-only; animate transform+opacity only) ── */
+
+/* Aurora / mesh gradient background — CSS-driven conic + radial drift.
+   Pure transform/opacity animation; no layout impact; GPU-friendly. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(255, 92, 0, 0.35),
+    rgba(20, 184, 166, 0.3),
+    rgba(37, 99, 235, 0.3),
+    rgba(255, 92, 0, 0.35)
+  );
+  filter: blur(60px);
+  opacity: 0.7;
+  animation: aurora-spin 28s linear infinite;
+  will-change: transform;
+}
+.aurora::after {
+  inset: -30%;
+  background: radial-gradient(40% 50% at 30% 30%, rgba(255, 92, 0, 0.5), transparent 60%),
+    radial-gradient(50% 60% at 70% 70%, rgba(37, 99, 235, 0.45), transparent 60%);
+  filter: blur(40px);
+  opacity: 0.6;
+  animation: aurora-drift 22s ease-in-out infinite alternate;
+}
+.aurora--soft::before { opacity: 0.4; }
+.aurora--soft::after { opacity: 0.35; }
+.aurora--bright::before { opacity: 0.85; }
+@keyframes aurora-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes aurora-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(2%, -3%, 0) scale(1.12); }
+}
+
+/* GradientText — animated sweep on headlines */
+.gradient-text {
+  background: linear-gradient(
+    100deg,
+    var(--ink) 0%,
+    var(--ink) 25%,
+    #ff5c00 45%,
+    #2563eb 55%,
+    var(--ink) 75%,
+    var(--ink) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-sweep 8s ease-in-out infinite;
+  will-change: background-position;
+}
+@keyframes gradient-sweep {
+  0%, 100% { background-position: 100% 50%; }
+  50% { background-position: 0% 50%; }
+}
+
+/* ScrollProgress — top bar tracking page scroll */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, #ff5c00, #2563eb, #14b8a6);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  z-index: 60;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* ScrollReveal v2 directional + stagger */
+html.reveal-ready .reveal-v2 {
+  opacity: 0;
+  transform: translate3d(var(--rv-x, 0), var(--rv-y, 24px), 0);
+  transition:
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--rv-delay, 0ms);
+  will-change: opacity, transform;
+}
+html.reveal-ready .reveal-v2.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+html.reveal-ready .reveal-v2.is-visible {
+  will-change: auto;
+}
+
+/* TiltCard — sheen sweep on hover (CSS half; JS does the 3D rotation) */
+.tilt-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 200ms ease-out;
+}
+.tilt-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+  pointer-events: none;
+  transform: translate3d(0, 0, 1px);
+}
+.tilt-card:hover::after,
+.tilt-card:focus-within::after { opacity: 1; }
+
+/* CursorGlow — page-level brand spotlight (positioned by JS via CSS vars) */
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 92, 0, 0.18),
+    rgba(255, 92, 0, 0.08) 40%,
+    transparent 75%
+  );
+  border-radius: 9999px;
+  transform: translate3d(var(--cx, 50vw), var(--cy, 50vh), 0);
+  transition: opacity 220ms ease-out;
+  mix-blend-mode: multiply;
+  will-change: transform;
+  opacity: 0;
+}
+.cursor-glow.is-active { opacity: 1; }
+
+/* Magnetic — JS sets --mx / --my offset from rest position */
+.magnetic {
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translate3d(var(--mx, 0), var(--my, 0), 0);
+  will-change: transform;
+}
+
+/* Underline sweep on text links (used in nav + body links) */
+.link-sweep {
+  position: relative;
+  background-image: linear-gradient(90deg, currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-sweep:hover,
+.link-sweep:focus-visible { background-size: 100% 1px; }
+
+/* Skeleton shimmer */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 25%,
+    rgba(0, 0, 0, 0.09) 37%,
+    rgba(0, 0, 0, 0.04) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ─── Reduced motion — disable ALL motion, show final states ─────────── */
 @media (prefers-reduced-motion: reduce) {
   html.reveal-ready .reveal,
-  html.reveal-ready .reveal.is-visible {
+  html.reveal-ready .reveal.is-visible,
+  html.reveal-ready .reveal-v2,
+  html.reveal-ready .reveal-v2.is-visible {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -198,16 +389,38 @@ html.reveal-ready .reveal.is-visible {
   .card-dark,
   .card:hover,
   .card-dark:hover,
-  .btn:hover {
+  .btn:hover,
+  .tilt-card,
+  .magnetic {
     transform: none !important;
     transition: none !important;
   }
-  .marquee-track {
+  .marquee-track,
+  .aurora::before,
+  .aurora::after,
+  .gradient-text,
+  .shimmer,
+  .scroll-progress {
     animation: none !important;
   }
+  .gradient-text {
+    background: var(--ink) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+  }
+  .cursor-glow { display: none !important; }
   html {
     scroll-behavior: auto;
   }
+}
+
+/* ─── Touch (coarse pointer) — disable mouse-only interactions ───────── */
+@media (pointer: coarse) {
+  .cursor-glow,
+  .magnetic { display: none !important; }
+  .tilt-card { transform: none !important; }
+  .tilt-card::after { display: none !important; }
 }
 
 /* ─── Form inputs ────────────────────────────────────────────────────── */

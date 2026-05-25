@@ -95,13 +95,55 @@ All vertical spacing snaps to multiples of 8 px. Tailwind units (4 px each) — 
 
 ## Motion language
 
-One coherent set of rules:
+One coherent set of rules. Premium not circus — every motion has a job.
 
-1. **Scroll-reveal** for below-the-fold content blocks. Translation: opacity 0 → 1 and translateY 16 → 0 over 700 ms with `cubic-bezier(.16, 1, .3, 1)`. Triggered by IntersectionObserver inside `<ScrollReveal>` ([src/components/ui/ScrollReveal.tsx](../src/components/ui/ScrollReveal.tsx)).
-2. **Hover** on cards: `transform: translateY(-2px)` + border accent + soft shadow. Transition 200 ms ease-out.
-3. **Hover on primary CTA**: `transform: scale(1.02)`, no shadow change. 150 ms ease-out.
-4. **No long animations.** Nothing above 700 ms. Nothing decorative — every motion has a job.
-5. **`prefers-reduced-motion: reduce` is honored.** Reveal animations skip, hover transforms set to none, transitions zeroed out — defined globally in [globals.css](../src/styles/globals.css).
+### Hard constraints (non-negotiable)
+
+1. **Animate ONLY `transform` + `opacity`.** Layout props (`width`/`height`/`top`/`left`/`margin`/`font-size`) are NEVER animated. CLS budget = 0.
+2. **`prefers-reduced-motion: reduce` disables EVERYTHING.** All keyframes, transitions, and interactive primitives skip to the final state. Defined globally in [globals.css](../src/styles/globals.css).
+3. **`pointer: coarse` (touch) disables cursor-only primitives.** CursorGlow, MagneticButton, TiltCard render disabled/inert on touch devices. Gradients and reveals remain.
+4. **All scroll/mouse handlers are rAF-throttled and passive.** Never block INP. Lazy-init below-fold via IntersectionObserver — never block LCP.
+5. **`will-change` is sparring** — added on hover/intersect, removed after. Never on the whole document.
+6. **`html.reveal-ready` gate** — content is always present in SSR HTML; reveal styles only apply when JS marks the page ready. No-JS crawlers see the full final state.
+
+### Primitives ([src/components/motion/](../src/components/motion/))
+
+Reusable, composable, all honor the constraints above.
+
+| Primitive | Use for | Constraints |
+|---|---|---|
+| `<ScrollReveal>` (v2) | Below-the-fold content fade-in | Directional (up/down/left/right), opacity+transform only, 700ms cubic-bezier(.16,1,.3,1) |
+| `<Stagger>` | Cascading reveal across a grid/list | Wraps children in ScrollReveal with auto-incrementing delay |
+| `<TiltCard>` | Premium hover on cards | 3D rotation on mouse position (rAF), max 6° tilt, sheen sweep on hover, disabled on touch |
+| `<MagneticButton>` | Hero/CTA buttons | Cursor-pull (rAF, capped at 8px), 180ms snap-back, disabled on touch |
+| `<CursorGlow>` | Page-wide brand spotlight | Trailing radial gradient via CSS custom props, mounted in root layout, disabled on touch |
+| `<AuroraGradient>` | Hero section backgrounds | Pure CSS conic+radial drift, blurred. **Limit: ONE per page.** GPU-friendly with will-change:transform |
+| `<GradientText>` | Display headlines only | Pure CSS animated `background-position` sweep on `background-clip:text`. **Limit: 1-2 per page** (paint cost) |
+| `<Parallax>` | Hero subhead, decorative | Scroll-driven (optionally + mouse-driven) translate3d, lazy-init on intersect |
+| `<ScrollProgress>` | Top-of-page progress bar | Single passive scroll listener, rAF-throttled, mounted in root layout |
+
+### Performance budget
+
+- **Aurora**: one per page max (heaviest primitive; blur+rotation on two pseudo-elements). Document on the page.
+- **GradientText**: 1-2 per page; only on H1/H2 display headlines. Animated `background-position` triggers paint; small headline = negligible cost.
+- **CursorGlow**: only one instance, mounted in root layout. Mix-blend-mode + radial gradient = single composited layer.
+- **TiltCard**: GPU-friendly per card on hover; multiple instances fine. `will-change` is only set during hover.
+- **MagneticButton**: same — per-instance hover only.
+
+### Cadence
+
+- Scroll reveal: 700ms.
+- TiltCard: 200ms transform transition.
+- MagneticButton: 180ms snap-back.
+- Aurora: 22–28s drift cycle (subliminal, not distracting).
+- GradientText: 8s sweep cycle.
+- Nothing decorative > 30s; nothing interactive > 700ms.
+
+### Motion don'ts
+
+- Don't compose more than 2 motion primitives on a single element (e.g. TiltCard wrapping a MagneticButton inside a Parallax is overkill).
+- Don't stack two aurora layers on the same section.
+- Don't animate gradient text on body copy — display headlines only.
 
 ## Imagery
 
