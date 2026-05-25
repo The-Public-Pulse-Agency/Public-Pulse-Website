@@ -201,7 +201,7 @@ export function articleSchema(input: ArticleSchemaInput) {
   };
 }
 
-// ─── FAQPage ────────────────────────────────────────────────────────────
+// ─── FAQPage (with Speakable for voice assistants) ───────────────────────
 
 export type Faq = { q: string; a: string };
 
@@ -209,11 +209,198 @@ export function faqPageSchema(faqs: Faq[]) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
+    inLanguage: SITE.language,
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: [".answer-block", "dl > div dt", "dl > div dd"],
+    },
     mainEntity: faqs.map((f) => ({
       "@type": "Question",
       name: f.q,
-      acceptedAnswer: { "@type": "Answer", text: f.a },
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: f.a,
+        inLanguage: SITE.language,
+      },
     })),
+  };
+}
+
+// ─── WebPage (per-page meta for entity stitching) ────────────────────────
+
+export type WebPageInput = {
+  /** Page path under SITE.url. */
+  path: string;
+  /** Page headline / title. */
+  name: string;
+  description: string;
+  /** Optional list of glossary slugs the page mentions inline. */
+  mentions?: string[];
+  /** Optional canonical entities the page is "about" (Service slug, Place name). */
+  about?: string[];
+  /** ISO datetime for first publish + last modified. */
+  datePublished?: string;
+  dateModified?: string;
+  /** Keywords (≤10 short phrases). */
+  keywords?: string[];
+  /** Author name (defaults to Org). */
+  author?: string;
+  /** Reviewer name for E-E-A-T (defaults to Org). */
+  reviewedBy?: string;
+};
+
+export function webPageSchema(input: WebPageInput) {
+  const url = absoluteUrl(input.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: input.name,
+    description: input.description,
+    inLanguage: SITE.language,
+    isPartOf: { "@id": WEBSITE_ID },
+    primaryImageOfPage: {
+      "@type": "ImageObject",
+      url: absoluteUrl(
+        `/og?title=${encodeURIComponent(input.name)}&eyebrow=Public%20Pulse%20%C2%B7%20Dhaka`
+      ),
+      width: 1200,
+      height: 630,
+    },
+    publisher: { "@id": ORG_ID },
+    author: {
+      "@type": "Organization",
+      name: input.author ?? SITE.name,
+      url: SITE.url,
+    },
+    reviewedBy: {
+      "@type": "Organization",
+      name: input.reviewedBy ?? SITE.name,
+      url: SITE.url,
+    },
+    ...(input.datePublished && { datePublished: input.datePublished }),
+    ...(input.dateModified && { dateModified: input.dateModified }),
+    ...(input.keywords &&
+      input.keywords.length > 0 && { keywords: input.keywords.join(", ") }),
+    ...(input.mentions &&
+      input.mentions.length > 0 && {
+        mentions: input.mentions.map((slug) => ({
+          "@type": "DefinedTerm",
+          "@id": `${absoluteUrl(`/glossary/${slug}`)}#term`,
+        })),
+      }),
+    ...(input.about &&
+      input.about.length > 0 && {
+        about: input.about.map((name) => ({
+          "@type": "Thing",
+          name,
+        })),
+      }),
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: [".answer-block"],
+    },
+    potentialAction: {
+      "@type": "ReadAction",
+      target: [url],
+    },
+  };
+}
+
+// ─── CollectionPage (for index pages like /services, /locations, etc.) ───
+
+export function collectionPageSchema(input: {
+  path: string;
+  name: string;
+  description: string;
+  items: { url: string; name: string }[];
+}) {
+  const url = absoluteUrl(input.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${url}#collection`,
+    url,
+    name: input.name,
+    description: input.description,
+    inLanguage: SITE.language,
+    isPartOf: { "@id": WEBSITE_ID },
+    publisher: { "@id": ORG_ID },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: input.items.length,
+      itemListElement: input.items.map((it, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: it.url.startsWith("http") ? it.url : absoluteUrl(it.url),
+        name: it.name,
+      })),
+    },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: [".answer-block"],
+    },
+  };
+}
+
+// ─── ProfessionalService (refinement of LocalBusiness) ───────────────────
+
+export function professionalServiceSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "@id": `${SITE.url}#professionalservice`,
+    name: SITE.name,
+    url: SITE.url,
+    image: absoluteUrl("/og-image.jpg"),
+    description: SITE.description,
+    telephone: SITE.contact.phone,
+    email: SITE.contact.email,
+    priceRange: "$$",
+    knowsAbout: [
+      "digital marketing",
+      "political PR",
+      "social media management",
+      "paid advertising",
+      "search engine optimization",
+      "content production",
+      "brand building",
+      "hospitality marketing",
+      "analytics",
+      "influencer marketing",
+      "Bangladesh",
+      "Dhaka",
+      "Cox's Bazar",
+      "Bengali language marketing",
+    ],
+    serviceArea: [
+      { "@type": "Country", name: "Bangladesh" },
+      { "@type": "AdministrativeArea", name: "Dhaka Division" },
+      { "@type": "City", name: "Dhaka" },
+      { "@type": "City", name: "Chattogram" },
+      { "@type": "City", name: "Sylhet" },
+      { "@type": "City", name: "Cox's Bazar" },
+    ],
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Public Pulse services",
+      itemListElement: [
+        "Political PR",
+        "Social Media Management",
+        "Paid Ads",
+        "Content Production",
+        "SEO",
+        "Hospitality Marketing",
+        "Brand Building",
+        "Analytics",
+        "Influencer Marketing",
+      ].map((s) => ({
+        "@type": "OfferCatalog",
+        name: s,
+      })),
+    },
+    parentOrganization: { "@id": ORG_ID },
   };
 }
 

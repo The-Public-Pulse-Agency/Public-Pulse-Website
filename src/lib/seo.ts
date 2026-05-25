@@ -6,19 +6,21 @@ type BuildMetadataInput = {
   description: string;
   path: string;
   ogImage?: string;
-  ogType?: "website" | "article";
+  ogType?: "website" | "article" | "profile";
   publishedTime?: string;
   modifiedTime?: string;
   authors?: string[];
   section?: string;
   tags?: string[];
   noIndex?: boolean;
+  /** Eyebrow text for the dynamic OG factory (defaults to chip text). */
+  ogEyebrow?: string;
+  /** When set, uses the dynamic /og?title=&eyebrow= factory instead of the static OG. */
+  useDynamicOg?: boolean;
 };
 
 const DEFAULT_OG = "/og-image.jpg";
 
-// 60 / 158 char SEO budgets — runtime-warn (not throw) so we still ship if a
-// page slightly overflows; the dev sees the warning in the build log.
 function warnIfLong(label: string, value: string, max: number) {
   if (value.length > max && process.env.NODE_ENV !== "production") {
     console.warn(
@@ -32,7 +34,7 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
     title,
     description,
     path,
-    ogImage = DEFAULT_OG,
+    ogImage,
     ogType = "website",
     publishedTime,
     modifiedTime,
@@ -40,22 +42,50 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
     section,
     tags,
     noIndex,
+    ogEyebrow,
+    useDynamicOg = !ogImage, // if no explicit OG image supplied, generate one
   } = input;
 
   warnIfLong("title", title, 60);
   warnIfLong("description", description, 160);
 
   const canonical = absoluteUrl(path);
-  const image = ogImage.startsWith("http") ? ogImage : absoluteUrl(ogImage);
+  const resolvedOg = useDynamicOg
+    ? absoluteUrl(
+        `/og?title=${encodeURIComponent(title)}&eyebrow=${encodeURIComponent(
+          ogEyebrow ?? "Public Pulse · Dhaka"
+        )}`
+      )
+    : (ogImage ?? DEFAULT_OG).startsWith("http")
+    ? (ogImage ?? DEFAULT_OG)
+    : absoluteUrl(ogImage ?? DEFAULT_OG);
 
   return {
     metadataBase: new URL(SITE.url),
     title,
     description,
-    alternates: { canonical },
+    keywords: tags?.join(", "),
+    applicationName: SITE.name,
+    creator: SITE.name,
+    publisher: SITE.name,
+    referrer: "strict-origin-when-cross-origin",
+    formatDetection: { email: false, address: false, telephone: false },
+    alternates: {
+      canonical,
+      languages: {
+        en: canonical,
+        "x-default": canonical,
+      },
+    },
     robots: noIndex
       ? { index: false, follow: false }
-      : { index: true, follow: true, "max-image-preview": "large" },
+      : {
+          index: true,
+          follow: true,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+          "max-video-preview": -1,
+        },
     openGraph: {
       type: ogType,
       url: canonical,
@@ -63,7 +93,7 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
       description,
       siteName: SITE.name,
       locale: SITE.locale,
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      images: [{ url: resolvedOg, width: 1200, height: 630, alt: title }],
       ...(ogType === "article" && {
         publishedTime,
         modifiedTime: modifiedTime ?? publishedTime,
@@ -76,12 +106,26 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [resolvedOg],
+      site: SITE.twitter,
+      creator: SITE.twitter,
     },
     other: {
+      // Geo meta (legacy but still consumed by some crawlers)
       "geo.region": SITE.contact.address.region,
       "geo.placename": SITE.contact.address.locality,
       "geo.position": `${SITE.contact.address.lat};${SITE.contact.address.lng}`,
+      "ICBM": `${SITE.contact.address.lat}, ${SITE.contact.address.lng}`,
+      // Mobile-app hints
+      "apple-mobile-web-app-capable": "yes",
+      "apple-mobile-web-app-status-bar-style": "black-translucent",
+      "apple-mobile-web-app-title": SITE.shortName,
+      "mobile-web-app-capable": "yes",
+      "msapplication-TileColor": "#0A0A0A",
+      "msapplication-tap-highlight": "no",
+      // Color scheme + theme hints (browsers tint UI chrome to match)
+      "color-scheme": "light",
+      "theme-color": "#0A0A0A",
     },
   };
 }

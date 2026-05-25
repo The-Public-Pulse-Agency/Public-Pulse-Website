@@ -4,8 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, itemListSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { getPublishedCaseStudies } from "@/lib/data/case-studies";
 
@@ -35,29 +34,17 @@ export default async function CaseStudiesIndex() {
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">Case studies</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink">
-              Receipts. <span className="text-brand-orange">Not vibes.</span>
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">
-              Real engagement results — metrics-led, dated, named where the client has approved
-              attribution; industry-described where NDAs apply.
-            </p>
-          </div>
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock>
-              Public Pulse case studies are published as Review + Service JSON-LD with the metric,
-              the time window, the industry, and the engagement summary. Named where the client
-              has approved; otherwise industry-only. No anonymized vanity numbers — every metric
-              ties to a real engagement.
-            </AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip="Case studies"
+        title={
+          <>
+            Receipts. <span className="text-brand-orange">Not vibes.</span>
+          </>
+        }
+        lead="Real engagement results — metrics-led, dated, named where the client has approved attribution; industry-described where NDAs apply."
+        answer="Public Pulse case studies are published as Review + Service JSON-LD with the metric, the time window, the industry, and the engagement summary. Named where the client has approved; otherwise industry-only. No anonymized vanity numbers — every metric ties to a real engagement."
+      />
 
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>

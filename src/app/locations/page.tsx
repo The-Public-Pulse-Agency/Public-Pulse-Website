@@ -4,8 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, itemListSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { LOCATIONS } from "@/lib/taxonomies/locations";
 
@@ -34,29 +33,17 @@ export default function LocationsIndex() {
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">Locations</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink">
-              Across <span className="text-brand-orange">Bangladesh</span>.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">
-              Dhaka HQ. Active engagements in {LOCATIONS.length} cities. Real local context — not
-              copy-pasted templates.
-            </p>
-          </div>
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock>
-              Public Pulse Agency runs digital marketing and political PR engagements across
-              Bangladesh — Dhaka, Chattogram, Sylhet, Khulna, Rajshahi, Cox&apos;s Bazar, Gazipur,
-              Narayanganj and Comilla. Each city has its own LocalBusiness page grounded in real
-              local industry mix and consumer behaviour, not generic templates.
-            </AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip="Locations"
+        title={
+          <>
+            Across <span className="text-brand-orange">Bangladesh</span>.
+          </>
+        }
+        lead={`Dhaka HQ. Active engagements in ${LOCATIONS.length} cities. Real local context — not copy-pasted templates.`}
+        answer="Public Pulse Agency runs digital marketing and political PR engagements across Bangladesh — Dhaka, Chattogram, Sylhet, Khulna, Rajshahi, Cox's Bazar, Gazipur, Narayanganj and Comilla. Each city has its own LocalBusiness page grounded in real local industry mix and consumer behaviour, not generic templates."
+      />
 
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>

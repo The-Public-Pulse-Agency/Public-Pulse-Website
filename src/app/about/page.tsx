@@ -4,8 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { aboutPageSchema, breadcrumbSchema, personSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SITE } from "@/lib/site";
@@ -61,28 +60,17 @@ export default function AboutPage() {
     <>
       <JsonLd data={[aboutPageSchema(), breadcrumbSchema(crumbs)]} />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">Studio</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink">
-              A small studio <span className="text-brand-orange">built</span> for Bangladesh.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">
-              Founded in Dhaka in 2024 to run the kind of integrated digital marketing and political
-              PR that Bangladeshi brands were stitching together from three or four vendors.
-            </p>
-          </div>
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock>
-              Public Pulse Agency is a Dhaka-based 360° digital marketing and political PR studio,
-              founded in 2024. We serve 50+ active clients across 10+ industries with an average
-              engagement lift of 300%+ in the first 90 days.
-            </AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip="Studio"
+        title={
+          <>
+            A small studio <span className="text-brand-orange">built</span> for Bangladesh.
+          </>
+        }
+        lead="Founded in Dhaka in 2024 to run the kind of integrated digital marketing and political PR that Bangladeshi brands were stitching together from three or four vendors."
+        answer="Public Pulse Agency is a Dhaka-based 360° digital marketing and political PR studio, founded in 2024. We serve 50+ active clients across 10+ industries with an average engagement lift of 300%+ in the first 90 days, billed in BDT from our registered Dhaka entity."
+      />
 
       <section className="border-y border-ink bg-paper-alt py-20 md:py-28">
         <Container>

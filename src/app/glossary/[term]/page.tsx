@@ -6,8 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, definedTermSchema, faqPageSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { GLOSSARY, getGlossaryTerm } from "@/lib/taxonomies/glossary";
 
@@ -85,25 +84,21 @@ export default async function TermPage({
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-4xl">
-            <span className="chip chip-orange">{t.area}</span>
-            <h1 className="mt-6 text-display font-extrabold tracking-tight text-ink">
-              {t.name}
-            </h1>
+      <GradientHero
+        crumbs={crumbs}
+        chip={t.area}
+        title={
+          <>
+            {t.name}
             {t.nameBn && (
-              <p className="mt-3 text-h3 font-medium text-ink/55">{t.nameBn}</p>
+              <span className="block text-h2 font-medium text-ink/55 mt-3">{t.nameBn}</span>
             )}
-            <p className="mt-6 text-lead text-ink/70">{t.definition}</p>
-          </div>
-
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock question={`What is ${t.name}?`}>{t.definition}</AnswerBlock>
-          </div>
-        </Container>
-      </section>
+          </>
+        }
+        lead={t.definition}
+        answer={t.definition}
+        answerQuestion={`What is ${t.name}?`}
+      />
 
       <section className="border-t border-ink bg-paper py-16 md:py-20">
         <Container>

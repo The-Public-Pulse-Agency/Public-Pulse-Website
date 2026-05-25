@@ -1,0 +1,6 @@
+# publicpulse.com.bd — Authorized Digital Sellers (IAB ads.txt)
+# https://iabtechlab.com/ads-txt/
+# We do not currently sell ad inventory. This file is intentionally minimal
+# to signal that no third-party seller is authorized.
+
+contact=info@publicpulse.com.bd

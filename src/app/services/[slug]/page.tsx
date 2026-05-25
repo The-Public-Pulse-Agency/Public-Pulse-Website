@@ -10,8 +10,7 @@ import {
   serviceSchema,
 } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SERVICES, getService } from "@/lib/services";
@@ -73,35 +72,20 @@ export default async function ServiceDetailPage({
         ]}
       />
 
-      {/* ═══ HERO ════════════════════════════════════════════════════════ */}
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">{service.category}</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink">
-              {service.name}
-              <span className="text-brand-orange">.</span>
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">{service.oneLiner}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/contact" className="btn btn-primary">
-                Start a project
-                <ArrowUpRight className="h-4 w-4" aria-hidden />
-              </Link>
-              <Link href="#deliverables" className="btn btn-secondary">
-                What&rsquo;s included
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock question={`What is ${service.shortName} at Public Pulse Agency?`}>
-              {content.answer}
-            </AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip={service.category}
+        title={
+          <>
+            {service.name}
+            <span className="text-brand-orange">.</span>
+          </>
+        }
+        lead={service.oneLiner}
+        answer={content.answer}
+        answerQuestion={`What is ${service.shortName} at Public Pulse Agency?`}
+        primaryCtaLabel="Start a project"
+      />
 
       {/* ═══ INTRO ═══════════════════════════════════════════════════════ */}
       <section className="border-y border-ink bg-paper-alt py-16 md:py-20">

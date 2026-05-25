@@ -4,8 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, definedTermSetSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { GLOSSARY } from "@/lib/taxonomies/glossary";
 
@@ -40,29 +39,17 @@ export default function GlossaryIndex() {
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">Glossary</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink">
-              Words we <span className="text-brand-orange">use</span>.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">
-              The vocabulary of digital marketing and political PR — defined for the Bangladesh
-              market, in plain English (and Bangla where relevant).
-            </p>
-          </div>
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock>
-              The Public Pulse glossary defines the working vocabulary of digital marketing and
-              political PR: AEO, GEO, JSON-LD, FAQPage Schema, IndexNow, Meta Conversions API,
-              ROAS, CTR, Political PR, Narrative Engineering, Opposition Research, llms.txt,
-              robots.txt, Speakable. Each term has its own page with a longer explanation.
-            </AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip="Glossary"
+        title={
+          <>
+            Words we <span className="text-brand-orange">use</span>.
+          </>
+        }
+        lead="The vocabulary of digital marketing and political PR — defined for the Bangladesh market, in plain English (and Bangla where relevant)."
+        answer="The Public Pulse glossary defines the working vocabulary of digital marketing and political PR: AEO, GEO, JSON-LD, FAQPage Schema, IndexNow, Meta Conversions API, ROAS, CTR, Political PR, Narrative Engineering, Opposition Research, llms.txt, robots.txt, Speakable. Each term has its own page with a longer explanation."
+      />
 
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>

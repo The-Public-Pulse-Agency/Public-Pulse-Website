@@ -4,8 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, itemListSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { INDUSTRIES } from "@/lib/taxonomies/industries";
 
@@ -34,29 +33,17 @@ export default function IndustriesIndex() {
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">Industries</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink">
-              Verticals we <span className="text-brand-orange">know</span>.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">
-              Ten verticals we&rsquo;ve worked across the Bangladesh economy — each with its own
-              dominant channels, priorities and tested playbooks.
-            </p>
-          </div>
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock>
-              Public Pulse Agency runs vertical-tailored digital marketing across the Bangladesh
-              economy: real estate, e-commerce, restaurants &amp; food, healthcare, education, NGO
-              &amp; development, government, RMG &amp; garments, hospitality, fintech. Each
-              industry page surfaces the priorities and aligned services for that vertical.
-            </AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip="Industries"
+        title={
+          <>
+            Verticals we <span className="text-brand-orange">know</span>.
+          </>
+        }
+        lead="Ten verticals we've worked across the Bangladesh economy — each with its own dominant channels, priorities and tested playbooks."
+        answer="Public Pulse Agency runs vertical-tailored digital marketing across the Bangladesh economy: real estate, e-commerce, restaurants & food, healthcare, education, NGO & development, government, RMG & garments, hospitality, fintech. Each industry page surfaces the priorities and aligned services for that vertical."
+      />
 
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>

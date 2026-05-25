@@ -4,8 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, itemListSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { COMPARES } from "@/lib/content/compares";
 
@@ -35,29 +34,17 @@ export default function CompareIndex() {
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">Compare</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink">
-              Decision <span className="text-brand-orange">matrices</span>.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">
-              Honest side-by-side comparisons for Bangladesh marketing decisions — no agency
-              boosterism, no straw-man takedowns.
-            </p>
-          </div>
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock>
-              The Public Pulse compare library publishes side-by-side decision matrices for the
-              calls Bangladesh marketing teams have to make — in-house team vs integrated agency,
-              Facebook Ads vs Google Ads, channel-by-channel cost/benefit. Each compare ends with
-              an honest recommendation, not an agency pitch.
-            </AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip="Compare"
+        title={
+          <>
+            Decision <span className="text-brand-orange">matrices</span>.
+          </>
+        }
+        lead="Honest side-by-side comparisons for Bangladesh marketing decisions — no agency boosterism, no straw-man takedowns."
+        answer="The Public Pulse compare library publishes side-by-side decision matrices for the calls Bangladesh marketing teams have to make — in-house team vs integrated agency, Facebook Ads vs Google Ads, channel-by-channel cost/benefit. Each compare ends with an honest recommendation, not an agency pitch."
+      />
 
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowUpRight, ArrowRight, CheckCircle2 } from "lucide-react";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import type { Crumb } from "@/lib/schema";
 
@@ -67,31 +66,14 @@ export function ProgrammaticPage(props: Props) {
 
   return (
     <article>
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-16">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-5xl">
-            <span className="chip chip-orange">{chip}</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink leading-[0.95]">
-              {title}
-            </h1>
-            <p className="mt-6 max-w-2xl text-lead text-ink/70">{lead}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/contact" className="btn btn-primary">
-                Book a free audit
-                <ArrowUpRight className="h-4 w-4" aria-hidden />
-              </Link>
-              <Link href="/services" className="btn btn-secondary">
-                See all services
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock question={answerQuestion}>{answer}</AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip={chip}
+        title={title}
+        lead={lead}
+        answer={answer}
+        answerQuestion={answerQuestion}
+      />
 
       {children}
 

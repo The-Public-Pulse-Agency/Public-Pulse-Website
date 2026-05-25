@@ -11,8 +11,7 @@ import {
   faqPageSchema,
 } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { POSTS, getPost, DIGITAL_MARKETING_2026_CONTENT } from "@/lib/posts";
 
@@ -95,29 +94,14 @@ export default async function BlogPostPage({
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-10 md:pt-14">
-          <Breadcrumbs crumbs={crumbs} />
-          <header className="mx-auto mt-8 max-w-3xl">
-            <span className="chip chip-orange">{post.category}</span>
-            <h1 className="mt-6 text-display font-extrabold tracking-tight text-ink">
-              {post.title}
-            </h1>
-            <p className="mt-4 text-lead text-ink/70">{post.description}</p>
-            <div className="mt-5 flex items-center gap-4 text-meta text-ink/55">
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-                {dateStr}
-              </span>
-              <span aria-hidden>·</span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" aria-hidden />
-                {post.readMinutes} min
-              </span>
-            </div>
-          </header>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip={`${post.category} · ${dateStr} · ${post.readMinutes} min`}
+        title={post.title}
+        lead={post.description}
+        answer={content.answer}
+        answerQuestion={post.title}
+      />
 
       <section className="bg-paper">
         <Container className="pt-8">
@@ -138,8 +122,7 @@ export default async function BlogPostPage({
       <section className="bg-paper py-12 md:py-16">
         <Container>
           <div className="mx-auto max-w-3xl">
-            <AnswerBlock>{content.answer}</AnswerBlock>
-            <div className="mt-10 space-y-10">
+            <div className="space-y-10">
               {content.sections.map((s) => (
                 <section key={s.heading}>
                   <h2 className="text-h2 font-extrabold tracking-tight text-ink">{s.heading}</h2>

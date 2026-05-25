@@ -1,0 +1,7 @@
+# Public Pulse Agency — security contact (RFC 9116)
+Contact: mailto:info@publicpulse.com.bd
+Contact: tel:+8801717714676
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en, bn
+Canonical: https://publicpulse.com.bd/.well-known/security.txt
+Policy: https://publicpulse.com.bd/about

@@ -1,0 +1,23 @@
+/* TEAM */
+Studio: Public Pulse Agency
+Location: Dhaka, Bangladesh
+Contact: info@publicpulse.com.bd
+Site: https://publicpulse.com.bd
+
+/* CREDITS */
+Concept: Public Pulse Agency
+Development: Public Pulse Agency
+AI co-author: Anthropic Claude (Opus 4.7)
+
+/* SITE */
+Languages: English, Bengali (planned)
+Standards: HTML5, CSS3, ES2024, Schema.org, Open Graph, llms.txt
+Software: Next.js 16, SST v3 (OpenNext) on AWS Lambda + CloudFront,
+          Tailwind CSS, Drizzle ORM, Neon Postgres, Resend, BetterAuth
+
+/* HIRING */
+Studio: We hire in Dhaka. Open roles published at
+        https://publicpulse.com.bd/about (when applicable).
+
+/* LAST UPDATED */
+2026-05-25

@@ -6,8 +6,7 @@ import { Clock, ArrowRight } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, faqPageSchema, howToSchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { AnswerBlock } from "@/components/seo/AnswerBlock";
-import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { GUIDES, getGuide } from "@/lib/content/guides";
 import { getGlossaryTerm } from "@/lib/taxonomies/glossary";
@@ -86,25 +85,14 @@ export default async function GuidePage({
         ]}
       />
 
-      <section className="bg-paper">
-        <Container className="pt-10 pb-14 md:pt-14 md:pb-20">
-          <Breadcrumbs crumbs={crumbs} />
-          <div className="mt-8 max-w-4xl">
-            <span className="chip chip-orange">HowTo</span>
-            <h1 className="mt-6 text-display font-extrabold tracking-tight text-ink">
-              {g.title}
-            </h1>
-            <p className="mt-6 text-lead text-ink/70">{g.description}</p>
-            <div className="mt-5 inline-flex items-center gap-1.5 text-meta text-ink/55">
-              <Clock className="h-3.5 w-3.5" aria-hidden />
-              Estimated time {g.totalTime.replace("PT", "").toLowerCase()}
-            </div>
-          </div>
-          <div className="mt-12 max-w-3xl">
-            <AnswerBlock>{g.answer}</AnswerBlock>
-          </div>
-        </Container>
-      </section>
+      <GradientHero
+        crumbs={crumbs}
+        chip={`HowTo · ${g.totalTime.replace("PT", "").toLowerCase()}`}
+        title={g.title}
+        lead={g.description}
+        answer={g.answer}
+        answerQuestion={g.title}
+      />
 
       <section className="border-t border-ink bg-paper-alt py-16 md:py-20">
         <Container>
