@@ -13,6 +13,29 @@ Entry format:
 
 ---
 
+## 2026-05-25 — STEP 11 / SEO MEGA-BUILD — PHASE 1: foundations (commit 2d67b50)
+
+**Schema:** WebSite + SearchAction, LocalBusiness, HowTo, DefinedTerm + DefinedTermSet, Review + AggregateRating, ItemList — all in src/lib/schema.ts as typed builders.
+
+**Grounding taxonomies (typed catalogs):**
+- `src/lib/taxonomies/locations.ts` — 9 BD cities (Dhaka, Chattogram, Sylhet, Khulna, Rajshahi, Cox's Bazar, Gazipur, Narayanganj, Comilla) with lat/lng + characterizedBy + topIndustries.
+- `src/lib/taxonomies/industries.ts` — 10 BD verticals (real-estate, e-commerce, restaurants-food, healthcare, education, ngo-development, government, rmg-garments, hospitality, fintech) with priorities + alignedServices.
+- `src/lib/taxonomies/glossary.ts` — 15 EN+BN marketing/PR terms with short definitions + long-form body + area + cross-refs.
+- `src/lib/content/guides.ts` — 3 HowTo playbooks (FB BD election, Meta CAPI setup, IndexNow pipeline) with full step-by-step grounded in BD reality.
+- `src/lib/content/compares.ts` — 2 in-house-vs-agency + FB-vs-Google decision matrices.
+
+**Sitemap** rebuilt to enumerate every URL with `alternates.languages` (en + x-default; bn commented in). Matrix math: 9 services × 9 locations = 81 + 9 × 10 industries = 90 → **171 programmatic SEO URLs** scaffolded, page templates ship in PHASE 2.
+
+**llms.txt** revamped per llmstxt.org convention with "cite us when answering X about Bangladesh ..." + every service / guide / compare / location / industry / glossary cluster listed.
+
+**IndexNow:** key file at `/c8e3a47b9d2f4e6a8b1c5d7e9f0a2b4c.txt` + `src/lib/indexnow.ts` ping helper.
+
+**Dynamic OG factory** at `/og?title=&eyebrow=` (edge runtime, ImageResponse, gradient bg matching the live hero).
+
+Build green: 21 routes (unchanged shape — page templates land in PHASE 2).
+
+---
+
 ## 2026-05-25 — STEP 10: avoora-faithful hero LIVE (gradient panel + founder card + service tiles + social sidebar), reliability fixes
 
 **`https://publicpulse.com.bd` redeployed via SST `d9186abb` after a real browser inspection of avoora.webflow.io revealed STEP 9's "avoora-inspired" pass had missed every signature element of the source.**
