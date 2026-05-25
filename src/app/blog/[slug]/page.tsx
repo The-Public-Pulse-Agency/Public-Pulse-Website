@@ -7,16 +7,15 @@ import { ArrowUpRight, CalendarDays, Clock, ExternalLink, MessageCircleMore, Sha
 import { buildMetadata } from "@/lib/seo";
 import {
   articleSchema,
+  BRAND_BYLINE,
   breadcrumbSchema,
   faqPageSchema,
-  personSchema,
 } from "@/lib/schema";
 import { absoluteUrl, SITE } from "@/lib/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import {
-  getAuthorBySlug,
   getCategories,
   getPostBySlug,
   getPublishedPosts,
@@ -81,9 +80,8 @@ export default async function BlogPostPage({
   const post = await getPostBySlug(slug, "en");
   if (!post) notFound();
 
-  const [categories, author, related] = await Promise.all([
+  const [categories, related] = await Promise.all([
     getCategories(),
-    post.authorSlug ? getAuthorBySlug(post.authorSlug) : Promise.resolve(null),
     getRelatedPosts(post.slug, post.categorySlug, "en", 3),
   ]);
 
@@ -165,6 +163,7 @@ export default async function BlogPostPage({
   const shareUrl = absoluteUrl(`/blog/${post.slug}`);
   const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`${post.title} — ${shareUrl}`)}`;
 
+  // Article schema author = the Organization. No Person. Brand owns the byline.
   const schemas: object[] = [
     articleSchema({
       slug: post.slug,
@@ -179,28 +178,10 @@ export default async function BlogPostPage({
       section: category?.nameEn ?? post.categorySlug,
       tags,
       wordCount,
-      ...(author && {
-        author: {
-          name: author.name,
-          url: `/about#${author.slug}`,
-          jobTitle: author.role,
-          sameAs: (author.sameAs as string[] | null) ?? undefined,
-        },
-      }),
     }),
     breadcrumbSchema(crumbs),
   ];
   if (faqs.length > 0) schemas.push(faqPageSchema(faqs));
-  if (author) {
-    schemas.push(
-      personSchema({
-        name: author.name,
-        jobTitle: author.role,
-        image: author.image ?? undefined,
-        sameAs: (author.sameAs as string[] | null) ?? undefined,
-      })
-    );
-  }
 
   return (
     <article>
@@ -242,45 +223,38 @@ export default async function BlogPostPage({
         <Container>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-12">
             <div className="lg:col-span-8">
-              {/* Author / meta byline */}
-              {author && (
-                <div className="flex flex-wrap items-center gap-4 border-b border-ink/10 pb-6">
-                  {author.image && (
-                    <Image
-                      src={author.image}
-                      alt={author.name}
-                      width={56}
-                      height={56}
-                      className="h-14 w-14 rounded-full border border-ink/15 object-cover"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-ink">
-                      <Link href={`/about#${author.slug}`} className="hover:text-brand-orange">
-                        {author.name}
-                      </Link>
-                    </p>
-                    <p className="text-xs text-ink/55">{author.role}</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-wider text-ink/55">
-                    {publishedDate && (
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" aria-hidden />
-                        Published {publishedDate}
-                      </span>
-                    )}
-                    {updatedIsNewer && updatedDate && (
-                      <span className="inline-flex items-center gap-1">
-                        · Updated {updatedDate}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" aria-hidden />
-                      {post.readingTime} min
-                    </span>
-                  </div>
+              {/* Brand byline + meta — brand-forward, no named individuals */}
+              <div className="flex flex-wrap items-center gap-4 border-b border-ink/10 pb-6">
+                <div
+                  className="grid h-12 w-12 place-items-center rounded-full bg-ink text-paper text-sm font-extrabold tracking-tight"
+                  aria-hidden="true"
+                >
+                  PP
                 </div>
-              )}
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-ink">
+                    <Link href="/about" className="hover:text-brand-orange">
+                      {BRAND_BYLINE.name}
+                    </Link>
+                  </p>
+                  <p className="text-xs text-ink/55">{BRAND_BYLINE.role}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-wider text-ink/55">
+                  {publishedDate && (
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                      Published {publishedDate}
+                    </span>
+                  )}
+                  {updatedIsNewer && updatedDate && (
+                    <span className="inline-flex items-center gap-1">· Updated {updatedDate}</span>
+                  )}
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" aria-hidden />
+                    {post.readingTime} min
+                  </span>
+                </div>
+              </div>
 
               {/* Body */}
               <div className="mt-8">

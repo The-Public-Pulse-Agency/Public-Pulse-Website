@@ -3,11 +3,19 @@
 // the graph together across pages.
 
 import { SITE, absoluteUrl } from "./site";
+import { PULSE_GROUP } from "./group";
+import { SERVICES } from "./services";
 
 const ORG_ID = SITE.organizationId;
 const WEBSITE_ID = `${SITE.url}/#website`;
 
-// ─── Site-wide: Organization (with Pulse Group as parent) ───────────────
+// ─── Site-wide: Organization (knowledge-panel-ready, BRAND-ONLY) ────────
+//
+// HARD RULE: NO `founder`, NO `employee`, NO Person references. The brand
+// is the entity. Owners exist (privately, on the legal entity); the agency
+// presents itself as an organization, not as a personality. Adding a named
+// founder here would change the knowledge-graph shape and is intentionally
+// out of scope.
 
 export function organizationSchema() {
   return {
@@ -15,28 +23,78 @@ export function organizationSchema() {
     "@type": "Organization",
     "@id": ORG_ID,
     name: SITE.name,
+    legalName: SITE.name,
+    alternateName: ["Public Pulse", "Public Pulse Agency Bangladesh"],
     url: SITE.url,
-    logo: absoluteUrl("/og-image.jpg"),
+    logo: {
+      "@type": "ImageObject",
+      url: absoluteUrl("/og-image.jpg"),
+      width: 1200,
+      height: 630,
+    },
+    image: absoluteUrl("/og-image.jpg"),
     description: SITE.description,
+    slogan: "Reach that moves. Narratives that hold.",
+    foundingDate: "2024",
+    foundingLocation: {
+      "@type": "Place",
+      name: `${SITE.contact.address.locality}, Bangladesh`,
+    },
     email: SITE.contact.email,
     telephone: SITE.contact.phone,
     address: {
       "@type": "PostalAddress",
       addressLocality: SITE.contact.address.locality,
+      addressRegion: SITE.contact.address.region,
       addressCountry: SITE.contact.address.country,
     },
-    sameAs: [SITE.social.facebook, SITE.social.instagram],
-    foundingDate: "2024",
-    areaServed: { "@type": "Country", name: "Bangladesh" },
+    areaServed: [
+      { "@type": "Country", name: "Bangladesh" },
+      { "@type": "AdministrativeArea", name: "South Asia" },
+    ],
+    knowsAbout: [
+      // The 9 services we deliver — what Google should associate this entity with.
+      ...SERVICES.filter((s) => s.ready).map((s) => s.serviceType),
+      "Digital marketing in Bangladesh",
+      "Political PR",
+      "Answer Engine Optimization",
+      "Generative Engine Optimization",
+    ],
+    knowsLanguage: ["en", "bn"],
     contactPoint: [
       {
         "@type": "ContactPoint",
+        contactType: "sales",
         telephone: SITE.contact.phone,
+        email: SITE.contact.email,
+        areaServed: "BD",
+        availableLanguage: ["en", "bn"],
+      },
+      {
+        "@type": "ContactPoint",
         contactType: "customer service",
+        telephone: SITE.contact.phone,
+        url: SITE.contact.whatsapp,
         areaServed: "BD",
         availableLanguage: ["en", "bn"],
       },
     ],
+    sameAs: [
+      SITE.social.facebook,
+      SITE.social.instagram,
+      // Authoritative external profiles for entity disambiguation can be
+      // appended here as they're created (LinkedIn, Wikidata, etc.).
+    ].filter(Boolean),
+    identifier: [
+      { "@type": "PropertyValue", propertyID: "BIN", value: SITE.contact.legal.bin },
+      { "@type": "PropertyValue", propertyID: "TradeLicense", value: SITE.contact.legal.tradeLicense },
+    ],
+    parentOrganization: {
+      "@type": "Organization",
+      "@id": PULSE_GROUP.id,
+      name: PULSE_GROUP.name,
+      url: PULSE_GROUP.url,
+    },
   };
 }
 
@@ -169,38 +227,23 @@ export type ArticleSchemaInput = {
   pathPrefix?: string;
   /** Article language (defaults to site default). */
   inLanguage?: string;
-  /** Legacy: simple author name (falls back to Organization). */
-  authorName?: string;
-  /** Preferred: Person reference for E-E-A-T. Set when post has a known author. */
-  author?: {
-    name: string;
-    /** Public profile URL — usually /authors/<slug>. */
-    url?: string;
-    jobTitle?: string;
-    sameAs?: string[];
-  };
   section: string;
   tags?: string[];
   wordCount?: number;
 };
 
+// Brand byline — used for both the visual byline and the Article schema's
+// author/publisher. The site is brand-forward: no named individuals.
+export const BRAND_BYLINE = {
+  name: SITE.name,
+  role: "Editorial team",
+} as const;
+
 export function articleSchema(input: ArticleSchemaInput) {
   const prefix = input.pathPrefix ?? "/blog";
   const url = absoluteUrl(`${prefix}/${input.slug}`);
-  const author = input.author
-    ? {
-        "@type": "Person",
-        name: input.author.name,
-        ...(input.author.url && { url: absoluteUrl(input.author.url) }),
-        ...(input.author.jobTitle && { jobTitle: input.author.jobTitle }),
-        ...(input.author.sameAs && input.author.sameAs.length > 0 && { sameAs: input.author.sameAs }),
-        worksFor: { "@id": ORG_ID },
-      }
-    : {
-        "@type": "Organization",
-        name: input.authorName ?? SITE.name,
-        url: SITE.url,
-      };
+  // Author is always the Organization. No Person. The brand owns the byline.
+  const author = { "@id": ORG_ID };
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -469,12 +512,18 @@ export function personSchema(input: PersonSchemaInput) {
 
 // ─── AboutPage ───────────────────────────────────────────────────────────
 
-export function aboutPageSchema() {
+export function aboutPageSchema(opts: { path?: string; inLanguage?: string } = {}) {
+  const path = opts.path ?? "/about";
   return {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    url: absoluteUrl("/about"),
+    "@id": `${absoluteUrl(path)}#aboutpage`,
+    url: absoluteUrl(path),
+    name: `About ${SITE.name}`,
+    description: SITE.description,
+    inLanguage: opts.inLanguage ?? SITE.language,
     mainEntity: { "@id": ORG_ID },
+    isPartOf: { "@id": `${SITE.url}/#website` },
   };
 }
 
