@@ -74,18 +74,30 @@ export async function deleteTopicAction(formData: FormData) {
   refresh();
 }
 
-/** "Generate now" stub. Until the Bedrock pipeline lands, this just flips
- *  the topic to `review` so an admin can author the post manually in
- *  /manage/blog/new. The real generator will replace this with a Bedrock
- *  invoke + quality gate + blog_posts insert + status flip to `generated`. */
-export async function generateNowStub(formData: FormData) {
+/** Generate ONE specific topic via Bedrock (synchronous — admin clicks the
+ *  button and waits). Heavy work; expect 10–25 seconds per post. */
+export async function generateNowAction(formData: FormData) {
   await requireSession();
   const id = String(formData.get("id") ?? "");
   if (!id) return;
-  await db
-    .update(contentTopics)
-    .set({ status: "review", updatedAt: new Date() })
-    .where(eq(contentTopics.id, id));
+  const { runGenerator } = await import("@/lib/generator/run");
+  await runGenerator({ maxPosts: 1, topicIds: [id], reviewFirst: true });
+  refresh();
+}
+
+/** Generate the next N queued topics in priority order. Default N=3 to keep
+ *  the synchronous request under ~60s. For larger runs use the CLI. */
+export async function runBatchAction(formData: FormData) {
+  await requireSession();
+  const n = Math.min(5, Math.max(1, Number(formData.get("n") ?? 3)));
+  const locale = String(formData.get("locale") ?? "");
+  const reviewFirst = String(formData.get("reviewFirst") ?? "1") === "1";
+  const { runGenerator } = await import("@/lib/generator/run");
+  await runGenerator({
+    maxPosts: n,
+    locale: locale === "en" || locale === "bn" ? locale : undefined,
+    reviewFirst,
+  });
   refresh();
 }
 

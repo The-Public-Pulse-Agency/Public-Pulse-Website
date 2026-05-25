@@ -7,7 +7,8 @@ import { contentTopics } from "@/db/schema";
 import {
   createTopicAction,
   deleteTopicAction,
-  generateNowStub,
+  generateNowAction,
+  runBatchAction,
   setTopicStatusAction,
 } from "./actions";
 
@@ -72,6 +73,39 @@ export default async function ContentTopicsPage({
           </p>
         </div>
       </header>
+
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
+        <h2 className="text-sm font-semibold text-brand-navy">Run a generation batch</h2>
+        <p className="mt-1 text-xs text-slate-600">
+          Drains the next N queued topics (priority-ordered) via Bedrock Haiku. Heavy work — expect ~15s per post.
+          Default is "review first": gate-pass posts land in /manage/blog as <strong>draft</strong> for you to approve
+          before they go live. Uncheck to publish gate-pass posts immediately. Hard cap: 5 per click (use the CLI for larger drains).
+        </p>
+        <form action={runBatchAction} className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="text-xs text-slate-700">
+            Count
+            <input name="n" type="number" min={1} max={5} defaultValue={3} className="form-input ml-2 w-20" />
+          </label>
+          <label className="text-xs text-slate-700">
+            Locale
+            <select name="locale" defaultValue="" aria-label="Locale filter" className="form-input ml-2">
+              <option value="">Any</option>
+              <option value="en">EN only</option>
+              <option value="bn">BN only</option>
+            </select>
+          </label>
+          <label className="text-xs text-slate-700">
+            <input name="reviewFirst" type="checkbox" value="1" defaultChecked className="mr-2 align-middle" />
+            Review first (don't auto-publish)
+          </label>
+          <button
+            type="submit"
+            className="inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            Run batch
+          </button>
+        </form>
+      </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-brand-navy">Add a topic</h2>
@@ -172,11 +206,12 @@ export default async function ContentTopicsPage({
                   <td className="p-3">
                     <div className="flex flex-wrap gap-2">
                       {r.status === "queued" && (
-                        <form action={generateNowStub}>
+                        <form action={generateNowAction}>
                           <input type="hidden" name="id" value={r.id} />
                           <button
                             type="submit"
                             className="rounded-full border border-emerald-300 px-3 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50"
+                            title="Calls Bedrock (~15s). Output lands as draft in /manage/blog."
                           >
                             Generate now
                           </button>

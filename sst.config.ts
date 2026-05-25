@@ -83,10 +83,29 @@ export default $config({
       ],
       // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
       // Resend is called over public HTTPS — no IAM permissions needed.
+      // Bedrock is called over public HTTPS but requires bedrock:InvokeModel
+      // permission for the Haiku-class cross-region inference profile used
+      // by the blog generator (see src/lib/bedrock.ts).
       server: {
         memory: "1024 MB",
-        timeout: "10 seconds",
+        // Bumped from 10s → 60s so the synchronous "Generate now" /
+        // "Run batch" admin clicks can complete a Bedrock round-trip
+        // (~15s per post). Most other Lambdas finish in <500ms; this is
+        // only relevant for /manage/content-topics POSTs.
+        timeout: "60 seconds",
         runtime: "nodejs22.x",
+        permissions: [
+          {
+            actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+            // Allow any anthropic.* foundation model + any inference profile
+            // (the us.* and apac.* prefixes are inference profile ARNs, not
+            // model ARNs — they need a separate Resource pattern).
+            resources: [
+              "arn:aws:bedrock:*::foundation-model/anthropic.*",
+              "arn:aws:bedrock:*:*:inference-profile/*",
+            ],
+          },
+        ],
       },
       // Image optimizer: ALSO outside VPC; output cached at CloudFront so a
       // given variant only invokes Lambda once.
