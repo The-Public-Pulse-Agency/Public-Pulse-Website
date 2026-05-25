@@ -14,8 +14,12 @@
 // IMPORTANT: lazy-initialized. The client is built on first use (not at module
 // load) so `next build` doesn't require DATABASE_URL — SST sets it at deploy
 // time and Lambda picks it up at cold start.
+//
+// Note: no `import "server-only"` here because this module is also loaded by
+// CLI scripts (scripts/generate.ts, src/db/seed-*.ts). Server boundary is
+// enforced by callers — cached read paths use next/cache (server-only), and
+// admin server actions check session before any DB query.
 
-import "server-only";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "./schema";

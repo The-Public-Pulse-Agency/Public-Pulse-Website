@@ -4,8 +4,12 @@
 //
 // All functions return [] on DB failure so the homepage / listing page
 // prerender even before the secrets are wired (resilience contract).
+//
+// Note: no `import "server-only"` here because BLOG_TAG (the cache-tag
+// constant) is also imported by scripts/generate.ts. next/cache imports
+// below remain a transitive server-only signal — a Client Component
+// importing them would fail at build time anyway.
 
-import "server-only";
 import { unstable_cache } from "next/cache";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
