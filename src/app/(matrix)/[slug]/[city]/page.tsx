@@ -45,6 +45,9 @@ export async function generateMetadata({
     title: `${s.shortName} in ${l.name} | Public Pulse Agency`,
     description: `${s.oneLiner} Public Pulse delivers ${s.shortName.toLowerCase()} for ${l.name} brands — grounded in the local market.`,
     path: `/${s.slug}/${l.slug}`,
+    useDynamicOg: true,
+    ogTitle: `${s.shortName} in ${l.name}`,
+    ogEyebrow: `${s.category.toUpperCase()} · ${l.name.toUpperCase()}`,
   });
 }
 

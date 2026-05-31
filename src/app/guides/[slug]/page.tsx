@@ -31,6 +31,9 @@ export async function generateMetadata({
     title: g.title,
     description: g.description,
     path: `/guides/${g.slug}`,
+    useDynamicOg: true,
+    ogTitle: g.title,
+    ogEyebrow: "GUIDE · HOW-TO",
   });
 }
 

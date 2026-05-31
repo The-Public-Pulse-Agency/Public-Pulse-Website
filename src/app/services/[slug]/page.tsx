@@ -39,6 +39,13 @@ export async function generateMetadata({
     title: service.seoTitle,
     description: service.seoDescription,
     path: `/services/${service.slug}`,
+    // Per-service OG card via the dynamic /og?title=&eyebrow= factory.
+    // Headline uses the clean service name (not the verbose SEO title with
+    // "| Public Pulse" suffix); chip uses the category in caps. Each service
+    // now shares a distinct preview instead of the generic homepage OG.
+    useDynamicOg: true,
+    ogTitle: service.name,
+    ogEyebrow: service.category.toUpperCase(),
   });
 }
 

@@ -28,6 +28,9 @@ export async function generateMetadata({
     title: c.title,
     description: c.description,
     path: `/compare/${c.slug}`,
+    useDynamicOg: true,
+    ogTitle: c.title,
+    ogEyebrow: "COMPARE · DECISION MATRIX",
   });
 }
 

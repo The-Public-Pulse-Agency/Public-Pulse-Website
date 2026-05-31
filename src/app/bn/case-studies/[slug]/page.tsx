@@ -35,6 +35,9 @@ export async function generateMetadata({
     description: study.seoDescription ?? `${study.metric} ${study.windowLabel}। ${study.summary}`.slice(0, 160),
     path: `/bn/case-studies/${slug}`,
     alternateLanguages: { en: `/case-studies/${slug}` },
+    useDynamicOg: true,
+    ogTitle: study.title,
+    ogEyebrow: `কেস স্টাডি · ${study.metric}`,
   });
 }
 

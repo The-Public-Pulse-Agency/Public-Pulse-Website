@@ -30,6 +30,9 @@ export async function generateMetadata({
     title: `${t.name} — definition | Public Pulse Glossary`,
     description: t.definition,
     path: `/glossary/${t.slug}`,
+    useDynamicOg: true,
+    ogTitle: t.name,
+    ogEyebrow: "GLOSSARY · DEFINITION",
   });
 }
 

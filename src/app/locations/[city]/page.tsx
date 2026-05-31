@@ -32,6 +32,9 @@ export async function generateMetadata({
     title: `Digital Marketing Agency in ${loc.name} | Public Pulse`,
     description: `Public Pulse Agency for ${loc.name}: digital marketing, paid ads, SEO, PR, content. Grounded in the real ${loc.name} market — ${loc.topIndustries.slice(0, 3).join(", ")}.`,
     path: `/locations/${loc.slug}`,
+    useDynamicOg: true,
+    ogTitle: `Digital Marketing in ${loc.name}`,
+    ogEyebrow: `LOCATION · ${loc.name.toUpperCase()}`,
   });
 }
 

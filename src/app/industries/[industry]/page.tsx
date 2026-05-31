@@ -28,6 +28,9 @@ export async function generateMetadata({
     title: `Digital Marketing for ${ind.name} | Public Pulse`,
     description: `Public Pulse Agency runs vertical-tailored digital marketing for ${ind.name} brands in Bangladesh — ${ind.priorities.slice(0, 3).join(", ")}.`,
     path: `/industries/${ind.slug}`,
+    useDynamicOg: true,
+    ogTitle: `Digital Marketing for ${ind.name}`,
+    ogEyebrow: `INDUSTRY · ${ind.name.toUpperCase()}`,
   });
 }
 

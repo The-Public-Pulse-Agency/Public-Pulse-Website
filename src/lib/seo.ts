@@ -17,6 +17,10 @@ type BuildMetadataInput = {
   ogEyebrow?: string;
   /** When set, uses the dynamic /og?title=&eyebrow= factory instead of the static OG. */
   useDynamicOg?: boolean;
+  /** Override the OG card headline (only used when useDynamicOg=true).
+   *  Useful when the page <title> is verbose (e.g. "X | Public Pulse")
+   *  but the OG card should show a cleaner phrase. Falls back to `title`. */
+  ogTitle?: string;
   /** Extra hreflang entries merged into alternates.languages (e.g. bn-BD pointing at /bn/...). */
   alternateLanguages?: Record<string, string>;
 };
@@ -50,6 +54,7 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
     // opt-in per page if you want the dynamic image.
     useDynamicOg = false,
     alternateLanguages,
+    ogTitle,
   } = input;
 
   warnIfLong("title", title, 60);
@@ -58,7 +63,7 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
   const canonical = absoluteUrl(path);
   const resolvedOg = useDynamicOg
     ? absoluteUrl(
-        `/og?title=${encodeURIComponent(title)}&eyebrow=${encodeURIComponent(
+        `/og?title=${encodeURIComponent(ogTitle ?? title)}&eyebrow=${encodeURIComponent(
           ogEyebrow ?? "Public Pulse · Dhaka"
         )}`
       )

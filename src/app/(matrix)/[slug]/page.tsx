@@ -49,6 +49,9 @@ export async function generateMetadata({
     title: `${service.shortName} for ${industry.name} | Public Pulse Agency`,
     description: `Public Pulse delivers ${service.shortName.toLowerCase()} for Bangladesh ${industry.name.toLowerCase()} brands — tuned to the vertical's priorities: ${industry.priorities.slice(0, 3).join(", ")}.`,
     path: `/${slug}`,
+    useDynamicOg: true,
+    ogTitle: `${service.shortName} for ${industry.name}`,
+    ogEyebrow: `${service.category.toUpperCase()} · ${industry.name.toUpperCase()}`,
   });
 }
 
