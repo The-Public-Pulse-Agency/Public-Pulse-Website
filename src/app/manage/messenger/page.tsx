@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { desc, sql, isNotNull } from "drizzle-orm";
+import { and, desc, sql, isNotNull, inArray } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
@@ -26,45 +26,37 @@ export default async function MessengerInboxPage() {
 
   const token = await getActivePageToken(session.user.id);
 
-  // Group events by sender — most recent inbound first. We use a raw SQL
-  // grouping because Drizzle's groupBy on jsonb fields is awkward.
-  const conversations = await db.execute<{
-    sender_id: string;
-    last_text: string | null;
-    last_at: Date;
-    unread: number;
-    total: number;
-  }>(
-    sql`
-      SELECT
-        sender_id,
-        (array_agg(text ORDER BY received_at DESC) FILTER (WHERE text IS NOT NULL))[1] AS last_text,
-        MAX(received_at) AS last_at,
-        COUNT(*) FILTER (WHERE handled = false AND event_type IN ('message','postback')) AS unread,
-        COUNT(*) AS total
-      FROM messenger_events
-      WHERE sender_id IS NOT NULL AND event_type IN ('message','postback','messaging_optins')
-      GROUP BY sender_id
-      ORDER BY MAX(received_at) DESC
-      LIMIT 100
-    `
-  );
+  // Group events by sender — most recent inbound first. Drizzle's typed
+  // select + groupBy returns a proper Array (db.execute() returns a
+  // wrapper object on neon-http, which broke .map()).
+  const rows = await db
+    .select({
+      senderId: messengerEvents.senderId,
+      lastAt: sql<Date>`max(${messengerEvents.receivedAt})`,
+      unread: sql<number>`count(*) filter (where ${messengerEvents.handled} = false and ${messengerEvents.eventType} in ('message','postback'))::int`,
+      total: sql<number>`count(*)::int`,
+      lastText: sql<string | null>`(array_agg(${messengerEvents.text} order by ${messengerEvents.receivedAt} desc) filter (where ${messengerEvents.text} is not null))[1]`,
+    })
+    .from(messengerEvents)
+    .where(
+      and(
+        isNotNull(messengerEvents.senderId),
+        inArray(messengerEvents.eventType, ["message", "postback", "messaging_optins"])
+      )
+    )
+    .groupBy(messengerEvents.senderId)
+    .orderBy(desc(sql`max(${messengerEvents.receivedAt})`))
+    .limit(100);
 
-  void isNotNull;
-
-  const convs: Conversation[] = (conversations as unknown as Array<{
-    sender_id: string;
-    last_text: string | null;
-    last_at: Date | string;
-    unread: number | string;
-    total: number | string;
-  }>).map((r) => ({
-    senderId: r.sender_id,
-    lastText: r.last_text,
-    lastAt: r.last_at instanceof Date ? r.last_at : new Date(r.last_at),
-    unread: Number(r.unread),
-    total: Number(r.total),
-  }));
+  const convs: Conversation[] = rows
+    .filter((r): r is typeof r & { senderId: string } => r.senderId !== null)
+    .map((r) => ({
+      senderId: r.senderId,
+      lastText: r.lastText,
+      lastAt: r.lastAt instanceof Date ? r.lastAt : new Date(r.lastAt as unknown as string),
+      unread: Number(r.unread),
+      total: Number(r.total),
+    }));
 
   const totalUnread = convs.reduce((sum, c) => sum + c.unread, 0);
 
