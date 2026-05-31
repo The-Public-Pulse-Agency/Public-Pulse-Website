@@ -61,6 +61,8 @@ export default async function ManageLayout({
                   <li><Link href="/manage/case-studies" className="hover:text-brand-orange">Case studies</Link></li>
                   <li><Link href="/manage/subscribers" className="hover:text-brand-orange">Subscribers</Link></li>
                   <li><Link href="/manage/newsletter" className="hover:text-brand-orange">Newsletter</Link></li>
+                  <li><Link href="/manage/messenger" className="hover:text-brand-orange">Messenger</Link></li>
+                  <li><Link href="/manage/page-insights" className="hover:text-brand-orange">Insights</Link></li>
                   <li><Link href="/manage/team" className="hover:text-brand-orange">Team</Link></li>
                 </ul>
               </nav>

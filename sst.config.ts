@@ -80,6 +80,10 @@ export default $config({
     const MESSENGER_VERIFY_TOKEN = new sst.Secret("MESSENGER_VERIFY_TOKEN");
     const MESSENGER_PAGE_ACCESS_TOKEN = new sst.Secret("MESSENGER_PAGE_ACCESS_TOKEN");
     const MESSENGER_APP_SECRET = new sst.Secret("MESSENGER_APP_SECRET");
+    // FACEBOOK_APP_ID is technically public (it's in the OAuth URL), but we
+    // store it as an SST secret so it can be rotated/changed without a code
+    // change. Find it in Meta Dashboard → your App → Settings → Basic.
+    const FACEBOOK_APP_ID = new sst.Secret("FACEBOOK_APP_ID");
 
     // ─── Next.js (OpenNext) ────────────────────────────────────────────
     // The Nextjs component handles CloudFront + S3 (static + ISR cache) +
@@ -98,6 +102,7 @@ export default $config({
         MESSENGER_VERIFY_TOKEN,
         MESSENGER_PAGE_ACCESS_TOKEN,
         MESSENGER_APP_SECRET,
+        FACEBOOK_APP_ID,
       ],
       // Linked secrets are exposed at runtime as Resource.NAME.value AND
       // process.env.NAME for code that reads env directly.
@@ -105,6 +110,7 @@ export default $config({
         MESSENGER_VERIFY_TOKEN: MESSENGER_VERIFY_TOKEN.value,
         MESSENGER_PAGE_ACCESS_TOKEN: MESSENGER_PAGE_ACCESS_TOKEN.value,
         MESSENGER_APP_SECRET: MESSENGER_APP_SECRET.value,
+        FACEBOOK_APP_ID: FACEBOOK_APP_ID.value,
       },
       // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
       // Resend is called over public HTTPS — no IAM permissions needed.

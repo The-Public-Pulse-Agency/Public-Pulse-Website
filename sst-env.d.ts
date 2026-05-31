@@ -26,6 +26,22 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "FACEBOOK_APP_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "MESSENGER_APP_SECRET": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "MESSENGER_PAGE_ACCESS_TOKEN": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "MESSENGER_VERIFY_TOKEN": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "RESEND_API_KEY": {
       "type": "sst.sst.Secret"
       "value": string

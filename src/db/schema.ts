@@ -237,6 +237,50 @@ export const messengerEvents = pgTable(
 export type MessengerEvent = typeof messengerEvents.$inferSelect;
 export type NewMessengerEvent = typeof messengerEvents.$inferInsert;
 
+// ─── Facebook Page connection (OAuth-granted page access token) ────────
+// One row per (admin user × connected Page). The admin signs in to /manage
+// with their email+password (BetterAuth), then runs /manage/connect/facebook
+// which kicks off the Facebook OAuth flow + asks them to select a Page.
+// The selected Page's long-lived Page Access Token + granted scopes land
+// here. Used by messenger-send + page-insights as the auth source — falls
+// back to MESSENGER_PAGE_ACCESS_TOKEN env when no DB row exists.
+
+export const facebookConnections = pgTable(
+  "facebook_connections",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    /** BetterAuth user.id of the admin who connected this Page. */
+    userId: text("user_id").notNull(),
+    /** Facebook Page ID. */
+    pageId: text("page_id").notNull(),
+    pageName: text("page_name").notNull(),
+    /** Long-lived Page Access Token (does not expire as long as the admin
+     *  user token is alive + roles are intact). */
+    pageAccessToken: text("page_access_token").notNull(),
+    /** Token for the underlying user (also long-lived once exchanged). */
+    userAccessToken: text("user_access_token"),
+    /** Optional Business Manager ID that owns the Page. */
+    businessId: text("business_id"),
+    businessName: text("business_name"),
+    /** Granted OAuth scopes (so we can detect missing perms). */
+    scopesGranted: jsonb("scopes_granted").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    /** Whether webhook subscription succeeded for this Page. */
+    webhookSubscribed: boolean("webhook_subscribed").notNull().default(false),
+    /** Soft-disable without deleting the row. */
+    active: boolean("active").notNull().default(true),
+    connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => ({
+    userIdx: index("facebook_connections_user_idx").on(t.userId),
+    pageIdx: uniqueIndex("facebook_connections_user_page_idx").on(t.userId, t.pageId),
+    activeIdx: index("facebook_connections_active_idx").on(t.active, t.connectedAt.desc()),
+  })
+);
+
+export type FacebookConnection = typeof facebookConnections.$inferSelect;
+export type NewFacebookConnection = typeof facebookConnections.$inferInsert;
+
 // ─── Newsletter subscribers (DOUBLE OPT-IN) ────────────────────────────
 // status flow: pending → confirmed → unsubscribed.
 // confirm_token is one-time; consumed when the user clicks the confirmation
