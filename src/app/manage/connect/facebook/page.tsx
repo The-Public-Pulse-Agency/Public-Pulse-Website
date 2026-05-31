@@ -61,12 +61,16 @@ export default async function ConnectFacebookPage() {
             </div>
           </dl>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link
+            {/* Plain <a> — NOT next/link. The Link component prefetches as
+                an RSC fetch which gets blocked by CORS when the route
+                returns a 307 to facebook.com. We need a hard browser
+                navigation here, not a client-side router transition. */}
+            <a
               href="/api/facebook/oauth/start"
               className="rounded-full border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-100"
             >
               Re-connect / change Page
-            </Link>
+            </a>
             <Link
               href="/manage/messenger"
               className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
@@ -92,12 +96,14 @@ export default async function ConnectFacebookPage() {
             After granting, you&rsquo;ll select which Page to connect (your account must be an Admin or
             Editor of that Page). The long-lived Page Access Token is stored encrypted in our database.
           </p>
-          <Link
+          {/* Plain <a> — see note above. Hard browser navigation required
+              because the /api/facebook/oauth/start route 307s to facebook.com. */}
+          <a
             href="/api/facebook/oauth/start"
             className="mt-6 inline-flex items-center rounded-full bg-brand-orange px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
           >
             Connect Facebook Page →
-          </Link>
+          </a>
         </section>
       )}
 
