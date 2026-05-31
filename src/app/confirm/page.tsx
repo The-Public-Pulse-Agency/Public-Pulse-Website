@@ -13,6 +13,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { eq } from "drizzle-orm";
 
+import { headers } from "next/headers";
+
 import { db } from "@/db/client";
 import { subscribers } from "@/db/schema";
 import { tokensEqual } from "@/lib/email/tokens";
@@ -20,6 +22,7 @@ import { sendEmail } from "@/lib/email/send";
 import WelcomeEmail from "@/emails/WelcomeEmail";
 import { Container } from "@/components/ui/Container";
 import { SITE } from "@/lib/site";
+import { extractClientIp, extractFbCookies, sendCapiEvent } from "@/lib/meta-capi";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -33,7 +36,7 @@ export const metadata: Metadata = {
 
 type State = "ok" | "already" | "invalid" | "error";
 
-async function confirm(token: string): Promise<{
+async function confirm(token: string, reqHeaders: Headers): Promise<{
   state: State;
   email?: string;
   unsubscribeUrl?: string;
@@ -78,6 +81,37 @@ async function confirm(token: string): Promise<{
       if (!r.ok) console.warn("[confirm] welcome send failed", r.error);
     });
 
+    // Fire CompleteRegistration to Meta CAPI (the Lead event already fired
+    // on initial signup; this completes the funnel + lifts match quality
+    // because we now have a confirmed-good email).
+    const cookies = extractFbCookies(reqHeaders.get("cookie"));
+    const ipAddress = extractClientIp(reqHeaders);
+    const ua = reqHeaders.get("user-agent");
+    void sendCapiEvent({
+      eventName: "CompleteRegistration",
+      eventSourceUrl: `${SITE.url}/confirm`,
+      userData: {
+        email: row.email,
+        ipAddress,
+        userAgent: ua,
+        fbc: cookies.fbc,
+        fbp: cookies.fbp,
+        externalId: row.email,
+        country: "bd",
+      },
+      customData: {
+        content_name: "Newsletter confirmation (double opt-in)",
+        content_category: "newsletter",
+        status: "confirmed",
+        currency: "BDT",
+        value: 0,
+      },
+    }).then((r) => {
+      if (!r.ok && r.reason !== "no-token") {
+        console.warn("[confirm] capi failed:", r.reason, r.error);
+      }
+    });
+
     return { state: "ok", email: row.email, unsubscribeUrl, locale };
   } catch (err) {
     console.error("[confirm] failed", err);
@@ -92,7 +126,7 @@ export default async function ConfirmPage({
 }) {
   const sp = await searchParams;
   const token = String(sp.t ?? "").trim();
-  const result = await confirm(token);
+  const result = await confirm(token, await headers());
 
   const heading = {
     ok: "You're in.",

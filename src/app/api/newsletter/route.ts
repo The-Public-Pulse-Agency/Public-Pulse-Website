@@ -23,6 +23,7 @@ import { SITE } from "@/lib/site";
 import { newToken } from "@/lib/email/tokens";
 import { sendEmail } from "@/lib/email/send";
 import ConfirmEmail from "@/emails/ConfirmEmail";
+import { extractFbCookies, sendCapiEvent } from "@/lib/meta-capi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -133,6 +134,36 @@ export async function POST(req: Request): Promise<Response> {
       ],
     }).then((r) => {
       if (!r.ok) console.warn("[newsletter] confirm send failed", r.error);
+    });
+  }
+
+  // Fire a Lead event to Meta CAPI for ad-attribution / optimization.
+  // Best-effort, fire-and-forget — never blocks the form-submit response.
+  if (row) {
+    const cookies = extractFbCookies(h.get("cookie"));
+    void sendCapiEvent({
+      eventName: "Lead",
+      eventSourceUrl: `${SITE.url}${page ?? "/"}`,
+      userData: {
+        email: row.email,
+        ipAddress: ip === "unknown" ? null : ip,
+        userAgent,
+        fbc: cookies.fbc,
+        fbp: cookies.fbp,
+        externalId: normalizedEmail,
+        country: "bd",
+      },
+      customData: {
+        content_name: "Newsletter signup (pending)",
+        content_category: "newsletter",
+        source: source ?? "unknown",
+        currency: "BDT",
+        value: 0,
+      },
+    }).then((r) => {
+      if (!r.ok && r.reason !== "no-token") {
+        console.warn("[newsletter] capi failed:", r.reason, r.error);
+      }
     });
   }
 

@@ -21,6 +21,7 @@ import { leads } from "@/db/schema";
 import { contactSchema, type ContactActionResult, type ContactInput } from "@/lib/contact-schema";
 import { SITE } from "@/lib/site";
 import { getService } from "@/lib/services";
+import { extractFbCookies, sendCapiEvent } from "@/lib/meta-capi";
 
 // One Resend client per Lambda container (reused across warm invocations).
 // Lazy init so `next build` / typecheck doesn't require the API key to be set.
@@ -134,6 +135,39 @@ export async function submitContact(
       err: err instanceof Error ? err.message : String(err),
     });
   }
+
+  // CAPI Lead event — highest-value conversion the agency cares about.
+  // Split the name into first/last for better Meta match-rate.
+  const [firstName, ...lastParts] = (data.name ?? "").trim().split(/\s+/);
+  const lastName = lastParts.join(" ");
+  const fbCookies = extractFbCookies(h.get("cookie"));
+  void sendCapiEvent({
+    eventName: "Lead",
+    eventSourceUrl: `${SITE.url}/contact`,
+    userData: {
+      email: data.email,
+      phone: data.phone?.trim() || null,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      ipAddress: (await clientIp()) !== "unknown" ? await clientIp() : null,
+      userAgent,
+      fbc: fbCookies.fbc,
+      fbp: fbCookies.fbp,
+      externalId: data.email,
+      country: "bd",
+    },
+    customData: {
+      content_name: `Contact form — ${serviceLabel(data.serviceInterest)}`,
+      content_category: "contact-form",
+      service_interest: data.serviceInterest ?? "not-specified",
+      currency: "BDT",
+      value: 0,
+    },
+  }).then((r) => {
+    if (!r.ok && r.reason !== "no-token") {
+      console.warn("[contact] capi failed:", r.reason, r.error);
+    }
+  });
 
   return { ok: true };
 }

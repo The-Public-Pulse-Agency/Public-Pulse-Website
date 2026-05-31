@@ -20,6 +20,7 @@ import { whatsappOptin } from "@/db/schema";
 import { sendEmail } from "@/lib/email/send";
 import { SITE } from "@/lib/site";
 import AdminWhatsAppNotify from "@/emails/AdminWhatsAppNotify";
+import { extractFbCookies, sendCapiEvent } from "@/lib/meta-capi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,6 +115,34 @@ export async function POST(req: Request): Promise<Response> {
     tags: [{ name: "type", value: "whatsapp-optin-notify" }],
   }).then((r) => {
     if (!r.ok) console.warn("[whatsapp-optin] notify failed", r.error);
+  });
+
+  // CAPI Lead event — phone-only, action_source=chat (WhatsApp).
+  const cookies = extractFbCookies(h.get("cookie"));
+  void sendCapiEvent({
+    eventName: "Lead",
+    eventSourceUrl: `${SITE.url}${page ?? "/"}`,
+    actionSource: "chat",
+    userData: {
+      phone: phoneClean,
+      ipAddress: ip === "unknown" ? null : ip,
+      userAgent,
+      fbc: cookies.fbc,
+      fbp: cookies.fbp,
+      externalId: phoneClean,
+      country: "bd",
+    },
+    customData: {
+      content_name: "WhatsApp opt-in",
+      content_category: "whatsapp",
+      source: source ?? "unknown",
+      currency: "BDT",
+      value: 0,
+    },
+  }).then((r) => {
+    if (!r.ok && r.reason !== "no-token") {
+      console.warn("[whatsapp-optin] capi failed:", r.reason, r.error);
+    }
   });
 
   return NextResponse.json({ ok: true });

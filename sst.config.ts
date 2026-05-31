@@ -84,6 +84,18 @@ export default $config({
     // store it as an SST secret so it can be rotated/changed without a code
     // change. Find it in Meta Dashboard → your App → Settings → Basic.
     const FACEBOOK_APP_ID = new sst.Secret("FACEBOOK_APP_ID");
+    // ─── Meta Conversions API (CAPI) ───────────────────────────────────
+    // META_CAPI_ACCESS_TOKEN — generated in Events Manager → your Dataset
+    //   → Settings → Conversions API → Generate Access Token. Sensitive.
+    // META_CAPI_DATASET_ID — the Dataset ID (formerly Pixel ID) to POST
+    //   events to. Defaults to 1992777924798448 in code; override here
+    //   if you ever rotate / split datasets.
+    // META_CAPI_TEST_EVENT_CODE — optional TEST<...> code from Events
+    //   Manager → Test Events. When set, all events route to the test
+    //   stream instead of production. Leave UNSET for normal operation.
+    const META_CAPI_ACCESS_TOKEN = new sst.Secret("META_CAPI_ACCESS_TOKEN");
+    const META_CAPI_DATASET_ID = new sst.Secret("META_CAPI_DATASET_ID");
+    const META_CAPI_TEST_EVENT_CODE = new sst.Secret("META_CAPI_TEST_EVENT_CODE");
 
     // ─── Next.js (OpenNext) ────────────────────────────────────────────
     // The Nextjs component handles CloudFront + S3 (static + ISR cache) +
@@ -103,6 +115,9 @@ export default $config({
         MESSENGER_PAGE_ACCESS_TOKEN,
         MESSENGER_APP_SECRET,
         FACEBOOK_APP_ID,
+        META_CAPI_ACCESS_TOKEN,
+        META_CAPI_DATASET_ID,
+        META_CAPI_TEST_EVENT_CODE,
       ],
       // Linked secrets are exposed at runtime as Resource.NAME.value AND
       // process.env.NAME for code that reads env directly.
@@ -111,6 +126,9 @@ export default $config({
         MESSENGER_PAGE_ACCESS_TOKEN: MESSENGER_PAGE_ACCESS_TOKEN.value,
         MESSENGER_APP_SECRET: MESSENGER_APP_SECRET.value,
         FACEBOOK_APP_ID: FACEBOOK_APP_ID.value,
+        META_CAPI_ACCESS_TOKEN: META_CAPI_ACCESS_TOKEN.value,
+        META_CAPI_DATASET_ID: META_CAPI_DATASET_ID.value,
+        META_CAPI_TEST_EVENT_CODE: META_CAPI_TEST_EVENT_CODE.value,
       },
       // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
       // Resend is called over public HTTPS — no IAM permissions needed.

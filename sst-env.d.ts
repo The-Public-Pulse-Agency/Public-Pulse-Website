@@ -42,6 +42,18 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "META_CAPI_ACCESS_TOKEN": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "META_CAPI_DATASET_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "META_CAPI_TEST_EVENT_CODE": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "RESEND_API_KEY": {
       "type": "sst.sst.Secret"
       "value": string
