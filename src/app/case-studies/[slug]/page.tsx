@@ -70,7 +70,16 @@ export async function generateMetadata({
     title,
     description,
     path: `/case-studies/${slug}`,
-    ogImage: study.heroImageUrl ?? undefined,
+    // Use the case study's own hero image when one is set, otherwise fall
+    // back to the dynamic /og?title=&eyebrow= factory so every case study
+    // gets a distinct social-share card (instead of the generic static OG).
+    ...(study.heroImageUrl
+      ? { ogImage: study.heroImageUrl }
+      : {
+          useDynamicOg: true,
+          ogTitle: study.title,
+          ogEyebrow: `CASE STUDY · ${study.metric}`,
+        }),
     alternateLanguages: { bn: `/bn/case-studies/${slug}` },
   });
 }
