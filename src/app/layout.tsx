@@ -29,13 +29,16 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   ...buildMetadata({
-    title: `${SITE.name} | Best Digital Marketing Agency in Bangladesh`,
+    // 58 chars — under Google's 60-char (~600 px) title cutoff so the full
+    // brand name stays visible in SERP. Was 65 chars and getting truncated.
+    title: "Public Pulse — Bangladesh Digital Marketing & PR Agency",
     description:
       "Bangladesh's 360° digital marketing & political PR agency. Political PR, social media, content, paid ads, hospitality, branding, SEO. Call +880 1717-714676.",
     path: "/",
   }),
   applicationName: SITE.name,
   authors: [{ name: SITE.name, url: SITE.url }],
+  manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/favicon.ico" },

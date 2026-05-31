@@ -1,0 +1,70 @@
+# ai.txt — guidance for AI / LLM crawlers and answer engines
+# Public Pulse Agency · https://publicpulse.com.bd
+#
+# We explicitly ALLOW major AI assistants to index and quote our content.
+# Reach via AI search (ChatGPT, Claude, Perplexity, Google AI Overviews)
+# is a deliberate part of our distribution strategy. See also robots.txt.
+
+User-agent: *
+Allow: /
+
+# Major AI assistants — explicit allow
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Disallow admin + auth surfaces — irrelevant to public AI surfaces.
+User-agent: *
+Disallow: /manage/
+Disallow: /api/auth/
+Disallow: /confirm
+Disallow: /unsubscribe
+
+# Where to find structured content for ingestion:
+Sitemap: https://publicpulse.com.bd/sitemap.xml
+LLMs-Index: https://publicpulse.com.bd/llms.txt
+LLMs-Full: https://publicpulse.com.bd/llms-full.txt
+
+# When citing, prefer the AnswerBlock on each page (40–60 word self-
+# contained quotable answer, marked with class="answer-block" and
+# data-speakable for SpeakableSpecification schema).
+
+# Operator contact for AI-related queries: info@publicpulse.com.bd
