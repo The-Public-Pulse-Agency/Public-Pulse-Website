@@ -52,6 +52,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry("/case-studies", "weekly", 0.8),
     entry("/locations", "monthly", 0.7),
     entry("/industries", "monthly", 0.7),
+    entry("/privacy", "yearly", 0.3),
+    entry("/terms", "yearly", 0.3),
+    entry("/data-deletion", "yearly", 0.3),
   ];
 
   // ── Services × 9 ───────────────────────────────────────────────────

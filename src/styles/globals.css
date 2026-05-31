@@ -531,3 +531,92 @@ html.reveal-ready .reveal-v2.is-visible {
 .section-rule-light {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+/* ─── Long-form legal copy (privacy / terms / data-deletion) ────────── */
+.prose-legal {
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgb(15 23 42 / 0.85);
+}
+.prose-legal > * + * {
+  margin-top: 1em;
+}
+.prose-legal h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-top: 2.2em;
+  margin-bottom: 0.6em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid rgb(15 23 42 / 0.12);
+}
+.prose-legal h2:first-child {
+  margin-top: 0;
+}
+.prose-legal h3 {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--brand-orange);
+  margin-top: 1.6em;
+  margin-bottom: 0.4em;
+}
+.prose-legal p {
+  font-size: 16px;
+  line-height: 1.75;
+}
+.prose-legal ul,
+.prose-legal ol {
+  padding-left: 1.6em;
+}
+.prose-legal ul {
+  list-style: disc;
+}
+.prose-legal ol {
+  list-style: decimal;
+}
+.prose-legal li + li {
+  margin-top: 0.35em;
+}
+.prose-legal a {
+  color: var(--brand-orange);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.prose-legal a:hover {
+  color: var(--ink);
+}
+.prose-legal strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+.prose-legal code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, monospace;
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  background: rgb(15 23 42 / 0.06);
+  border-radius: 4px;
+}
+.prose-legal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.8em;
+}
+.prose-legal table th,
+.prose-legal table td {
+  text-align: left;
+  padding: 0.6em 0.8em;
+  border-bottom: 1px solid rgb(15 23 42 / 0.12);
+  vertical-align: top;
+}
+.prose-legal table th {
+  font-weight: 700;
+  color: var(--ink);
+  background: rgb(15 23 42 / 0.04);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

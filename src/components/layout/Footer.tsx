@@ -107,6 +107,23 @@ export function Footer() {
         </div>
       </div>
 
+      {/* ─── Legal row ────────────────────────────────────────────────── */}
+      <div className="border-t border-white/10">
+        <div className="max-w-container mx-auto flex flex-col gap-3 px-5 py-5 text-xs text-white/55 md:flex-row md:items-center md:justify-between md:px-8">
+          <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/privacy" className="text-white/70 hover:text-white">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-white/70 hover:text-white">
+              Terms of Service
+            </Link>
+            <Link href="/data-deletion" className="text-white/70 hover:text-white">
+              Data Deletion
+            </Link>
+          </nav>
+        </div>
+      </div>
+
       <div className="border-t border-white/10">
         <div className="max-w-container mx-auto flex flex-col gap-2 px-5 py-6 text-xs text-white/55 md:flex-row md:items-center md:justify-between md:px-8">
           <div>© {new Date().getFullYear()} {SITE.name}. Dhaka, Bangladesh.</div>
