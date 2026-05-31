@@ -64,11 +64,12 @@ export default async function SelectPagePage() {
                   Tasks: {(p.tasks ?? []).join(", ") || "(none reported)"}
                 </p>
               </div>
+              {/* SECURITY: only pageId is submitted. The server action
+                  re-reads pageName + access_token + userToken from the
+                  fb_oauth_pending httpOnly cookie, then validates via
+                  /debug_token. Never trust tokens from the client form. */}
               <form action={selectPageAction}>
                 <input type="hidden" name="pageId" value={p.id} />
-                <input type="hidden" name="pageName" value={p.name} />
-                <input type="hidden" name="pageAccessToken" value={p.access_token} />
-                <input type="hidden" name="userToken" value={pending!.userToken} />
                 <button
                   type="submit"
                   className="rounded-full bg-brand-orange px-5 py-2 text-sm font-semibold text-white hover:opacity-90"

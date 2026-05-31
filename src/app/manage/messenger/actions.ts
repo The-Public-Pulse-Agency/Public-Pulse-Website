@@ -23,15 +23,16 @@ const replySchema = z.object({
 });
 
 export async function replyAction(formData: FormData): Promise<void> {
-  await requireSession();
+  const session = await requireSession();
   const parsed = replySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     throw new Error(parsed.error.issues.map((i) => i.message).join("; "));
   }
   const { senderId, text } = parsed.data;
 
-  // Send via Graph API
-  const sent = await sendMessage({
+  // Send via Graph API — token is scoped to the signed-in admin's
+  // OAuth-connected Page only.
+  const sent = await sendMessage(session.user.id, {
     recipientPsid: senderId,
     text,
     messagingType: "RESPONSE",
@@ -73,6 +74,6 @@ export async function markHandledAction(senderId: string): Promise<void> {
 }
 
 export async function setTypingAction(senderId: string, on: boolean): Promise<void> {
-  await requireSession();
-  await markSenderAction(senderId, on ? "typing_on" : "typing_off");
+  const session = await requireSession();
+  await markSenderAction(session.user.id, senderId, on ? "typing_on" : "typing_off");
 }

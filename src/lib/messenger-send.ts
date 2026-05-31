@@ -1,6 +1,11 @@
 // Outbound Messenger Send API.
 // Always reply within Meta's 24-hour standard messaging window unless you
 // pass a valid messaging_tag (post-purchase, account update, agent handoff).
+//
+// SECURITY: `userId` is REQUIRED on every call. The Page Access Token
+// returned by getActivePageToken is the token THAT USER personally OAuth-
+// granted in /manage/connect/facebook. Never call these helpers without
+// a verified admin session.
 
 import { graphPost, getActivePageToken } from "@/lib/facebook-graph";
 
@@ -23,10 +28,17 @@ export type SendResult =
   | { ok: true; recipientId: string; messageId: string }
   | { ok: false; error: string };
 
-export async function sendMessage(input: SendMessageInput): Promise<SendResult> {
-  const token = await getActivePageToken();
+export async function sendMessage(
+  userId: string,
+  input: SendMessageInput
+): Promise<SendResult> {
+  const token = await getActivePageToken(userId);
   if (!token) {
-    return { ok: false, error: "No active page access token (connect a Facebook Page in /manage/connect/facebook or set MESSENGER_PAGE_ACCESS_TOKEN)" };
+    return {
+      ok: false,
+      error:
+        "No active page access token for this admin (connect a Facebook Page in /manage/connect/facebook or set MESSENGER_PAGE_ACCESS_TOKEN)",
+    };
   }
 
   const messagingType = input.messagingType ?? (input.tag ? "MESSAGE_TAG" : "RESPONSE");
@@ -48,22 +60,27 @@ export async function sendMessage(input: SendMessageInput): Promise<SendResult> 
 
 /** Mark a sender's conversation as "seen" (typing indicator off / read receipt). */
 export async function markSenderAction(
+  userId: string,
   recipientPsid: string,
   action: "mark_seen" | "typing_on" | "typing_off"
 ): Promise<SendResult> {
-  const token = await getActivePageToken();
-  if (!token) return { ok: false, error: "no page access token" };
-  const r = await graphPost<{ recipient_id: string }>(`/${token.pageId}/messages`, token.accessToken, {
-    recipient: { id: recipientPsid },
-    sender_action: action,
-  });
+  const token = await getActivePageToken(userId);
+  if (!token) return { ok: false, error: "no page access token for this admin" };
+  const r = await graphPost<{ recipient_id: string }>(
+    `/${token.pageId}/messages`,
+    token.accessToken,
+    {
+      recipient: { id: recipientPsid },
+      sender_action: action,
+    }
+  );
   if (!r.ok) return { ok: false, error: r.error };
   return { ok: true, recipientId: r.data.recipient_id, messageId: "" };
 }
 
 /** Fetch a user's basic profile (first/last name, profile pic). */
-export async function fetchUserProfile(psid: string) {
-  const token = await getActivePageToken();
+export async function fetchUserProfile(userId: string, psid: string) {
+  const token = await getActivePageToken(userId);
   if (!token) return null;
   const { graphGet } = await import("@/lib/facebook-graph");
   const result = await graphGet<{

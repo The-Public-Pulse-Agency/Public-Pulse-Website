@@ -24,27 +24,48 @@ export type ActivePageToken = {
   source: "db" | "env";
 };
 
-/** Pull the active page access token. Prefers DB row over env. Returns
- *  null when no connection AND no env secret are configured. */
-export async function getActivePageToken(): Promise<ActivePageToken | null> {
-  try {
-    const [row] = await db
-      .select()
-      .from(facebookConnections)
-      .where(eq(facebookConnections.active, true))
-      .orderBy(desc(facebookConnections.connectedAt))
-      .limit(1);
-    if (row?.pageAccessToken) {
-      return {
-        pageId: row.pageId,
-        pageName: row.pageName,
-        accessToken: row.pageAccessToken,
-        source: "db",
-      };
+/** Pull the active page access token.
+ *
+ *  SECURITY: `userId` is REQUIRED for DB lookups — we will only ever
+ *  return a Page Access Token that was OAuth-granted by the requesting
+ *  admin themselves. Passing `null` skips the DB lookup entirely and
+ *  only considers the env fallback — used for system contexts (e.g.
+ *  cron jobs, the webhook receiver) where no user session exists.
+ *
+ *  Why this matters: even though the app is operationally single-tenant
+ *  today (one admin), a second admin in the future could otherwise have
+ *  their server-side calls silently use someone else's Page token. */
+export async function getActivePageToken(
+  userId: string | null
+): Promise<ActivePageToken | null> {
+  if (userId) {
+    try {
+      const [row] = await db
+        .select()
+        .from(facebookConnections)
+        .where(
+          and(
+            eq(facebookConnections.active, true),
+            eq(facebookConnections.userId, userId)
+          )
+        )
+        .orderBy(desc(facebookConnections.connectedAt))
+        .limit(1);
+      if (row?.pageAccessToken) {
+        return {
+          pageId: row.pageId,
+          pageName: row.pageName,
+          accessToken: row.pageAccessToken,
+          source: "db",
+        };
+      }
+    } catch (e) {
+      console.warn("[graph] DB token lookup failed", e instanceof Error ? e.message : e);
     }
-  } catch (e) {
-    console.warn("[graph] DB token lookup failed", e instanceof Error ? e.message : e);
   }
+  // Env fallback — only present when no real OAuth connection exists.
+  // Migration path from the SST-secret approach; kept for the single
+  // operational page until the user completes /manage/connect/facebook.
   const envToken = process.env.MESSENGER_PAGE_ACCESS_TOKEN;
   if (envToken && envToken.length > 50 && !envToken.startsWith("PENDING_")) {
     return {

@@ -24,7 +24,7 @@ export default async function MessengerInboxPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/manage/sign-in");
 
-  const token = await getActivePageToken();
+  const token = await getActivePageToken(session.user.id);
 
   // Group events by sender — most recent inbound first. We use a raw SQL
   // grouping because Drizzle's groupBy on jsonb fields is awkward.

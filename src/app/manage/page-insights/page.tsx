@@ -17,7 +17,7 @@ export default async function PageInsightsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/manage/sign-in");
 
-  const token = await getActivePageToken();
+  const token = await getActivePageToken(session.user.id);
 
   if (!token) {
     return (

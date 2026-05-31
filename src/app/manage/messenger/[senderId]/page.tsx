@@ -35,8 +35,8 @@ export default async function ConversationPage({
   // Reverse so chat reads top-down chronologically.
   const ordered = [...events].reverse();
 
-  const token = await getActivePageToken();
-  const profile = token ? await fetchUserProfile(senderId) : null;
+  const token = await getActivePageToken(session.user.id);
+  const profile = token ? await fetchUserProfile(session.user.id, senderId) : null;
   const displayName =
     profile?.first_name || profile?.last_name
       ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
