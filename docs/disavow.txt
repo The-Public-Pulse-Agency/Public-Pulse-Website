@@ -1,0 +1,35 @@
+# Google Search Console — disavow file for publicpulse.com.bd
+#
+# Generated 2026-05-31 in response to spam/manipulative backlinks identified
+# by Semrush's free SEO audit (https://semrush.com/site-audit). Domains
+# below are PBN / spam-link / fake "SEO services" sites that have created
+# unsolicited backlinks to publicpulse.com.bd in an attempt to either
+# (a) sell us their service via fake "test" links, or (b) manipulate our
+# link profile against our will.
+#
+# HOW TO SUBMIT:
+#   1. Open https://search.google.com/search-console/disavow-links
+#   2. Select the property: publicpulse.com.bd
+#   3. Click "Disavow links" → upload THIS file
+#   4. Confirm. Takes 4-6 weeks for Google to process.
+#
+# RE-AUDIT every 30 days. Add new spam domains here as they appear, then
+# re-upload the FULL file (Google replaces the previous disavow on each
+# upload — they don't merge).
+#
+# Reference: https://developers.google.com/search/docs/crawling-indexing/links/disavow
+
+# ─── Confirmed spam / link-farm domains ──────────────────────────────
+
+# "Domain Report" / scrape-and-display farms — auto-generated pages
+# containing unsolicited links + scraped metadata. No editorial value.
+domain:atomizelink.icu
+domain:drjack.world
+
+# Fake testimonial pages from "Fiverr SEO" outfits attempting to
+# attribute traffic/ranking to their (paid) service. Disavow.
+domain:fiverr-seo-for-small-businesses.site
+
+# ─── If more spam appears in audits, add as:  domain:example.com ─────
+# (Always prefer domain: over individual URLs — covers all paths +
+# subdomains in one entry.)

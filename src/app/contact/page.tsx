@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   Sparkles,
   ShieldCheck,
+  MapPin,
 } from "lucide-react";
 
 import { buildMetadata } from "@/lib/seo";
@@ -240,6 +241,36 @@ export default function ContactPage() {
               </div>
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange">
                 Compose
+                <ArrowUpRight
+                  className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  aria-hidden
+                />
+              </span>
+            </a>
+          </div>
+
+          {/* Google Maps — directions */}
+          <div className="mt-4">
+            <a
+              href={SITE.contact.mapsShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col items-start justify-between gap-3 rounded-panel border border-ink/15 bg-paper p-5 transition hover:border-ink sm:flex-row sm:items-center"
+              aria-label="Get directions to Public Pulse Agency on Google Maps"
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-card border border-ink bg-paper text-ink">
+                  <MapPin className="h-4 w-4" aria-hidden />
+                </span>
+                <div>
+                  <p className="text-meta uppercase tracking-wider text-ink/55">Location</p>
+                  <p className="text-base font-bold text-ink">
+                    Dhaka, Bangladesh
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-orange">
+                Get directions
                 <ArrowUpRight
                   className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                   aria-hidden

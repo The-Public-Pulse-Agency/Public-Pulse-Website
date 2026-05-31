@@ -44,6 +44,14 @@ export function Footer() {
             >
               {SITE.contact.email}
             </a>
+            <a
+              href={SITE.contact.mapsShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-full border border-white/20 px-4 py-2 text-xs uppercase tracking-wider text-white/85 hover:border-white/50"
+            >
+              Find us on Maps →
+            </a>
           </div>
         </div>
 

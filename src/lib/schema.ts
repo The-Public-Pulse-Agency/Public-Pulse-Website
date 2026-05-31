@@ -82,6 +82,7 @@ export function organizationSchema() {
     sameAs: [
       SITE.social.facebook,
       SITE.social.instagram,
+      SITE.contact.mapsPlaceUrl, // Google Maps Place — entity disambiguation
       // Authoritative external profiles for entity disambiguation can be
       // appended here as they're created (LinkedIn, Wikidata, etc.).
     ].filter(Boolean),
@@ -154,6 +155,8 @@ export function localBusinessSchema(input: LocalBusinessSchemaInput = {}) {
       latitude: SITE.contact.address.lat,
       longitude: SITE.contact.address.lng,
     },
+    // Google Maps Place URL — feeds Google Knowledge Graph + Local Pack.
+    hasMap: SITE.contact.mapsPlaceUrl,
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",

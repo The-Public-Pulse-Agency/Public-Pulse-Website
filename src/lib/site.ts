@@ -13,6 +13,12 @@ export const SITE = {
     phoneDisplay: "+880 1717-714676",
     email: "info@publicpulse.com.bd",
     whatsapp: "https://wa.me/message/TBIM4KYTCFPEI1",
+    // Google Maps — short share link (resolves to the same Place) +
+    // canonical place URL (used by schema.org `hasMap`). Place ID is
+    // ChIJY7S7LNYHXEUR5OOT3k5XIJI · CID 10529027197574464404.
+    mapsShareUrl: "https://share.google/g11S4Cxv9APnuvs92",
+    mapsPlaceUrl:
+      "https://www.google.com/maps/place/Public+Pulse+Agency/data=!4m2!3m1!1s0x455c07d62cbbb463:0x9220574ede93e394",
     address: {
       locality: "Dhaka",
       region: "BD-13",
