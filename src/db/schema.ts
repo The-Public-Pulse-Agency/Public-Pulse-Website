@@ -192,6 +192,51 @@ export const contentTopics = pgTable(
 export type ContentTopic = typeof contentTopics.$inferSelect;
 export type NewContentTopic = typeof contentTopics.$inferInsert;
 
+// ─── Messenger events (inbound Facebook Messenger webhook log) ─────────
+// Every POST from /api/messenger/webhook lands as a row. Used for:
+//   • Audit trail of every inbound interaction (msg / postback / opt-in)
+//   • /manage listing of conversations
+//   • Replay / reprocess if downstream handling fails
+//
+// We store the full payload as jsonb so we never lose data — even if Meta
+// adds new fields, we keep them. Indexed by senderId + receivedAt so the
+// /manage view can group per-user conversations.
+
+export const messengerEvents = pgTable(
+  "messenger_events",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    /** "message" | "postback" | "delivery" | "read" | "messaging_optins" | other. */
+    eventType: text("event_type").notNull(),
+    /** Facebook Page ID that received this event. */
+    pageId: text("page_id"),
+    /** Sender's PSID (Page-Scoped ID — unique per user-per-page). */
+    senderId: text("sender_id"),
+    /** Recipient PSID (usually the page itself for inbound). */
+    recipientId: text("recipient_id"),
+    /** Inbound message id (mid) — Meta dedupes by this. */
+    messageId: text("message_id"),
+    /** Plain-text message content if this is a text message. */
+    text: text("text"),
+    /** Whatever else the event carried (attachments, postback payload, etc.). */
+    raw: jsonb("raw").notNull(),
+    /** Has the team replied / handled this? */
+    handled: boolean("handled").notNull().default(false),
+    /** Meta's timestamp (ms epoch). */
+    fbTimestamp: timestamp("fb_timestamp", { withTimezone: true }),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    senderIdx: index("messenger_events_sender_idx").on(t.senderId, t.receivedAt.desc()),
+    pageIdx: index("messenger_events_page_idx").on(t.pageId, t.receivedAt.desc()),
+    messageIdx: uniqueIndex("messenger_events_msg_idx").on(t.messageId),
+    handledIdx: index("messenger_events_handled_idx").on(t.handled, t.receivedAt.desc()),
+  })
+);
+
+export type MessengerEvent = typeof messengerEvents.$inferSelect;
+export type NewMessengerEvent = typeof messengerEvents.$inferInsert;
+
 // ─── Newsletter subscribers (DOUBLE OPT-IN) ────────────────────────────
 // status flow: pending → confirmed → unsubscribed.
 // confirm_token is one-time; consumed when the user clicks the confirmation

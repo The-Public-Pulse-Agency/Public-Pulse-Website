@@ -68,6 +68,18 @@ export default $config({
     const ADMIN_PASSWORD = new sst.Secret("ADMIN_PASSWORD");
     // CRON_SECRET protects /api/cron/* endpoints. Generate with `openssl rand -hex 32`.
     const CRON_SECRET = new sst.Secret("CRON_SECRET");
+    // ─── Facebook Messenger Platform ───────────────────────────────────
+    // MESSENGER_VERIFY_TOKEN — string YOU pick + paste into Meta's webhook
+    //   verification field. `openssl rand -hex 32`. Used ONLY at handshake.
+    // MESSENGER_PAGE_ACCESS_TOKEN — long-lived page token Meta gives you
+    //   after you click "Add Page" in the Messenger setup. Used to send
+    //   replies + read user profile.
+    // MESSENGER_APP_SECRET — your Facebook App's "App Secret" (under
+    //   App Settings → Basic). Used to HMAC-verify every inbound POST so
+    //   we know the event actually came from Meta and not an attacker.
+    const MESSENGER_VERIFY_TOKEN = new sst.Secret("MESSENGER_VERIFY_TOKEN");
+    const MESSENGER_PAGE_ACCESS_TOKEN = new sst.Secret("MESSENGER_PAGE_ACCESS_TOKEN");
+    const MESSENGER_APP_SECRET = new sst.Secret("MESSENGER_APP_SECRET");
 
     // ─── Next.js (OpenNext) ────────────────────────────────────────────
     // The Nextjs component handles CloudFront + S3 (static + ISR cache) +
@@ -83,7 +95,17 @@ export default $config({
         ADMIN_EMAIL,
         ADMIN_PASSWORD,
         CRON_SECRET,
+        MESSENGER_VERIFY_TOKEN,
+        MESSENGER_PAGE_ACCESS_TOKEN,
+        MESSENGER_APP_SECRET,
       ],
+      // Linked secrets are exposed at runtime as Resource.NAME.value AND
+      // process.env.NAME for code that reads env directly.
+      environment: {
+        MESSENGER_VERIFY_TOKEN: MESSENGER_VERIFY_TOKEN.value,
+        MESSENGER_PAGE_ACCESS_TOKEN: MESSENGER_PAGE_ACCESS_TOKEN.value,
+        MESSENGER_APP_SECRET: MESSENGER_APP_SECRET.value,
+      },
       // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
       // Resend is called over public HTTPS — no IAM permissions needed.
       // Bedrock is called over public HTTPS but requires bedrock:InvokeModel
