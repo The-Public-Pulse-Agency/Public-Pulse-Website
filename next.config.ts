@@ -42,6 +42,14 @@ const nextConfig: NextConfig = {
       { source: "/teams", destination: "/about", permanent: true },
       { source: "/teams/", destination: "/about", permanent: true },
 
+      // ── Inbound URLs we don't have a post at yet — redirect to the
+      //    closest published guide so the visitor doesn't 404. ──────
+      {
+        source: "/blog/facebook-ads-guide-bangladesh",
+        destination: "/blog/paid-ads-dhaka-buyer-signals-channels-budget",
+        permanent: true,
+      },
+
       // ── Blog (old WP single posts → blog index; specific slugs
       //         won't have a match in the DB so just go to /blog) ─────
       // /how-businesses-can-leverage-data-for-smarter-decisions/ etc.
