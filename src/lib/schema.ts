@@ -493,6 +493,32 @@ export function qaPageSchema(question: string, answer: string) {
   };
 }
 
+// ─── SiteNavigationElement (sitelinks signal for Google + Bing) ─────────
+// Emits the main nav as a structured ItemList of SiteNavigationElement
+// so search engines + AI crawlers can reason about the site's IA. Google
+// auto-generates sitelinks based on signals (internal linking + brand
+// search volume + sitemap freshness); we can't FORCE them, but emitting
+// this gives engines one more confident signal about which URLs are top-level.
+
+export type NavItem = { name: string; url: string };
+
+export function siteNavigationSchema(items: NavItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${SITE.url}/#mainnav`,
+    name: "Public Pulse main navigation",
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: items.length,
+    itemListElement: items.map((item, i) => ({
+      "@type": "SiteNavigationElement",
+      position: i + 1,
+      name: item.name,
+      url: item.url.startsWith("http") ? item.url : `${SITE.url}${item.url}`,
+    })),
+  };
+}
+
 // ─── Industry (DefinedTerm-as-vertical) ─────────────────────────────────
 // We model an industry vertical as a DefinedTerm in a DefinedTermSet
 // (Public Pulse's industry coverage). This gives Google + AI engines a

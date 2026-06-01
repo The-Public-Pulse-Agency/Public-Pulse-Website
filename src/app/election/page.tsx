@@ -17,13 +17,18 @@ import { politicalPr } from "@/content/services/political-pr";
 import { bookingUrl } from "@/lib/booking";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Election Readiness for Bangladesh Candidates & Parties | Public Pulse",
+  // Title: 56 chars — under Google's 60-char SERP cutoff. Echoes the H1
+  // "Win the perception first. The booth comes after." for brand recall.
+  // Geo keyword "Bangladesh" leads for local-pack ranking.
+  title: "Bangladesh Election PR: Win the Perception, Win the Seat",
   description:
-    "90-day election playbook for Bangladeshi candidates and parties — constituency survey, narrative design, ground + digital coordination, 24h crisis SLA. From a registered Dhaka entity.",
+    "Win Bangladeshi elections with our 90-day PR playbook: constituency survey, narrative design, ground + digital coordination, 24h crisis SLA from Dhaka.",
   path: "/election",
   useDynamicOg: true,
-  ogTitle: "Bangladesh Election PR — 90-Day Playbook",
-  ogEyebrow: "ELECTION READINESS",
+  // Social-share OG card: outcome-led, time-bounded ("in 90 days"),
+  // sized to fit the 1200×630 /og factory without truncation.
+  ogTitle: "Win the Seat in 90 Days — Bangladesh Election PR",
+  ogEyebrow: "FOR CANDIDATES · 24-HOUR CRISIS SLA",
 });
 
 const crumbs = [
@@ -106,7 +111,7 @@ export default function ElectionPage() {
           breadcrumbSchema(crumbs),
           webPageSchema({
             path: "/election",
-            name: "Election Readiness for Bangladesh Candidates & Parties",
+            name: "Win the Seat in 90 Days — Bangladesh Election PR",
             description:
               "90-day election PR playbook for Bangladeshi candidates and parties.",
             about: ["political-pr"],
@@ -115,6 +120,7 @@ export default function ElectionPage() {
               "political campaign agency Bangladesh",
               "candidate image building Dhaka",
               "90-day election playbook",
+              "win the seat",
             ],
           }),
           faqPageSchema(FAQS),

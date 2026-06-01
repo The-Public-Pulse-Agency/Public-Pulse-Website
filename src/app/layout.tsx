@@ -9,6 +9,7 @@ import {
   localBusinessSchema,
   organizationSchema,
   professionalServiceSchema,
+  siteNavigationSchema,
   websiteSchema,
 } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -79,6 +80,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             websiteSchema(),
             localBusinessSchema(),
             professionalServiceSchema(),
+            // Main nav as structured data — sitelinks signal for Google/Bing.
+            // Sitelinks themselves are auto-generated; this just gives the
+            // engines a confident map of the top-level URLs.
+            siteNavigationSchema([
+              { name: "Services", url: "/services" },
+              { name: "Work", url: "/case-studies" },
+              { name: "Election readiness", url: "/election" },
+              { name: "Insights", url: "/blog" },
+              { name: "Studio", url: "/about" },
+              { name: "Contact", url: "/contact" },
+              { name: "Press & media", url: "/press" },
+              { name: "Search", url: "/search" },
+              { name: "Book a call", url: "/book" },
+            ]),
           ]}
         />
         <a

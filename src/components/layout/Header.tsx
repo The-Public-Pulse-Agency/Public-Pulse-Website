@@ -4,25 +4,24 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, Search, ArrowUpRight } from "lucide-react";
 
-// Primary nav — kept to 5 items per agency-site convention. New surfaces
-// (Press, Election, Search) live in the mobile drawer's secondary group
-// + the footer, so the top bar stays uncluttered. "Work" is the standard
-// agency-site label for the case-studies index; we keep the editorial
-// "Studio" / "Insights" labels per docs/BRAND.md.
+// Primary nav. /election is a priority landing page (seasonal political-PR
+// flagship) so it sits in the top bar between Work and Insights. Search
+// is also priority — promoted from icon-only to a labeled button in the
+// right cluster (see below). Press remains secondary (mobile drawer + footer).
 const NAV = [
   { href: "/services", label: "Services" },
   { href: "/case-studies", label: "Work" },
+  { href: "/election", label: "Election" },
   { href: "/blog", label: "Insights" },
   { href: "/about", label: "Studio" },
   { href: "/contact", label: "Contact" },
 ];
 
-// Secondary nav — surfaced on mobile drawer + footer only. Keeps the
-// top-bar clean while still making these pages discoverable.
+// Secondary nav — only Press now; Election + Search were promoted to
+// the primary bar / right cluster. Press still surfaces in the mobile
+// drawer + footer for journalist discoverability.
 const SECONDARY = [
-  { href: "/election", label: "Election readiness" },
   { href: "/press", label: "Press & media" },
-  { href: "/search", label: "Search" },
 ];
 
 export function Header() {
@@ -110,10 +109,10 @@ export function Header() {
         <div className="flex flex-shrink-0 items-center gap-2 md:gap-3">
           <Link
             href="/search"
-            aria-label="Search the site"
-            className="hidden h-10 w-10 place-items-center rounded-full text-ink/70 transition hover:bg-ink/5 hover:text-ink md:grid"
+            className="hidden items-center gap-1.5 rounded-full border border-ink/15 px-4 py-2 text-[13px] font-medium text-ink/75 transition hover:border-ink hover:text-ink md:inline-flex"
           >
-            <Search className="h-[18px] w-[18px]" aria-hidden />
+            <Search className="h-[15px] w-[15px]" aria-hidden />
+            Search
           </Link>
           <Link
             href="/book"
@@ -126,7 +125,7 @@ export function Header() {
             ref={triggerRef}
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
+            aria-expanded={open ? "true" : "false"}
             aria-controls="mobile-nav-drawer"
             onClick={() => setOpen((o) => !o)}
             className="grid h-10 w-10 place-items-center rounded-card border border-ink text-ink md:hidden"
@@ -146,9 +145,42 @@ export function Header() {
           className="border-t border-ink/10 bg-paper md:hidden"
         >
           <div className="px-5 py-6">
+            {/* Priority block — Election + Search pinned to top with
+                brand-orange accent so they're the first thing thumbed. */}
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/election"
+                  onClick={closeDrawer}
+                  className="flex items-center justify-between rounded-card border-2 border-brand-orange bg-brand-orange/5 px-4 py-3 text-lg font-bold text-ink"
+                >
+                  <span className="flex items-center gap-2">
+                    Election readiness
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-brand-orange" aria-hidden />
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/search"
+                  onClick={closeDrawer}
+                  className="flex items-center justify-between rounded-card border border-ink/15 px-4 py-3 text-base font-semibold text-ink"
+                >
+                  <span className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-ink/55" aria-hidden />
+                    Search the site
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-ink/30" aria-hidden />
+                </Link>
+              </li>
+            </ul>
+
+            {/* Divider */}
+            <hr className="my-5 border-ink/10" aria-hidden />
+
             {/* Primary nav */}
             <ul className="space-y-1 text-lg font-bold text-ink">
-              {NAV.map((n) => (
+              {NAV.filter((n) => n.href !== "/election").map((n) => (
                 <li key={n.href}>
                   <Link
                     href={n.href}
