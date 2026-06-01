@@ -493,6 +493,39 @@ export function qaPageSchema(question: string, answer: string) {
   };
 }
 
+// ─── Industry (DefinedTerm-as-vertical) ─────────────────────────────────
+// We model an industry vertical as a DefinedTerm in a DefinedTermSet
+// (Public Pulse's industry coverage). This gives Google + AI engines a
+// crisp entity definition for "{industry} marketing in Bangladesh" and
+// stitches the page into the same knowledge graph as Org + WebSite.
+
+export type IndustrySchemaInput = {
+  slug: string;
+  name: string;
+  description: string;
+  alignedServiceSlugs: string[];
+};
+
+export function industrySchema(input: IndustrySchemaInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTerm",
+    "@id": `${SITE.url}/industries/${input.slug}#term`,
+    name: input.name,
+    description: input.description,
+    termCode: input.slug,
+    inDefinedTermSet: {
+      "@type": "DefinedTermSet",
+      "@id": `${SITE.url}/industries#set`,
+      name: "Public Pulse industry coverage",
+      url: `${SITE.url}/industries`,
+    },
+    additionalType: input.alignedServiceSlugs.map(
+      (s) => `${SITE.url}/services/${s}#service`
+    ),
+  };
+}
+
 // ─── AboutPage ───────────────────────────────────────────────────────────
 // NOTE: personSchema was intentionally removed — the Org schema (above)
 // HARD-FORBIDS Person/founder references for brand-only knowledge-graph

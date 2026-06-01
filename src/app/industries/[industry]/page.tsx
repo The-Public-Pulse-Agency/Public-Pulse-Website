@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { buildMetadata } from "@/lib/seo";
-import { breadcrumbSchema, faqPageSchema } from "@/lib/schema";
+import { breadcrumbSchema, faqPageSchema, industrySchema } from "@/lib/schema";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProgrammaticPage, CalloutList, Hl } from "@/components/seo/ProgrammaticPage";
 import { INDUSTRIES, getIndustry } from "@/lib/taxonomies/industries";
@@ -59,6 +59,12 @@ export default async function IndustryPage({
     <>
       <JsonLd
         data={[
+          industrySchema({
+            slug: ind.slug,
+            name: ind.name,
+            description: ind.description,
+            alignedServiceSlugs: alignedServices.map((s) => s.slug),
+          }),
           breadcrumbSchema(crumbs),
           faqPageSchema([
             {

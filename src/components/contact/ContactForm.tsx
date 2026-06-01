@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send, CheckCircle2, ArrowRight } from "lucide-react";
+import { Send, CheckCircle2, ArrowRight, Calendar, MessageCircle, BookOpen } from "lucide-react";
 import { contactSchema, type ContactInput } from "@/lib/contact-schema";
 import { submitContact } from "@/app/contact/actions";
 import { SERVICES } from "@/lib/services";
 import { getServiceIcon } from "@/lib/icons";
+import { SITE } from "@/lib/site";
 
 export function ContactForm() {
   const [pending, startTransition] = useTransition();
@@ -61,6 +63,10 @@ export function ContactForm() {
   };
 
   if (serverState.status === "success") {
+    // Note: NEXT_PUBLIC_BOOKING_URL is read at build time. When set, we
+    // show the "Schedule a call" CTA; otherwise we omit it (visitors
+    // still get WhatsApp + Insights as next steps).
+    const booking = process.env.NEXT_PUBLIC_BOOKING_URL || null;
     return (
       <div
         role="status"
@@ -75,8 +81,62 @@ export function ContactForm() {
           We&rsquo;ve got your brief.
         </h3>
         <p className="mt-3 text-ink/70">
-          Expect a reply within 24 hours, Saturday through Thursday. For anything urgent,
-          WhatsApp is the fastest channel.
+          Expect a reply within 24 hours, Saturday through Thursday. While you wait,
+          here are the fastest ways to keep moving:
+        </p>
+
+        {/* Next-step CTAs — keep the lead warm. Booking link only renders
+            when BOOKING_URL env is set; WhatsApp + Insights always show. */}
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          {booking && (
+            <a
+              href={booking}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-start gap-3 rounded-card border border-ink/15 bg-paper p-4 transition hover:-translate-y-0.5 hover:border-brand-orange hover:shadow-card-hover"
+            >
+              <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-brand-orange/10 text-brand-orange">
+                <Calendar className="h-5 w-5" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-ink">Schedule the call now</div>
+                <div className="mt-0.5 text-meta text-ink/55">Pick a 30-min slot — instant confirmation.</div>
+              </div>
+              <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-ink/40 transition group-hover:translate-x-0.5 group-hover:text-brand-orange" aria-hidden />
+            </a>
+          )}
+          <a
+            href={SITE.contact.whatsapp}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-start gap-3 rounded-card border border-ink/15 bg-paper p-4 transition hover:-translate-y-0.5 hover:border-brand-orange hover:shadow-card-hover"
+          >
+            <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-whatsapp/15 text-whatsapp">
+              <MessageCircle className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-ink">Message on WhatsApp</div>
+              <div className="mt-0.5 text-meta text-ink/55">Fastest path — usually &lt;2h reply.</div>
+            </div>
+            <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-ink/40 transition group-hover:translate-x-0.5 group-hover:text-brand-orange" aria-hidden />
+          </a>
+          <Link
+            href="/blog"
+            className="group flex items-start gap-3 rounded-card border border-ink/15 bg-paper p-4 transition hover:-translate-y-0.5 hover:border-brand-orange hover:shadow-card-hover"
+          >
+            <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-ink/5 text-ink">
+              <BookOpen className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-ink">Read the playbooks</div>
+              <div className="mt-0.5 text-meta text-ink/55">Bangladesh marketing guides while you wait.</div>
+            </div>
+            <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-ink/40 transition group-hover:translate-x-0.5 group-hover:text-brand-orange" aria-hidden />
+          </Link>
+        </div>
+
+        <p className="mt-6 text-meta text-ink/55">
+          Trusted by 50+ Bangladeshi brands · Senior in the room on every call.
         </p>
       </div>
     );

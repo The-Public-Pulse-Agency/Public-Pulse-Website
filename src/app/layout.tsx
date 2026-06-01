@@ -16,7 +16,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SocialSidebar } from "@/components/layout/SocialSidebar";
 import { WhatsAppFab } from "@/components/layout/WhatsAppFab";
-import { Tracking, TrackingNoscript } from "@/components/analytics/Tracking";
+import { CookieConsent } from "@/components/analytics/CookieConsent";
 import { CursorGlow, ScrollProgress } from "@/components/motion";
 import { StickyBar, ExitIntent } from "@/components/lead-capture";
 
@@ -66,8 +66,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="reveal-killswitch" strategy="afterInteractive">
           {`setTimeout(function(){document.documentElement.classList.remove('reveal-ready')},2500);`}
         </Script>
-        <Tracking />
-        <TrackingNoscript />
+        {/* Cookie banner + consent-gated GTM/GA4/Pixel.
+            Renders nothing on SSR; hydrates client-side and either:
+              - injects the 3 tracking scripts (if consent='granted')
+              - shows the banner (if no prior decision)
+              - stays silent (if consent='denied')
+            See src/components/analytics/CookieConsent.tsx for the policy. */}
+        <CookieConsent />
         <JsonLd
           data={[
             organizationSchema(),
