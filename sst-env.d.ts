@@ -18,6 +18,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "BOOKING_URL": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "CRON_SECRET": {
       "type": "sst.sst.Secret"
       "value": string

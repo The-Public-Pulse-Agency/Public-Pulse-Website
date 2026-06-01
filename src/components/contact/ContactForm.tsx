@@ -11,7 +11,7 @@ import { SERVICES } from "@/lib/services";
 import { getServiceIcon } from "@/lib/icons";
 import { SITE } from "@/lib/site";
 
-export function ContactForm() {
+export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {}) {
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<
     | { status: "idle" }
@@ -63,10 +63,11 @@ export function ContactForm() {
   };
 
   if (serverState.status === "success") {
-    // Note: NEXT_PUBLIC_BOOKING_URL is read at build time. When set, we
-    // show the "Schedule a call" CTA; otherwise we omit it (visitors
-    // still get WhatsApp + Insights as next steps).
-    const booking = process.env.NEXT_PUBLIC_BOOKING_URL || null;
+    // Booking URL resolved server-side and passed in as a prop — avoids
+    // NEXT_PUBLIC build-time inline issues with SST runtime secrets.
+    // When unset, we omit the "Schedule a call" card; visitors still
+    // get WhatsApp + Insights as next steps.
+    const booking = bookingUrl || null;
     return (
       <div
         role="status"

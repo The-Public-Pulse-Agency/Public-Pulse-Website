@@ -20,6 +20,7 @@ import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { Container } from "@/components/ui/Container";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { SITE } from "@/lib/site";
+import { bookingUrl } from "@/lib/booking";
 
 export const metadata: Metadata = buildMetadata({
   title: "Contact Public Pulse Agency | Free Consultation, Dhaka",
@@ -304,7 +305,10 @@ export default function ContactPage() {
 
             {/* Form */}
             <div className="lg:col-span-8">
-              <ContactForm />
+              {/* Resolve booking URL server-side and pass as prop —
+                  avoids the NEXT_PUBLIC build-time inline problem when
+                  the URL comes from an SST runtime secret. */}
+              <ContactForm bookingUrl={bookingUrl()} />
             </div>
           </div>
         </Container>

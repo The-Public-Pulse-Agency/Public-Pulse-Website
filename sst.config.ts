@@ -97,6 +97,14 @@ export default $config({
     const META_CAPI_DATASET_ID = new sst.Secret("META_CAPI_DATASET_ID");
     const META_CAPI_TEST_EVENT_CODE = new sst.Secret("META_CAPI_TEST_EVENT_CODE");
 
+    // ─── Booking integration ───────────────────────────────────────────
+    // BOOKING_URL — public Cal.com / Calendly scheduling URL embedded by
+    // /book and CTA'd from /contact success state + /election. Stored as
+    // a Secret so the URL can be rotated/changed without redeploying
+    // code. The value itself is PUBLIC (anyone with the link can use it).
+    // Set via: sst secret set BOOKING_URL "https://cal.com/<user>/<event>"
+    const BOOKING_URL = new sst.Secret("BOOKING_URL", "");
+
     // ─── Next.js (OpenNext) ────────────────────────────────────────────
     // The Nextjs component handles CloudFront + S3 (static + ISR cache) +
     // Lambda (server) + Image Optimizer Lambda. Cache policy details in
@@ -118,6 +126,7 @@ export default $config({
         META_CAPI_ACCESS_TOKEN,
         META_CAPI_DATASET_ID,
         META_CAPI_TEST_EVENT_CODE,
+        BOOKING_URL,
       ],
       // Linked secrets are exposed at runtime as Resource.NAME.value AND
       // process.env.NAME for code that reads env directly.
@@ -129,6 +138,11 @@ export default $config({
         META_CAPI_ACCESS_TOKEN: META_CAPI_ACCESS_TOKEN.value,
         META_CAPI_DATASET_ID: META_CAPI_DATASET_ID.value,
         META_CAPI_TEST_EVENT_CODE: META_CAPI_TEST_EVENT_CODE.value,
+        // BOOKING_URL is read server-side via bookingUrl() helper, then
+        // passed as a prop to client components (e.g. ContactForm). We
+        // do NOT use NEXT_PUBLIC_* because SST resolves secrets at Lambda
+        // runtime, not at next-build time.
+        BOOKING_URL: BOOKING_URL.value,
       },
       // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
       // Resend is called over public HTTPS — no IAM permissions needed.
