@@ -22,6 +22,36 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
 
+  // 301 redirects — migrate old WordPress URLs to their modern equivalent.
+  // URLs WITHOUT a modern equivalent are handled by middleware.ts (410 Gone).
+  // Trailing slash, capital-S /Service, and similar variations all caught.
+  async redirects() {
+    return [
+      // ── Contact ─────────────────────────────────────────────────────
+      { source: "/contact-us", destination: "/contact", permanent: true },
+      { source: "/contact-us/", destination: "/contact", permanent: true },
+
+      // ── Services index ──────────────────────────────────────────────
+      { source: "/our-services", destination: "/services", permanent: true },
+      { source: "/our-services/", destination: "/services", permanent: true },
+      { source: "/services/", destination: "/services", permanent: true },
+
+      // ── About / team (old WP used /our-team, /teams, /our-team/) ───
+      { source: "/our-team", destination: "/about", permanent: true },
+      { source: "/our-team/", destination: "/about", permanent: true },
+      { source: "/teams", destination: "/about", permanent: true },
+      { source: "/teams/", destination: "/about", permanent: true },
+
+      // ── Blog (old WP single posts → blog index; specific slugs
+      //         won't have a match in the DB so just go to /blog) ─────
+      // /how-businesses-can-leverage-data-for-smarter-decisions/ etc.
+      // → handled by middleware 410 (those exact URLs in GONE_EXACT)
+
+      // ── Lost-password / cart → manage sign-in or contact ───────────
+      // → handled by middleware 410 (signup is admin-only)
+    ];
+  },
+
   // Security + privacy headers, applied to every response.
   // SEO audits (Semrush, SiteCheckup, The Hoth, Seobility) flagged the
   // absence of HSTS + CSP; this closes those + adds standard defense-in-
