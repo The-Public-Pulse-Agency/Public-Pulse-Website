@@ -49,6 +49,15 @@ const nextConfig: NextConfig = {
         destination: "/blog/paid-ads-dhaka-buyer-signals-channels-budget",
         permanent: true,
       },
+      {
+        // Google-indexed ghost (srsltid referral); no such post exists.
+        // Closest match is the content-production pricing guide which
+        // covers production scope including video. Kept generic to also
+        // catch any future "video-tips" variant inbound link rot.
+        source: "/blog/content-production-video-tips",
+        destination: "/blog/content-production-pricing-bangladesh",
+        permanent: true,
+      },
 
       // ── BN locale retired — site is English-only.
       //    301 every /bn/* path to its English equivalent. Catches
