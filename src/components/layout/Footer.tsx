@@ -24,7 +24,7 @@ export function Footer() {
       </div>
 
       {/* ─── Columns ─────────────────────────────────────────────────── */}
-      <div className="max-w-container mx-auto grid grid-cols-2 gap-10 px-5 py-14 md:grid-cols-4 md:px-8">
+      <div className="max-w-container mx-auto grid grid-cols-2 gap-10 px-5 py-14 md:grid-cols-6 md:px-8">
         <div className="col-span-2 md:col-span-2">
           <Link href="/" className="flex items-baseline gap-1" aria-label="Public Pulse Agency home">
             <span className="text-[22px] font-extrabold tracking-tight text-paper">Public</span>
@@ -77,8 +77,30 @@ export function Footer() {
           <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">Studio</h3>
           <ul className="mt-4 space-y-2.5 text-sm">
             <li><Link href="/about" className="text-white/80 hover:text-white">About</Link></li>
+            <li><Link href="/case-studies" className="text-white/80 hover:text-white">Work</Link></li>
             <li><Link href="/blog" className="text-white/80 hover:text-white">Insights</Link></li>
+            <li><Link href="/press" className="text-white/80 hover:text-white">Press</Link></li>
             <li><Link href="/contact" className="text-white/80 hover:text-white">Contact</Link></li>
+            <li><Link href="/book" className="text-white/80 hover:text-white">Book a call</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">Resources</h3>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            <li><Link href="/election" className="text-white/80 hover:text-white">Election readiness</Link></li>
+            <li><Link href="/guides" className="text-white/80 hover:text-white">Guides</Link></li>
+            <li><Link href="/glossary" className="text-white/80 hover:text-white">Glossary</Link></li>
+            <li><Link href="/compare" className="text-white/80 hover:text-white">Compare</Link></li>
+            <li><Link href="/locations" className="text-white/80 hover:text-white">Locations</Link></li>
+            <li><Link href="/industries" className="text-white/80 hover:text-white">Industries</Link></li>
+            <li><Link href="/search" className="text-white/80 hover:text-white">Search</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">Social</h3>
+          <ul className="mt-4 space-y-2.5 text-sm">
             <li>
               <a href={SITE.social.facebook} rel="noopener noreferrer" target="_blank" className="text-white/80 hover:text-white">
                 Facebook
