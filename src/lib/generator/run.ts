@@ -336,7 +336,6 @@ async function processOne(
     try {
       updateTag(BLOG_TAG);
       revalidatePath("/blog");
-      revalidatePath("/bn/blog");
       revalidatePath(`/blog/${finalSlug}`);
       await pingIndexNow([
         `${SITE.url}/blog`,

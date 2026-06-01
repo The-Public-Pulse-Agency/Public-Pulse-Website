@@ -2,8 +2,7 @@
 
 // /manage/blog mutations. Every successful mutation:
 //   • Calls updateTag(BLOG_TAG) so cached reads refresh
-//   • revalidatePath('/blog'), revalidatePath('/bn/blog') and the specific
-//     /blog/<slug> route
+//   • revalidatePath('/blog') and the specific /blog/<slug> route
 //   • Fires pingIndexNow() for the changed URLs (best-effort)
 
 import { revalidatePath, updateTag } from "next/cache";
@@ -23,24 +22,22 @@ async function requireSession() {
   if (!session) redirect("/manage/sign-in");
 }
 
-function postUrl(locale: string, slug: string): string {
-  return `${SITE.url}${locale === "bn" ? "/bn/blog" : "/blog"}/${slug}`;
+function postUrl(_locale: string, slug: string): string {
+  return `${SITE.url}/blog/${slug}`;
 }
 
 function refreshPublic(slug?: string, locale: string = "en") {
   updateTag(BLOG_TAG);
   revalidatePath("/blog");
-  revalidatePath("/bn/blog");
   revalidatePath("/");
   if (slug) {
-    revalidatePath(locale === "bn" ? `/bn/blog/${slug}` : `/blog/${slug}`);
+    revalidatePath(`/blog/${slug}`);
     void pingIndexNow([
       `${SITE.url}/blog`,
-      `${SITE.url}/bn/blog`,
       postUrl(locale, slug),
     ]).catch(() => {});
   } else {
-    void pingIndexNow([`${SITE.url}/blog`, `${SITE.url}/bn/blog`]).catch(() => {});
+    void pingIndexNow([`${SITE.url}/blog`]).catch(() => {});
   }
 }
 

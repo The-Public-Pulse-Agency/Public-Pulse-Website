@@ -50,6 +50,15 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
+      // ── BN locale retired — site is English-only.
+      //    301 every /bn/* path to its English equivalent. Catches
+      //    /bn (bare) AND /bn/<any-path>. Includes legacy crawled URLs
+      //    like /bn/blog/<slug> (the route never existed but Google
+      //    saw them via sitemap hreflang in the old version). ───────
+      { source: "/bn", destination: "/", permanent: true },
+      { source: "/bn/", destination: "/", permanent: true },
+      { source: "/bn/:path*", destination: "/:path*", permanent: true },
+
       // ── Blog (old WP single posts → blog index; specific slugs
       //         won't have a match in the DB so just go to /blog) ─────
       // /how-businesses-can-leverage-data-for-smarter-decisions/ etc.

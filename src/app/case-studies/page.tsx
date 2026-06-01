@@ -22,7 +22,6 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Real client outcomes — paid, social, PR, SEO — across Bangladesh hospitality, e-commerce and political PR. Metrics-first, grounded in real campaigns.",
   path: "/case-studies",
-  alternateLanguages: { bn: "/bn/case-studies" },
 });
 
 const crumbs = [

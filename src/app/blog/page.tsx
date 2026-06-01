@@ -87,16 +87,6 @@ export default async function BlogIndexPage() {
         <BlogFilter posts={serializedPosts} categories={serializedCategories} />
       </Suspense>
 
-      {posts.length > 0 && (
-        <section className="border-t border-ink bg-paper py-12">
-          <Container>
-            <p className="text-meta text-ink/55">
-              Canonical hub: <code>{SITE.url}/blog</code> · বাংলা hub at{" "}
-              <code>{SITE.url}/bn/blog</code> (native authoring only)
-            </p>
-          </Container>
-        </section>
-      )}
     </>
   );
 }

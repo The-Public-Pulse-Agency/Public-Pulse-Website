@@ -67,12 +67,11 @@ async function requireSession() {
   if (!session) redirect("/manage/sign-in");
 }
 
-function refreshPublic(slug?: string, locale: "en" | "bn" = "en") {
+function refreshPublic(slug?: string, _locale: "en" | "bn" = "en") {
   updateTag(CASE_STUDIES_TAG);
   revalidatePath("/");
   revalidatePath("/case-studies");
-  revalidatePath("/bn/case-studies");
-  if (slug) revalidatePath(locale === "bn" ? `/bn/case-studies/${slug}` : `/case-studies/${slug}`);
+  if (slug) revalidatePath(`/case-studies/${slug}`);
   const urls = [`${SITE.url}/`, `${SITE.url}/case-studies`];
   if (slug) urls.push(`${SITE.url}/case-studies/${slug}`);
   void pingIndexNow(urls).catch(() => {});

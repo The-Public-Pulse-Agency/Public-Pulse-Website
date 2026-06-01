@@ -72,7 +72,6 @@ export async function generateMetadata({
     section: post.categorySlug,
     tags: (post.tags as string[] | null) ?? [],
     authors: [SITE.name],
-    alternateLanguages: { "bn-BD": absoluteUrl(`/bn/blog/${post.slug}`) },
   });
 }
 

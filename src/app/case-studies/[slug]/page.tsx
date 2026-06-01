@@ -80,7 +80,6 @@ export async function generateMetadata({
           ogTitle: study.title,
           ogEyebrow: `CASE STUDY · ${study.metric}`,
         }),
-    alternateLanguages: { bn: `/bn/case-studies/${slug}` },
   });
 }
 

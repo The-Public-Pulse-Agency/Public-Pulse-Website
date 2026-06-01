@@ -87,76 +87,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Compare pages ──────────────────────────────────────────────────
   const compares = COMPARES.map((c) => entry(`/compare/${c.slug}`, "monthly", 0.6));
 
-  // ── Blog (DB-backed; published posts in EN + BN with hreflang) ────
+  // ── Blog (DB-backed, English only — BN retired 2026-05-31) ─────────
   const publishedEn = await getPublishedPosts("en");
-  const publishedBn = await getPublishedPosts("bn");
-  const bnSlugSet = new Set(publishedBn.map((p) => p.slug));
-  const blog: MetadataRoute.Sitemap = publishedEn.map((p) => {
-    const path = `/blog/${p.slug}`;
-    const hasBn = bnSlugSet.has(p.slug);
-    return {
-      url: absoluteUrl(path),
-      lastModified: p.publishedAt ? new Date(p.publishedAt).toISOString().slice(0, 10) : today,
-      changeFrequency: "monthly",
-      priority: 0.7,
-      alternates: {
-        languages: {
-          en: absoluteUrl(path),
-          "x-default": absoluteUrl(path),
-          ...(hasBn ? { "bn-BD": absoluteUrl(`/bn/blog/${p.slug}`) } : {}),
-        },
-      },
-    };
-  });
-  // ── Case studies (DB-backed, EN + BN with hreflang) ─────────────────
-  const caseEn = await getPublishedCaseStudies("en");
-  const caseBn = await getPublishedCaseStudies("bn");
-  const caseBnSlugs = new Set(caseBn.map((c) => c.slug));
-  const cases: MetadataRoute.Sitemap = caseEn.map((c) => {
-    const path = `/case-studies/${c.slug}`;
-    const hasBn = caseBnSlugs.has(c.slug);
-    return {
-      url: absoluteUrl(path),
-      lastModified: c.publishedAt ? new Date(c.publishedAt).toISOString().slice(0, 10) : today,
-      changeFrequency: "monthly",
-      priority: 0.75,
-      alternates: {
-        languages: {
-          en: absoluteUrl(path),
-          "x-default": absoluteUrl(path),
-          ...(hasBn ? { "bn-BD": absoluteUrl(`/bn/case-studies/${c.slug}`) } : {}),
-        },
-      },
-    };
-  });
-  const casesBnOnly: MetadataRoute.Sitemap = caseBn.map((c) => ({
-    url: absoluteUrl(`/bn/case-studies/${c.slug}`),
-    lastModified: c.publishedAt ? new Date(c.publishedAt).toISOString().slice(0, 10) : today,
-    changeFrequency: "monthly",
-    priority: 0.7,
-    alternates: {
-      languages: {
-        "bn-BD": absoluteUrl(`/bn/case-studies/${c.slug}`),
-        en: absoluteUrl(`/case-studies/${c.slug}`),
-        "x-default": absoluteUrl(`/case-studies/${c.slug}`),
-      },
-    },
-  }));
-
-  const blogBnOnly: MetadataRoute.Sitemap = publishedBn.map((p) => ({
-    url: absoluteUrl(`/bn/blog/${p.slug}`),
-    // Neon HTTP driver returns timestamps as ISO strings on some code paths
-    // (cache rehydrate, JSONB serialization). Coerce defensively.
+  const blog: MetadataRoute.Sitemap = publishedEn.map((p) => ({
+    url: absoluteUrl(`/blog/${p.slug}`),
     lastModified: p.publishedAt ? new Date(p.publishedAt).toISOString().slice(0, 10) : today,
     changeFrequency: "monthly",
-    priority: 0.65,
-    alternates: {
-      languages: {
-        "bn-BD": absoluteUrl(`/bn/blog/${p.slug}`),
-        en: absoluteUrl(`/blog/${p.slug}`),
-        "x-default": absoluteUrl(`/blog/${p.slug}`),
-      },
-    },
+    priority: 0.7,
+  }));
+
+  // ── Case studies (DB-backed, English only) ─────────────────────────
+  const caseEn = await getPublishedCaseStudies("en");
+  const cases: MetadataRoute.Sitemap = caseEn.map((c) => ({
+    url: absoluteUrl(`/case-studies/${c.slug}`),
+    lastModified: c.publishedAt ? new Date(c.publishedAt).toISOString().slice(0, 10) : today,
+    changeFrequency: "monthly",
+    priority: 0.75,
   }));
 
   return [
@@ -170,9 +116,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...guides,
     ...compares,
     ...blog,
-    ...blogBnOnly,
     ...cases,
-    ...casesBnOnly,
   ];
 }
 
