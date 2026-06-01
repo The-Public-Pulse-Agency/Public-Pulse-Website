@@ -121,7 +121,9 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https: https://www.facebook.com https://*.fbcdn.net https://*.googletagmanager.com https://www.google-analytics.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://stats.g.doubleclick.net https://www.facebook.com https://graph.facebook.com https://*.facebook.com",
-              "frame-src 'self' https://www.facebook.com https://*.facebook.com https://www.googletagmanager.com",
+              // cal.com: required for the /book Cal.com booking iframe.
+              // *.cal.com covers app.cal.com / embed.cal.com / etc.
+              "frame-src 'self' https://www.facebook.com https://*.facebook.com https://www.googletagmanager.com https://cal.com https://*.cal.com",
               "form-action 'self'",
               "base-uri 'self'",
               "frame-ancestors 'self'",
