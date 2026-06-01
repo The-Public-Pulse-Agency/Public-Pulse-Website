@@ -184,7 +184,7 @@ export default function AboutPage() {
               <ScrollReveal>
                 <p className="text-eyebrow uppercase text-brand-orange">Why the studio exists</p>
                 <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
-                  Built to fix the <GradientText as="span">handoff</GradientText> problem.
+                  Built to fix the <em className="not-italic text-brand-orange">handoff</em> problem.
                 </h2>
               </ScrollReveal>
             </div>
@@ -248,7 +248,7 @@ export default function AboutPage() {
             <ScrollReveal>
               <p className="text-eyebrow uppercase text-brand-orange">Capabilities</p>
               <h2 className="mt-4 text-display font-extrabold tracking-tight">
-                Nine services. <GradientText as="span">One accountable team.</GradientText>
+                Nine services. <em className="not-italic text-brand-orange">One accountable team.</em>
               </h2>
               <p className="mt-6 text-lead text-white/70">
                 Each service is led by a senior practitioner inside the studio. They stand alone or
@@ -355,7 +355,7 @@ export default function AboutPage() {
               <ScrollReveal>
                 <p className="text-eyebrow uppercase text-brand-orange">Pulse Group</p>
                 <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
-                  Part of <GradientText as="span">a wider family</GradientText> of Bangladesh-focused
+                  Part of <em className="not-italic text-brand-orange">a wider family</em> of Bangladesh-focused
                   digital businesses.
                 </h2>
                 <p className="mt-6 text-lead text-ink/70">

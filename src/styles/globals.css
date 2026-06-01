@@ -73,6 +73,15 @@ body {
 .btn:hover {
   transform: translateY(-1px);
 }
+/* Keyboard focus ring — WCAG 2.4.7. Light bg buttons get orange ring,
+   dark bg buttons get the same orange (high-contrast on both surfaces). */
+.btn:focus-visible {
+  outline: 3px solid var(--brand-orange);
+  outline-offset: 3px;
+}
+.btn-ghost-dark:focus-visible {
+  outline-color: var(--paper);
+}
 .btn-primary {
   background: var(--ink);
   color: var(--paper);

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listAllCaseStudies } from "@/lib/data/case-studies";
 import { deleteCaseStudy, togglePublish } from "./actions";
+import { ConfirmButton } from "../_components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -79,19 +80,16 @@ export default async function CaseStudiesPage() {
                       {c.published ? "Unpublish" : "Publish"}
                     </button>
                   </form>
-                  <form
+                  <ConfirmButton
                     action={async () => {
                       "use server";
                       await deleteCaseStudy(c.id);
                     }}
+                    confirmMessage={`Delete "${c.title || c.slug}" case study permanently? This cannot be undone.`}
+                    className="rounded-full border border-brand-red/40 px-3 py-1 text-sm text-brand-red hover:bg-brand-red/5"
                   >
-                    <button
-                      type="submit"
-                      className="rounded-full border border-brand-red/40 px-3 py-1 text-sm text-brand-red hover:bg-brand-red/5"
-                    >
-                      Delete
-                    </button>
-                  </form>
+                    Delete
+                  </ConfirmButton>
                 </div>
               </div>
             </li>

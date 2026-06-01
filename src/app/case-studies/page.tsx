@@ -15,7 +15,9 @@ import { getPublishedCaseStudies } from "@/lib/data/case-studies";
 import { SERVICES } from "@/lib/services";
 import { CaseStudiesFilter } from "@/components/case-studies/CaseStudiesFilter";
 
-export const revalidate = 60;
+// 1h ISR window per CACHING.md — admin mutations also call updateTag('case-studies')
+// for instant refresh, so 1h is just the safety-net regeneration cadence.
+export const revalidate = 3600;
 
 export const metadata: Metadata = buildMetadata({
   title: "Case Studies | Public Pulse — Bangladesh client results",

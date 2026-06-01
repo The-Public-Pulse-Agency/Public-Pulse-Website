@@ -12,8 +12,8 @@
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { createHash } from "node:crypto";
 import { z } from "zod";
+import { and, eq, gte, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { whatsappOptin } from "@/db/schema";
@@ -21,6 +21,7 @@ import { sendEmail } from "@/lib/email/send";
 import { SITE } from "@/lib/site";
 import AdminWhatsAppNotify from "@/emails/AdminWhatsAppNotify";
 import { extractFbCookies, sendCapiEvent } from "@/lib/meta-capi";
+import { hashIp, isOverLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,11 +44,6 @@ const schema = z.object({
   consent: z.literal(true), // checkbox must be ticked
   website: z.string().max(0).optional(), // honeypot
 });
-
-function hashIp(ip: string): string {
-  const dayKey = new Date().toISOString().slice(0, 10);
-  return createHash("sha256").update(`${ip}::${dayKey}`).digest("hex").slice(0, 40);
-}
 
 function normalizePhone(raw: string): string {
   // Keep + at the start; drop everything else non-digit
@@ -82,6 +78,22 @@ export async function POST(req: Request): Promise<Response> {
     h.get("x-real-ip") ??
     "unknown";
   const userAgent = h.get("user-agent") ?? null;
+  const ipHash = hashIp(ip);
+
+  // Per-IP rate limit: max 3 opt-ins per hour. Honeypot covers naive bots;
+  // this caps deliberate phone-number-harvesting abuse and stops the team
+  // inbox from being flooded with junk notifications.
+  const limited = await isOverLimit(ipHash, 3, async (h, since) => {
+    const [r] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(whatsappOptin)
+      .where(and(eq(whatsappOptin.ipHash, h), gte(whatsappOptin.createdAt, since)));
+    return r?.n ?? 0;
+  }).catch(() => false);
+  if (limited) {
+    // Silent OK — same as the honeypot.
+    return NextResponse.json({ ok: true });
+  }
 
   try {
     await db.insert(whatsappOptin).values({
@@ -91,7 +103,7 @@ export async function POST(req: Request): Promise<Response> {
       locale: locale ?? "en",
       note: note ?? null,
       consentText: locale === "bn" ? CONSENT_BN : CONSENT_EN,
-      ipHash: hashIp(ip),
+      ipHash,
       userAgent,
     });
   } catch (err) {

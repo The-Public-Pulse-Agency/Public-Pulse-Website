@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const NAV = [
@@ -13,6 +13,47 @@ const NAV = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Drawer a11y: when open, move focus to first link, trap Tab inside,
+  // and ESC closes the drawer + returns focus to the hamburger.
+  useEffect(() => {
+    if (!open) return;
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+    const focusables = drawer.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled])'
+    );
+    focusables[0]?.focus();
+
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      if (e.key !== "Tab" || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
+  function closeDrawer() {
+    setOpen(false);
+    // Return focus to the hamburger so keyboard users don't lose their place.
+    triggerRef.current?.focus();
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper/90 backdrop-blur">
       <div className="max-w-container mx-auto flex h-16 items-center justify-between px-5 md:h-[72px] md:px-8">
@@ -50,9 +91,11 @@ export function Header() {
             Let&rsquo;s talk
           </Link>
           <button
+            ref={triggerRef}
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open ? "true" : "false"}
+            aria-expanded={open}
+            aria-controls="mobile-nav-drawer"
             onClick={() => setOpen((o) => !o)}
             className="md:hidden grid h-10 w-10 place-items-center rounded-card border border-ink text-ink"
           >
@@ -63,14 +106,20 @@ export function Header() {
 
       {/* Mobile drawer */}
       {open && (
-        <div className="md:hidden border-t border-ink/10 bg-paper">
+        <div
+          ref={drawerRef}
+          id="mobile-nav-drawer"
+          role="region"
+          aria-label="Mobile navigation"
+          className="md:hidden border-t border-ink/10 bg-paper"
+        >
           <ul className="px-5 py-4 space-y-3 text-base font-semibold text-ink">
             {NAV.map((n) => (
               <li key={n.href}>
                 <Link
                   href={n.href}
                   className="block py-2"
-                  onClick={() => setOpen(false)}
+                  onClick={closeDrawer}
                 >
                   {n.label}
                 </Link>
@@ -79,7 +128,7 @@ export function Header() {
             <li className="pt-2">
               <Link
                 href="/contact"
-                onClick={() => setOpen(false)}
+                onClick={closeDrawer}
                 className="btn btn-primary w-full justify-center"
               >
                 Let&rsquo;s talk

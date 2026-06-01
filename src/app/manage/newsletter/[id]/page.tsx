@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { newsletterIssues } from "@/db/schema";
 import { sendIssueAction, testSendAction, updateIssueAction } from "../actions";
+import { ConfirmButton } from "../../_components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -125,21 +126,19 @@ export default async function IssuePage({
               </button>
             </div>
           </form>
-          <form
-            action={async () => {
-              "use server";
-              await sendIssueAction(id);
-            }}
-            className="flex flex-col gap-2"
-          >
+          <div className="flex flex-col gap-2">
             <label className="text-xs font-bold uppercase tracking-wider text-emerald-700">Send to all confirmed subscribers</label>
-            <button
-              type="submit"
+            <ConfirmButton
+              action={async () => {
+                "use server";
+                await sendIssueAction(id);
+              }}
+              confirmMessage={`Send this issue LIVE to ALL confirmed subscribers right now? This cannot be undone — the emails leave Resend immediately.`}
               className="rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Send live now
-            </button>
-          </form>
+            </ConfirmButton>
+          </div>
         </section>
       )}
     </div>

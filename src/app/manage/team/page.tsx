@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listAuthorsAdmin } from "@/lib/data/blog-admin";
 import { deleteAuthor } from "./actions";
+import { ConfirmButton } from "../_components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -62,19 +63,16 @@ export default async function TeamAdminPage() {
                 >
                   Edit
                 </Link>
-                <form
+                <ConfirmButton
                   action={async () => {
                     "use server";
                     await deleteAuthor(a.id);
                   }}
+                  confirmMessage={`Delete team member "${a.name}"? This cannot be undone.`}
+                  className="rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
                 >
-                  <button
-                    type="submit"
-                    className="rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
-                  >
-                    Delete
-                  </button>
-                </form>
+                  Delete
+                </ConfirmButton>
               </div>
             </li>
           ))}

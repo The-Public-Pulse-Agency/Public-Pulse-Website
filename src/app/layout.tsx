@@ -85,7 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ScrollProgress />
         <CursorGlow />
         <Header />
-        <main id="main">{children}</main>
+        <main id="main" tabIndex={-1} className="focus:outline-none">{children}</main>
         <SocialSidebar />
         <Footer />
         <WhatsAppFab />

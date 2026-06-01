@@ -198,6 +198,7 @@ export function CaptureForm({
               onChange={(e) => setEmail(e.target.value)}
               className={`${inputBase} flex-1`}
               aria-invalid={state === "err" ? "true" : "false"}
+              aria-describedby={state === "err" ? `lc-err-${context}` : undefined}
             />
           </>
         ) : (
@@ -216,6 +217,7 @@ export function CaptureForm({
               onChange={(e) => setPhone(e.target.value)}
               className={`${inputBase} flex-1`}
               aria-invalid={state === "err" ? "true" : "false"}
+              aria-describedby={state === "err" ? `lc-err-${context}` : undefined}
             />
           </>
         )}
@@ -247,7 +249,11 @@ export function CaptureForm({
       </p>
 
       {state === "err" && (
-        <p className={`mt-2 text-xs ${dark ? "text-white/70" : "text-red-600"}`} role="alert">
+        <p
+          id={`lc-err-${context}`}
+          className={`mt-2 text-xs ${dark ? "text-white/70" : "text-red-600"}`}
+          role="alert"
+        >
           {locale === "bn"
             ? "কিছু সমস্যা হয়েছে — আবার চেষ্টা করুন।"
             : "Something went wrong — try again."}

@@ -13,9 +13,8 @@
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { createHash } from "node:crypto";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { subscribers } from "@/db/schema";
@@ -24,6 +23,7 @@ import { newToken } from "@/lib/email/tokens";
 import { sendEmail } from "@/lib/email/send";
 import ConfirmEmail from "@/emails/ConfirmEmail";
 import { extractFbCookies, sendCapiEvent } from "@/lib/meta-capi";
+import { hashIp, isOverLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,11 +37,6 @@ const schema = z.object({
   /** Honeypot — must be empty. */
   website: z.string().max(0).optional(),
 });
-
-function hashIp(ip: string): string {
-  const dayKey = new Date().toISOString().slice(0, 10);
-  return createHash("sha256").update(`${ip}::${dayKey}`).digest("hex").slice(0, 40);
-}
 
 export async function POST(req: Request): Promise<Response> {
   let body: unknown;
@@ -69,6 +64,22 @@ export async function POST(req: Request): Promise<Response> {
     h.get("x-real-ip") ??
     "unknown";
   const userAgent = h.get("user-agent") ?? null;
+  const ipHash = hashIp(ip);
+
+  // Per-IP rate limit: max 5 newsletter signups per hour. Double opt-in
+  // already prevents fake confirmations, but this stops the pending table
+  // (and Resend send queue) from being flooded with junk addresses.
+  const limited = await isOverLimit(ipHash, 5, async (h, since) => {
+    const [r] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(subscribers)
+      .where(and(eq(subscribers.ipHash, h), gte(subscribers.createdAt, since)));
+    return r?.n ?? 0;
+  }).catch(() => false);
+  if (limited) {
+    // Silent OK — same as the honeypot. Don't leak that we're rate-limiting.
+    return NextResponse.json({ ok: true });
+  }
 
   const normalizedEmail = email.toLowerCase().trim();
   const confirmToken = newToken(24);
@@ -86,7 +97,7 @@ export async function POST(req: Request): Promise<Response> {
         capturePage: page ?? null,
         confirmToken,
         unsubscribeToken,
-        ipHash: hashIp(ip),
+        ipHash,
         userAgent,
       })
       .onConflictDoNothing({ target: subscribers.email })

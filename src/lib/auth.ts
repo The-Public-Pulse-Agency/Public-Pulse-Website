@@ -16,10 +16,22 @@ import { db } from "@/db/client";
 const baseURL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
+// Fail loudly in production if the auth secret isn't injected. Silently
+// falling back to a hardcoded dev string means session tokens become
+// forgeable — anyone with the public secret can mint admin cookies.
+// Local dev: set BETTER_AUTH_SECRET in .env.local. Production: SST secret.
+const secret = process.env.BETTER_AUTH_SECRET;
+if (!secret && process.env.NODE_ENV === "production") {
+  throw new Error(
+    "BETTER_AUTH_SECRET is required in production. " +
+      "Set it via `sst secret set BETTER_AUTH_SECRET ...`."
+  );
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg" }),
   baseURL,
-  secret: process.env.BETTER_AUTH_SECRET ?? "dev-only-insecure-secret",
+  secret: secret ?? "dev-only-insecure-secret-do-not-use-in-prod",
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,

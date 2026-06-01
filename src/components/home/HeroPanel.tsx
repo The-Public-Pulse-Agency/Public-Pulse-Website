@@ -108,8 +108,10 @@ export function HeroPanel() {
               </p>
             </div>
 
-            {/* Numbered service tiles */}
-            <ul className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {/* Numbered service tiles — single column on phones (<640px) so
+                "Content Production" / "Influencer Marketing" don't truncate.
+                Wider gap (gap-3) gives breathing room on phones too. */}
+            <ul className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-2">
               {tiles.map((s, i) => {
                 const Icon = getServiceIcon(s.slug);
                 return (

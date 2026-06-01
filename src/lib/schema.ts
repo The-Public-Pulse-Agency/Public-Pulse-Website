@@ -60,7 +60,7 @@ export function organizationSchema() {
       "Answer Engine Optimization",
       "Generative Engine Optimization",
     ],
-    knowsLanguage: ["en", "bn"],
+    knowsLanguage: ["en"],
     contactPoint: [
       {
         "@type": "ContactPoint",
@@ -68,7 +68,7 @@ export function organizationSchema() {
         telephone: SITE.contact.phone,
         email: SITE.contact.email,
         areaServed: "BD",
-        availableLanguage: ["en", "bn"],
+        availableLanguage: ["en"],
       },
       {
         "@type": "ContactPoint",
@@ -76,7 +76,7 @@ export function organizationSchema() {
         telephone: SITE.contact.phone,
         url: SITE.contact.whatsapp,
         areaServed: "BD",
-        availableLanguage: ["en", "bn"],
+        availableLanguage: ["en"],
       },
     ],
     sameAs: [
@@ -337,6 +337,11 @@ export function webPageSchema(input: WebPageInput) {
       ),
       width: 1200,
       height: 630,
+      // Accessibility + AI-crawler image understanding. Schema.org allows
+      // either `caption` or `name` for the alt-text role — using both for
+      // belt-and-braces compatibility across validators.
+      caption: input.name,
+      name: input.name,
     },
     publisher: { "@id": ORG_ID },
     author: {
@@ -488,32 +493,12 @@ export function qaPageSchema(question: string, answer: string) {
   };
 }
 
-// ─── Person (E-E-A-T for team members on /about) ─────────────────────────
-
-export type PersonSchemaInput = {
-  name: string;
-  jobTitle: string;
-  /** Path or absolute URL to a profile photo if available. */
-  image?: string;
-  /** External profile links (LinkedIn, X, personal site) — fed into sameAs. */
-  sameAs?: string[];
-};
-
-export function personSchema(input: PersonSchemaInput) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: input.name,
-    jobTitle: input.jobTitle,
-    worksFor: { "@id": ORG_ID },
-    ...(input.image && {
-      image: input.image.startsWith("http") ? input.image : absoluteUrl(input.image),
-    }),
-    ...(input.sameAs && input.sameAs.length > 0 && { sameAs: input.sameAs }),
-  };
-}
-
 // ─── AboutPage ───────────────────────────────────────────────────────────
+// NOTE: personSchema was intentionally removed — the Org schema (above)
+// HARD-FORBIDS Person/founder references for brand-only knowledge-graph
+// positioning. If E-E-A-T per-author markup is wanted in the future,
+// restore from git history but plumb it through articleSchema only.
+
 
 export function aboutPageSchema(opts: { path?: string; inLanguage?: string } = {}) {
   const path = opts.path ?? "/about";

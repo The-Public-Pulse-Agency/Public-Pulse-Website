@@ -147,7 +147,8 @@ export function ContactForm() {
             id="name"
             type="text"
             autoComplete="name"
-            aria-invalid={errors.name ? "true" : "false"}
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "name-error" : undefined}
             className="form-input"
             placeholder="Jane Karim"
             {...register("name")}
@@ -158,7 +159,8 @@ export function ContactForm() {
             id="email"
             type="email"
             autoComplete="email"
-            aria-invalid={errors.email ? "true" : "false"}
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
             className="form-input"
             placeholder="you@brand.com"
             {...register("email")}
@@ -175,6 +177,8 @@ export function ContactForm() {
             type="tel"
             autoComplete="tel"
             inputMode="tel"
+            aria-invalid={!!errors.phone}
+            aria-describedby={errors.phone ? "phone-error" : undefined}
             className="form-input"
             placeholder="+880 …"
             {...register("phone")}
@@ -193,7 +197,8 @@ export function ContactForm() {
         <textarea
           id="message"
           rows={6}
-          aria-invalid={errors.message ? "true" : "false"}
+          aria-invalid={!!errors.message}
+          aria-describedby={errors.message ? "message-error" : undefined}
           maxLength={2000}
           className="form-input resize-y"
           placeholder="What's the goal, what have you tried, what's in the way?"
@@ -267,7 +272,11 @@ function Field({ id, label, error, required, className = "", hint, children }: F
       </div>
       <div className="mt-2">{children}</div>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-brand-orange">
+        <p
+          id={`${id}-error`}
+          role="alert"
+          className="mt-2 text-sm text-brand-orange"
+        >
           {error}
         </p>
       )}

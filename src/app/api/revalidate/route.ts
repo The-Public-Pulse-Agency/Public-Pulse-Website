@@ -3,11 +3,13 @@
 // at build time with [] before DATABASE_URL was set, and revalidate:false
 // meant the empty result stayed cached forever).
 //
-//   POST /api/revalidate?tag=blog&secret=<CRON_SECRET>
-//   POST /api/revalidate?path=/blog&secret=<CRON_SECRET>
+//   curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
+//     "https://publicpulse.com.bd/api/revalidate?tag=blog"
 //
-// Pass either ?tag= or ?path= (or both). Auth is the same CRON_SECRET used
-// by /api/cron/digest. Fails CLOSED in production.
+// Pass either ?tag= or ?path= (or both) as query params. The SECRET
+// MUST be in the Authorization header — query-string secrets leak into
+// CloudFront access logs + CloudWatch and are recoverable from there.
+// Same CRON_SECRET as /api/cron/digest. Fails CLOSED in production.
 
 import { NextResponse } from "next/server";
 import { revalidatePath, updateTag } from "next/cache";
@@ -35,12 +37,10 @@ function checkSecret(req: Request): boolean {
     if (process.env.NODE_ENV === "production") return false;
     return true;
   }
-  const url = new URL(req.url);
-  const qp = url.searchParams.get("secret");
-  if (qp && qp === expected) return true;
+  // Header-only. Query-string secrets are logged by CloudFront + CloudWatch
+  // and any actor with log access can replay them.
   const auth = req.headers.get("authorization") ?? "";
-  if (auth === `Bearer ${expected}`) return true;
-  return false;
+  return auth === `Bearer ${expected}`;
 }
 
 async function handle(req: Request): Promise<Response> {

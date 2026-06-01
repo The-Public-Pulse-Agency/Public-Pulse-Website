@@ -48,6 +48,10 @@ const GONE_EXACT = new Set<string>([
   "/sample-page-2",
   "/lost-password/",
   "/lost-password",
+  // Both spellings — the original WP slug had "og" (typo) but we cover the
+  // correct "of" spelling too in case Google decided to canonicalize.
+  "/get-the-most-out-of-the-creativity/",
+  "/get-the-most-out-of-the-creativity",
   "/get-the-most-out-og-the-creativity/",
   "/get-the-most-out-og-the-creativity",
   "/how-businesses-can-leverage-data-for-smarter-decisions/",

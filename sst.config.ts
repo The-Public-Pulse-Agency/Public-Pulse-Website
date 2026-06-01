@@ -143,6 +143,10 @@ export default $config({
         // only relevant for /manage/content-topics POSTs.
         timeout: "60 seconds",
         runtime: "nodejs22.x",
+        // CloudWatch log retention. Default is indefinite, which silently
+        // accumulates cost. 1 week is plenty for debugging; structured
+        // observability + alarms should be the durable signal, not raw logs.
+        logging: { retention: "1 week" },
         permissions: [
           {
             actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
@@ -160,6 +164,7 @@ export default $config({
       // given variant only invokes Lambda once.
       imageOptimization: {
         memory: "1536 MB",
+        logging: { retention: "1 week" },
       },
       // ──────────────────────────────────────────────────────────────────
       // DOMAIN: deliberately NOT attached on any stage. See the banner at
@@ -216,6 +221,7 @@ export default $config({
           },
           runtime: "nodejs22.x",
           timeout: "120 seconds",
+          logging: { retention: "1 week" },
         },
       });
     }

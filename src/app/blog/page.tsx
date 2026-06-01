@@ -13,7 +13,9 @@ import { BlogFilter } from "@/components/blog/BlogFilter";
 // ISR — page is server-rendered once + cached at the CDN. Filters/search
 // run on the client (BlogFilter reads useSearchParams), so different
 // ?category=&q= variants share the same cached HTML.
-export const revalidate = 60;
+// 1h ISR window per CACHING.md — admin mutations also call updateTag('blog')
+// for instant cache refresh, so 1h is just the safety-net regeneration cadence.
+export const revalidate = 3600;
 
 export const metadata: Metadata = buildMetadata({
   title: "Insights | Public Pulse Agency — Digital Marketing Guides",

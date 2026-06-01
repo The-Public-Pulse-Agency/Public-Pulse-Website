@@ -7,7 +7,7 @@ export function Breadcrumbs({ crumbs }: BreadcrumbsProps) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="text-sm text-slate-500"
+      className="text-sm text-ink/55"
     >
       <ol className="flex flex-wrap items-center gap-2">
         {crumbs.map((c, i) => {
@@ -15,15 +15,15 @@ export function Breadcrumbs({ crumbs }: BreadcrumbsProps) {
           return (
             <li key={c.path} className="flex items-center gap-2">
               {last ? (
-                <span aria-current="page" className="text-slate-700">
+                <span aria-current="page" className="text-ink/80">
                   {c.name}
                 </span>
               ) : (
-                <Link href={c.path} className="hover:text-brand-red">
+                <Link href={c.path} className="hover:text-brand-orange">
                   {c.name}
                 </Link>
               )}
-              {!last && <span className="text-slate-400">/</span>}
+              {!last && <span aria-hidden="true" className="text-ink/40">/</span>}
             </li>
           );
         })}

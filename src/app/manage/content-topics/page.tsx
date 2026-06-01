@@ -4,6 +4,7 @@ import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { contentTopics } from "@/db/schema";
+import { ConfirmButton } from "../_components/ConfirmButton";
 import {
   createTopicAction,
   deleteTopicAction,
@@ -241,15 +242,14 @@ export default async function ContentTopicsPage({
                           </button>
                         </form>
                       )}
-                      <form action={deleteTopicAction}>
-                        <input type="hidden" name="id" value={r.id} />
-                        <button
-                          type="submit"
-                          className="rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      <ConfirmButton
+                        action={deleteTopicAction}
+                        confirmMessage={`Delete topic "${r.topic}"? This cannot be undone.`}
+                        hiddenFields={{ id: r.id }}
+                        className="rounded-full border border-red-200 px-3 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                      >
+                        Delete
+                      </ConfirmButton>
                     </div>
                   </td>
                 </tr>

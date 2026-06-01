@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getBlogPostById, listAuthorsAdmin, listCategoriesAdmin } from "@/lib/data/blog-admin";
 import { updateBlogPost, deleteBlogPost } from "../actions";
 import { PostForm } from "../PostForm";
+import { ConfirmButton } from "../../_components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -33,11 +34,13 @@ export default async function EditBlogPostPage({
             <span className="font-semibold">{post.status}</span>
           </p>
         </div>
-        <form action={deleteAction}>
-          <button type="submit" className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">
-            Delete
-          </button>
-        </form>
+        <ConfirmButton
+          action={deleteAction}
+          confirmMessage={`Delete "${post.title}" permanently? This cannot be undone.`}
+          className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+        >
+          Delete
+        </ConfirmButton>
       </header>
 
       {post.gateScores != null && typeof post.gateScores === "object" ? (
