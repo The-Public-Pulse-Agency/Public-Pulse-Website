@@ -147,7 +147,7 @@ export function PostBody({ body }: { body: string }) {
     const h2 = line.match(/^##\s+(.+)$/);
     const h3 = line.match(/^###\s+(.+)$/);
     if (h2) {
-      blocks.push(<h2 key={`h2-${key++}`} className="mt-12 text-h2 font-extrabold tracking-tight text-ink">{inlineParse(h2[1], `h2-${key}`)}</h2>);
+      blocks.push(<h2 key={`h2-${key++}`} className="mt-12 text-h2 tracking-tight text-ink">{inlineParse(h2[1], `h2-${key}`)}</h2>);
       continue;
     }
     if (h3) {

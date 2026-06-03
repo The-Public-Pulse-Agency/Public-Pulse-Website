@@ -150,7 +150,7 @@ export default async function LocationPage({
         <section className="border-t border-ink bg-ink py-20 text-paper md:py-24">
           <div className="mx-auto max-w-3xl px-5 md:px-8">
             <p className="text-eyebrow uppercase text-brand-orange">Service mix</p>
-            <h2 className="mt-4 text-display font-extrabold tracking-tight">
+            <h2 className="mt-4 text-display tracking-tight">
               The services {loc.name} brands ask for.
             </h2>
             <ul className="mt-10 grid gap-3 sm:grid-cols-2">

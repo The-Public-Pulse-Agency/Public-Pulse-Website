@@ -42,7 +42,7 @@ export function InlineBlock({
             {t.eyebrow}
           </p>
         )}
-        <h2 className="mt-3 text-h2 font-extrabold leading-[1.06] tracking-tight">
+        <h2 className="mt-3 text-h2 leading-[1.06] tracking-tight">
           {t.title}
         </h2>
         <p className={`mt-4 text-lead ${sub}`}>{t.sub}</p>

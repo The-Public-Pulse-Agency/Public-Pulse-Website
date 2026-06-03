@@ -78,7 +78,7 @@ export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {})
           <CheckCircle2 className="h-6 w-6" aria-hidden />
         </div>
         <p className="mt-5 text-eyebrow uppercase text-brand-orange">Sent</p>
-        <h3 className="mt-3 text-h2 font-extrabold tracking-tight text-ink">
+        <h3 className="mt-3 text-h2 tracking-tight text-ink">
           We&rsquo;ve got your brief.
         </h3>
         <p className="mt-3 text-ink/70">

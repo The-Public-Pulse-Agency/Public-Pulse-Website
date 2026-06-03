@@ -258,7 +258,7 @@ export default async function SearchPage({
           <Breadcrumbs crumbs={crumbs} />
           <div className="mt-6 max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">Search</p>
-            <h1 className="mt-4 text-h1 font-extrabold tracking-tight text-ink">
+            <h1 className="mt-4 text-h1 tracking-tight text-ink">
               Find a guide, service, or case study.
             </h1>
             <p className="mt-5 text-lead text-ink/70">

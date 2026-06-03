@@ -54,7 +54,7 @@ export default function BookPage() {
           <Breadcrumbs crumbs={crumbs} />
           <div className="mt-6 max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">Book a call</p>
-            <h1 className="mt-4 text-h1 font-extrabold tracking-tight text-ink">
+            <h1 className="mt-4 text-h1 tracking-tight text-ink">
               Pick a time that works.
             </h1>
             <p className="mt-5 text-lead text-ink/70">

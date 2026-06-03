@@ -5,25 +5,32 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // ── Avoora-inspired palette: B&W base + saturated orange accent ──
-        "ink": "#0A0A0A",
-        "ink-soft": "#1A1A1A",
+        // ── Avoora-faithful palette (verified against avoora.webflow.io) ──
+        // Ink: #111 (avoora exact). Was #0A0A0A — slightly too dark.
+        // Brand orange: #FF5911 (avoora exact). Was #FF5C00 — close but not identical.
+        // Body text: flat #5D5D5D (avoora exact). Use via `text-mute` token.
+        // Dark grey: #4C4C4C — avoora's NEUTRAL primary-button colour.
+        "ink": "#111111",
+        "ink-soft": "#222222",
+        "ink-mute": "#5D5D5D",
         "paper": "#FFFFFF",
         "paper-alt": "#F5F5F5",
-        "paper-tint": "#EDEDED",
-        "brand-orange": "#FF5C00",
-        "brand-orange-soft": "#FF7A2E",
-        "brand-orange-deep": "#E04E00",
-        // Legacy aliases (keep so any unmigrated markup still compiles)
-        "brand-navy": "#0A0A0A",
-        "brand-navy-soft": "#1A1A1A",
-        "brand-teal": "#FF5C00",
-        "brand-teal-soft": "#FF7A2E",
-        "brand-teal-deep": "#E04E00",
+        "paper-tint": "#E3E3E3",
+        "graphite": "#4C4C4C",
+        "brand-orange": "#FF5911",
+        "brand-orange-soft": "#FF7A3D",
+        "brand-orange-deep": "#E84A00",
+        // Legacy aliases (kept so any unmigrated markup still compiles).
+        // They point at the new tokens so the visual stays correct.
+        "brand-navy": "#111111",
+        "brand-navy-soft": "#222222",
+        "brand-teal": "#FF5911",
+        "brand-teal-soft": "#FF7A3D",
+        "brand-teal-deep": "#E84A00",
         "brand-teal-tint": "#FFE6D6",
-        "brand-red": "#FF5C00",
+        "brand-red": "#FF5911",
         "surface-alt": "#F5F5F5",
-        "surface-tint": "#EDEDED",
+        "surface-tint": "#E3E3E3",
         whatsapp: "#25D366",
         // Category palette retained for service-card top borders only
         "cat-red": "#D32F2F",
@@ -43,12 +50,17 @@ const config: Config = {
         serif: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       fontSize: {
-        // Avoora-tuned: big bold headlines with tight tracking
-        mega: ["clamp(3.25rem, 6vw + 1rem, 7.5rem)", { lineHeight: "0.95", letterSpacing: "-0.04em" }],
-        display: ["clamp(2.5rem, 4vw + 1rem, 5.5rem)", { lineHeight: "1.02", letterSpacing: "-0.035em" }],
-        h1: ["clamp(2rem, 2.5vw + 1rem, 3.75rem)", { lineHeight: "1.08", letterSpacing: "-0.025em" }],
-        h2: ["clamp(1.75rem, 1.5vw + 1rem, 2.75rem)", { lineHeight: "1.12", letterSpacing: "-0.02em" }],
-        h3: ["clamp(1.125rem, 0.5vw + 1rem, 1.5rem)", { lineHeight: "1.25", letterSpacing: "-0.01em" }],
+        // Avoora-faithful: editorial weight (500/600), VERY tight tracking.
+        // Avoora's H1 sits at 129.6px / weight 500 / letter-spacing -8px.
+        // Their H2 sits at 60px / weight 600 / letter-spacing -4px.
+        // Each token carries its OWN font-weight default so callers don't
+        // need to remember `font-medium` / `font-semibold` — and overrides
+        // (`font-extrabold` etc.) still win when explicitly applied.
+        mega: ["clamp(3.5rem, 7vw + 1rem, 8.5rem)", { lineHeight: "0.92", letterSpacing: "-0.06em", fontWeight: "500" }],
+        display: ["clamp(2.75rem, 5vw + 1rem, 6.5rem)", { lineHeight: "0.98", letterSpacing: "-0.055em", fontWeight: "500" }],
+        h1: ["clamp(2.25rem, 3vw + 1rem, 4.25rem)", { lineHeight: "1.04", letterSpacing: "-0.045em", fontWeight: "500" }],
+        h2: ["clamp(1.875rem, 2vw + 1rem, 3rem)", { lineHeight: "1.08", letterSpacing: "-0.04em", fontWeight: "600" }],
+        h3: ["clamp(1.25rem, 0.75vw + 1rem, 1.625rem)", { lineHeight: "1.22", letterSpacing: "-0.02em", fontWeight: "600" }],
         eyebrow: ["0.75rem", { lineHeight: "1.2", letterSpacing: "0.12em" }],
         lead: ["clamp(1.0625rem, 0.25vw + 1rem, 1.25rem)", { lineHeight: "1.55" }],
         body: ["1rem", { lineHeight: "1.6" }],
@@ -63,7 +75,10 @@ const config: Config = {
         prose: "65ch",
       },
       borderRadius: {
-        btn: "9999px",
+        // Avoora-faithful: small 6px radius on buttons (was pill 9999px).
+        // Pills feel SaaS-y; the small rectangle feels editorial.
+        // Card stays 8px, panel 12px (close enough to avoora's quietly rounded forms).
+        btn: "6px",
         card: "8px",
         panel: "12px",
       },

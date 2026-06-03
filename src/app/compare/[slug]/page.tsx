@@ -124,7 +124,7 @@ export default async function ComparePage({
           <Container>
             <div className="mx-auto max-w-3xl">
               <p className="text-eyebrow uppercase text-brand-orange">Our recommendation</p>
-              <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-h2 tracking-tight text-ink">
                 The short version.
               </h2>
               <p className="mt-6 text-base leading-relaxed text-ink/80">{c.recommendation}</p>

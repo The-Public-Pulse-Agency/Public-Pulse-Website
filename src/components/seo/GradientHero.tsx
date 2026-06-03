@@ -61,7 +61,7 @@ export function GradientHero({
         >
           <div className={variant === "panel" ? "lg:col-span-7" : "max-w-5xl"}>
             <span className="chip chip-orange">{chip}</span>
-            <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink leading-[0.95]">
+            <h1 className="mt-6 text-mega tracking-tight text-ink leading-[0.95]">
               {title}
             </h1>
             <p className="mt-6 max-w-2xl text-lead text-ink/70">{lead}</p>

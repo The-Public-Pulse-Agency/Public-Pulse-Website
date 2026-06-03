@@ -28,7 +28,7 @@ export function HeroPanel() {
       <Container className="relative pt-6 pb-10 md:pt-10 md:pb-14">
         {/* ── Top row: wordmark + founder card ─────────────────────────── */}
         <div className="flex items-start gap-6">
-          <h1 className="flex-1 text-mega font-extrabold leading-[0.92] tracking-[-0.04em] text-ink">
+          <h1 className="flex-1 text-mega leading-[0.92] tracking-[-0.04em] text-ink">
             Public<span className="text-ink/30">_</span>Pulse
             <span className="text-ink/30">®</span>
           </h1>
@@ -99,7 +99,7 @@ export function HeroPanel() {
 
             {/* Sub-headline */}
             <div className="mt-12 md:mt-20">
-              <h2 className="max-w-[12ch] text-display font-extrabold leading-[1.05] tracking-tight text-paper md:max-w-none md:text-mega md:leading-[0.95]">
+              <h2 className="max-w-[12ch] text-display leading-[1.05] tracking-tight text-paper md:max-w-none md:text-mega md:leading-[0.95]">
                 We build brands with <span className="text-paper/70">influence.</span>
               </h2>
               <p className="mt-5 max-w-xl text-sm text-paper/85 md:text-base">

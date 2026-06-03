@@ -131,7 +131,7 @@ export function ExitIntent({ locale = "en" }: { locale?: Locale }) {
           <p className="text-eyebrow text-brand-red">{t.eyebrow}</p>
           <h2
             id="exit-intent-title"
-            className="mt-3 text-h2 font-extrabold leading-[1.05] tracking-tight text-ink"
+            className="mt-3 text-h2 leading-[1.05] tracking-tight text-ink"
           >
             {t.title}
           </h2>

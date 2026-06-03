@@ -74,7 +74,7 @@ export default function PressPage() {
           <Breadcrumbs crumbs={crumbs} />
           <div className="mt-6 max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">Press &amp; media</p>
-            <h1 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+            <h1 className="mt-4 text-display tracking-tight text-ink">
               Reporting on us? Here&rsquo;s what you need.
             </h1>
             <p className="mt-5 text-lead text-ink/70">
@@ -108,7 +108,7 @@ export default function PressPage() {
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-1">
               <p className="text-eyebrow uppercase text-brand-orange">Boilerplate</p>
-              <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-h2 tracking-tight text-ink">
                 Cut, paste, publish.
               </h2>
               <p className="mt-4 text-body text-ink/65">
@@ -156,7 +156,7 @@ export default function PressPage() {
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">Brand assets</p>
-            <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-h2 tracking-tight text-ink">
               Logos, colors, typography.
             </h2>
             <p className="mt-5 text-body text-ink/65">
@@ -233,7 +233,7 @@ export default function PressPage() {
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-1">
               <p className="text-eyebrow uppercase text-brand-orange">Coverage</p>
-              <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-h2 tracking-tight text-ink">
                 In the news.
               </h2>
               <p className="mt-4 text-body text-ink/65">
@@ -266,7 +266,7 @@ export default function PressPage() {
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">FAQ</p>
-            <h2 className="mt-4 text-h1 font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-h1 tracking-tight text-ink">
               Journalist questions.
             </h2>
           </div>
@@ -295,7 +295,7 @@ export default function PressPage() {
         <Container>
           <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div className="max-w-2xl">
-              <h2 className="text-h2 font-extrabold tracking-tight">
+              <h2 className="text-h2 tracking-tight">
                 Got a deadline?
               </h2>
               <p className="mt-3 text-white/70">

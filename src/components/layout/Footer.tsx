@@ -10,7 +10,7 @@ export function Footer() {
       {/* ─── Mega CTA strip ──────────────────────────────────────────── */}
       <div className="border-b border-white/10">
         <div className="max-w-container mx-auto flex flex-col gap-8 px-5 py-16 md:flex-row md:items-end md:justify-between md:px-8 md:py-24">
-          <h2 className="text-mega font-extrabold tracking-tight">
+          <h2 className="text-mega tracking-tight">
             Let&rsquo;s make <span className="text-brand-orange">noise</span>.
           </h2>
           <Link
@@ -158,6 +158,23 @@ export function Footer() {
         <div className="max-w-container mx-auto flex flex-col gap-2 px-5 py-6 text-xs text-white/55 md:flex-row md:items-center md:justify-between md:px-8">
           <div>© {new Date().getFullYear()} {SITE.name}. Dhaka, Bangladesh.</div>
           <div>BIN: {SITE.contact.legal.bin} · Trade License: {SITE.contact.legal.tradeLicense}</div>
+        </div>
+      </div>
+
+      {/* ─── Mega footer wordmark (avoora-faithful) ───────────────────────
+          Edge-to-edge typographic sign-off — the way avoora closes with
+          "AVOORA®". "PublicPulse" is twice as long as "AVOORA" so the
+          per-character size is tuned smaller to fit the container width
+          on desktop without clipping. Tracking-tight, weight 500. */}
+      <div
+        aria-hidden
+        className="select-none overflow-hidden border-t border-white/10 px-4 pt-8 pb-2 md:pt-12 md:pb-4 md:px-8"
+      >
+        <div className="max-w-container mx-auto">
+          <div className="whitespace-nowrap font-medium leading-[0.88] tracking-[-0.06em] text-paper [font-size:clamp(2.5rem,11vw,9.5rem)]">
+            Public<span className="text-brand-orange">Pulse</span>
+            <sup className="align-top text-[0.3em] tracking-normal text-paper/55">®</sup>
+          </div>
         </div>
       </div>
     </footer>

@@ -120,7 +120,7 @@ export default function AboutPage() {
           <div className="mt-8 grid items-end gap-10 lg:grid-cols-12">
             <div className="lg:col-span-8">
               <span className="chip chip-orange">About the studio</span>
-              <h1 className="mt-6 text-mega font-extrabold tracking-tight text-ink leading-[0.95]">
+              <h1 className="mt-6 text-mega tracking-tight text-ink leading-[0.95]">
                 <GradientText as="span">A Bangladesh studio</GradientText>
                 <br />
                 built for{" "}
@@ -183,7 +183,7 @@ export default function AboutPage() {
             <div className="lg:col-span-5">
               <ScrollReveal>
                 <p className="text-eyebrow uppercase text-brand-orange">Why the studio exists</p>
-                <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+                <h2 className="mt-4 text-display tracking-tight text-ink">
                   Built to fix the <em className="not-italic text-brand-orange">handoff</em> problem.
                 </h2>
               </ScrollReveal>
@@ -218,7 +218,7 @@ export default function AboutPage() {
           <div className="max-w-3xl">
             <ScrollReveal>
               <p className="text-eyebrow uppercase text-brand-orange">How we work</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 Four brand promises. Hold us to them.
               </h2>
             </ScrollReveal>
@@ -247,7 +247,7 @@ export default function AboutPage() {
           <div className="max-w-3xl">
             <ScrollReveal>
               <p className="text-eyebrow uppercase text-brand-orange">Capabilities</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight">
+              <h2 className="mt-4 text-display tracking-tight">
                 Nine services. <em className="not-italic text-brand-orange">One accountable team.</em>
               </h2>
               <p className="mt-6 text-lead text-white/70">
@@ -288,7 +288,7 @@ export default function AboutPage() {
           <div className="max-w-3xl">
             <ScrollReveal>
               <p className="text-eyebrow uppercase text-brand-orange">Proof</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 The work, the receipts.
               </h2>
               <p className="mt-6 text-lead text-ink/70">
@@ -354,7 +354,7 @@ export default function AboutPage() {
             <div className="lg:col-span-5">
               <ScrollReveal>
                 <p className="text-eyebrow uppercase text-brand-orange">Pulse Group</p>
-                <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+                <h2 className="mt-4 text-display tracking-tight text-ink">
                   Part of <em className="not-italic text-brand-orange">a wider family</em> of Bangladesh-focused
                   digital businesses.
                 </h2>
@@ -403,7 +403,7 @@ export default function AboutPage() {
             <div className="lg:col-span-4">
               <ScrollReveal>
                 <p className="text-eyebrow uppercase text-brand-orange">Credentials</p>
-                <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+                <h2 className="mt-4 text-display tracking-tight text-ink">
                   Registered. Local. Reachable.
                 </h2>
               </ScrollReveal>
@@ -435,7 +435,7 @@ export default function AboutPage() {
           <div className="max-w-3xl">
             <ScrollReveal>
               <p className="text-eyebrow uppercase text-brand-orange">Frequently asked</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 Questions buyers + journalists usually ask.
               </h2>
             </ScrollReveal>
@@ -467,7 +467,7 @@ export default function AboutPage() {
         <AuroraGradient variant="soft" />
         <Container className="relative z-10">
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-mega font-extrabold leading-[0.95] tracking-tight">
+            <h2 className="text-mega leading-[0.95] tracking-tight">
               Curious whether we&rsquo;re&nbsp;
               <GradientText as="span">the right fit</GradientText>?
             </h2>
@@ -495,7 +495,7 @@ export default function AboutPage() {
 function ProofTile({ k, v }: { k: string; v: string }) {
   return (
     <div className="rounded-card border border-ink/15 bg-paper/80 px-4 py-3 backdrop-blur">
-      <p className="text-h3 font-extrabold tracking-tight text-ink">{k}</p>
+      <p className="text-h3 tracking-tight text-ink">{k}</p>
       <p className="mt-1 text-xs text-ink/65">{v}</p>
     </div>
   );

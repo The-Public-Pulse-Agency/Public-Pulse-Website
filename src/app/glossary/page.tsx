@@ -58,7 +58,7 @@ export default function GlossaryIndex() {
             if (terms.length === 0) return null;
             return (
               <div key={area} className="mb-14 last:mb-0">
-                <h2 className="text-h2 font-extrabold tracking-tight text-ink">{area}</h2>
+                <h2 className="text-h2 tracking-tight text-ink">{area}</h2>
                 <ul className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {terms.map((t) => (
                     <li key={t.slug}>

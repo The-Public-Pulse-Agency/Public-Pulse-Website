@@ -140,7 +140,7 @@ export default function ElectionPage() {
                 <p className="text-eyebrow uppercase text-brand-orange">
                   Election readiness · Bangladesh
                 </p>
-                <h1 className="mt-4 text-display font-extrabold tracking-tight">
+                <h1 className="mt-4 text-display tracking-tight">
                   Win the perception <em className="not-italic text-brand-orange">first</em>.
                   The booth comes after.
                 </h1>
@@ -193,7 +193,7 @@ export default function ElectionPage() {
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">90-day playbook</p>
-            <h2 className="mt-4 text-h1 font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-h1 tracking-tight text-ink">
               Five phases. One accountable team.
             </h2>
             <p className="mt-5 text-lead text-ink/70">
@@ -228,7 +228,7 @@ export default function ElectionPage() {
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">Constituency-ready</p>
-            <h2 className="mt-4 text-h1 font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-h1 tracking-tight text-ink">
               What we deliver — at constituency scale.
             </h2>
           </div>
@@ -252,7 +252,7 @@ export default function ElectionPage() {
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">FAQ</p>
-            <h2 className="mt-4 text-h1 font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-h1 tracking-tight text-ink">
               Election cycle questions.
             </h2>
           </div>
@@ -280,7 +280,7 @@ export default function ElectionPage() {
       <section className="bg-ink py-16 text-paper md:py-24">
         <Container>
           <div className="max-w-3xl">
-            <h2 className="text-h1 font-extrabold tracking-tight">
+            <h2 className="text-h1 tracking-tight">
               Election cycle running? Let&rsquo;s talk this week.
             </h2>
             <p className="mt-5 text-lead text-white/75">

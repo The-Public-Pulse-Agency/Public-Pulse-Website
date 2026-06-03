@@ -3,11 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --ink: #0a0a0a;
+  /* Avoora-faithful tokens, verified against avoora.webflow.io */
+  --ink: #111111;
+  --ink-mute: #5d5d5d;
   --paper: #ffffff;
-  --brand-orange: #ff5c00;
-  --brand-orange-deep: #e04e00;
-  --brand-orange-soft: #ff7a2e;
+  --paper-alt: #f5f5f5;
+  --paper-tint: #e3e3e3;
+  --graphite: #4c4c4c;
+  --brand-orange: #ff5911;
+  --brand-orange-deep: #e84a00;
+  --brand-orange-soft: #ff7a3d;
 }
 
 html {
@@ -50,7 +55,11 @@ body {
   color: rgba(255, 255, 255, 0.92);
 }
 
-/* ─── Buttons ────────────────────────────────────────────────────────── */
+/* ─── Buttons ──────────────────────────────────────────────────────────
+   Avoora-faithful: 6px rectangle (was pill), uppercase, 600 weight,
+   slightly negative letter-spacing. Padding mirrors avoora's primary
+   (10/14 vertical, 14/28 horizontal — asymmetric because real avoora
+   wraps an arrow circle on the right). */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -60,7 +69,7 @@ body {
   font-size: 0.9375rem;
   line-height: 1;
   padding: 0.875rem 1.5rem;
-  border-radius: 9999px;
+  border-radius: 6px;
   transition:
     background-color 200ms ease-out,
     color 200ms ease-out,
@@ -68,7 +77,7 @@ body {
     transform 200ms ease-out,
     box-shadow 200ms ease-out;
   white-space: nowrap;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.02em;
 }
 .btn:hover {
   transform: translateY(-1px);
@@ -87,7 +96,7 @@ body {
   color: var(--paper);
 }
 .btn-primary:hover {
-  background: var(--brand-orange);
+  background: var(--graphite);
 }
 .btn-orange {
   background: var(--brand-orange);
@@ -95,6 +104,15 @@ body {
 }
 .btn-orange:hover {
   background: var(--brand-orange-deep);
+}
+/* Avoora's literal primary — neutral graphite. Use sparingly (e.g.
+   secondary actions in dense layouts) so the orange CTA stays the loud one. */
+.btn-graphite {
+  background: var(--graphite);
+  color: var(--paper);
+}
+.btn-graphite:hover {
+  background: var(--ink);
 }
 .btn-secondary {
   background: var(--paper);

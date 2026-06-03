@@ -45,3 +45,6 @@ credentials
 .playwright-mcp/
 tmp-*.mjs
 tmp-*.ts
+avoora-*.png
+pp-*.png
+pp-after-*.png

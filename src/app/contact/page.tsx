@@ -65,7 +65,7 @@ export default function ContactPage() {
           <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:items-end">
             <div className="lg:col-span-7">
               <span className="chip chip-orange">Contact</span>
-              <h1 className="mt-5 text-mega font-extrabold tracking-tight text-ink">
+              <h1 className="mt-5 text-mega tracking-tight text-ink">
                 Talk to a <span className="text-brand-orange">human</span> in under an hour.
               </h1>
               <p className="mt-5 max-w-2xl text-lead text-ink/70">
@@ -120,7 +120,7 @@ export default function ContactPage() {
         <Container>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-eyebrow uppercase text-brand-orange">Pick your path</p>
-            <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-display tracking-tight text-ink">
               Three ways in. All of them work.
             </h2>
           </div>
@@ -142,7 +142,7 @@ export default function ContactPage() {
                   </span>
                   <span className="chip chip-light">Fastest</span>
                 </div>
-                <h3 className="mt-6 text-h2 font-extrabold leading-tight">
+                <h3 className="mt-6 text-h2 leading-tight">
                   WhatsApp <span className="text-paper/70">now</span>
                 </h3>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-paper/85">
@@ -173,7 +173,7 @@ export default function ContactPage() {
                   </span>
                   <span className="chip chip-light">Best fit</span>
                 </div>
-                <h3 className="mt-6 text-h2 font-extrabold leading-tight">
+                <h3 className="mt-6 text-h2 leading-tight">
                   Send a <span className="text-paper/80">brief</span>
                 </h3>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-paper/85">
@@ -204,7 +204,7 @@ export default function ContactPage() {
                   </span>
                   <span className="chip chip-light">Call us</span>
                 </div>
-                <h3 className="mt-6 text-h2 font-extrabold leading-tight">
+                <h3 className="mt-6 text-h2 leading-tight">
                   Just <span className="text-paper/80">call</span>
                 </h3>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-paper/85">
@@ -289,7 +289,7 @@ export default function ContactPage() {
             {/* Side rail */}
             <aside className="lg:col-span-4">
               <p className="text-eyebrow uppercase text-brand-orange">Brief</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 Send your brief.
               </h2>
               <p className="mt-4 text-ink/70">
@@ -319,7 +319,7 @@ export default function ContactPage() {
         <Container>
           <div className="mx-auto max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">FAQ</p>
-            <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-display tracking-tight text-ink">
               Before you write.
             </h2>
             <dl className="mt-10 space-y-4">

@@ -106,7 +106,7 @@ export default async function TermPage({
       <section className="border-t border-ink bg-paper py-16 md:py-20">
         <Container>
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-h2 font-extrabold tracking-tight text-ink">In practice</h2>
+            <h2 className="text-h2 tracking-tight text-ink">In practice</h2>
             <p className="mt-4 text-base leading-relaxed text-ink/80">{t.body}</p>
           </div>
         </Container>
@@ -117,7 +117,7 @@ export default async function TermPage({
           <Container>
             <div className="mx-auto max-w-3xl">
               <p className="text-eyebrow uppercase text-brand-orange">See also</p>
-              <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-h2 tracking-tight text-ink">
                 Related terms.
               </h2>
             </div>
@@ -148,7 +148,7 @@ export default async function TermPage({
         <Container>
           <div className="mx-auto max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">FAQ</p>
-            <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-h2 tracking-tight text-ink">
               Frequently asked.
             </h2>
             <dl className="mt-8 space-y-4">

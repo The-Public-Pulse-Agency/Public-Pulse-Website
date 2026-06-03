@@ -83,7 +83,7 @@ export default async function HomePage() {
           <div className="grid items-end gap-10 md:grid-cols-12">
             <div className="md:col-span-7">
               <p className="text-eyebrow uppercase text-brand-orange">What we do</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight">
+              <h2 className="mt-4 text-display tracking-tight">
                 Nine sharp services.
                 <br />
                 <span className="text-white/60">One accountable team.</span>
@@ -161,7 +161,7 @@ export default async function HomePage() {
           <div className="grid items-end gap-10 md:grid-cols-12">
             <div className="md:col-span-7">
               <p className="text-eyebrow uppercase text-brand-orange">How we run</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 Four steps.
                 <br />
                 <span className="text-ink/40">No fog.</span>
@@ -202,7 +202,7 @@ export default async function HomePage() {
             <div className="grid items-end gap-10 md:grid-cols-12">
               <div className="md:col-span-7">
                 <p className="text-eyebrow uppercase text-brand-orange">Selected results</p>
-                <h2 className="mt-4 text-display font-extrabold tracking-tight">
+                <h2 className="mt-4 text-display tracking-tight">
                   Receipts.
                   <br />
                   <span className="text-white/45">Not vibes.</span>
@@ -360,7 +360,7 @@ export default async function HomePage() {
       <section className="border-t border-ink bg-ink py-24 text-paper md:py-32">
         <Container>
           <div className="mx-auto max-w-5xl">
-            <h2 className="text-mega font-extrabold leading-[0.95] tracking-tight">
+            <h2 className="text-mega leading-[0.95] tracking-tight">
               Got a campaign that <span className="text-brand-orange">needs to land</span>?
             </h2>
             <p className="mt-7 max-w-2xl text-lead text-white/70">

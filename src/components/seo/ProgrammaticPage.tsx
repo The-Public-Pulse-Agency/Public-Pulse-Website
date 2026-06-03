@@ -82,7 +82,7 @@ export function ProgrammaticPage(props: Props) {
         <Container>
           <div className="mx-auto max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">FAQ</p>
-            <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-display tracking-tight text-ink">
               Frequently asked.
             </h2>
             <dl className="mt-10 space-y-4">
@@ -103,7 +103,7 @@ export function ProgrammaticPage(props: Props) {
           <Container>
             <div className="mx-auto max-w-3xl">
               <p className="text-eyebrow uppercase text-brand-orange">Keep reading</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 Related.
               </h2>
             </div>
@@ -136,7 +136,7 @@ export function ProgrammaticPage(props: Props) {
       <section className="border-t border-ink bg-ink py-24 text-paper md:py-28">
         <Container>
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-mega font-extrabold leading-[0.95] tracking-tight">{ctaTitle}</h2>
+            <h2 className="text-mega leading-[0.95] tracking-tight">{ctaTitle}</h2>
             <p className="mt-6 text-lead text-white/70">{ctaSub}</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link href="/contact" className="btn btn-orange">

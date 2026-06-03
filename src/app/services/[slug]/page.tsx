@@ -112,7 +112,7 @@ export default async function ServiceDetailPage({
           <div className="grid items-end gap-10 md:grid-cols-12">
             <div className="md:col-span-7">
               <p className="text-eyebrow uppercase text-brand-orange">Deliverables</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 What&rsquo;s in the box.
               </h2>
             </div>
@@ -137,7 +137,7 @@ export default async function ServiceDetailPage({
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">How it runs</p>
-            <h2 className="mt-4 text-display font-extrabold tracking-tight">5-step process.</h2>
+            <h2 className="mt-4 text-display tracking-tight">5-step process.</h2>
           </div>
           <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {content.process.map((step, i) => (
@@ -162,7 +162,7 @@ export default async function ServiceDetailPage({
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">Why us</p>
-            <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-display tracking-tight text-ink">
               Why Public Pulse for {service.shortName}?
             </h2>
           </div>
@@ -184,7 +184,7 @@ export default async function ServiceDetailPage({
         <Container>
           <div className="max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">FAQ</p>
-            <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-display tracking-tight text-ink">
               Frequently asked.
             </h2>
           </div>
@@ -213,7 +213,7 @@ export default async function ServiceDetailPage({
             <div className="grid items-end gap-10 md:grid-cols-12">
               <div className="md:col-span-7">
                 <p className="text-eyebrow uppercase text-brand-orange">From the blog</p>
-                <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+                <h2 className="mt-4 text-display tracking-tight text-ink">
                   Practitioner guides on {service.shortName.toLowerCase()}.
                 </h2>
               </div>
@@ -245,7 +245,7 @@ export default async function ServiceDetailPage({
           <div className="grid items-end gap-10 md:grid-cols-12">
             <div className="md:col-span-7">
               <p className="text-eyebrow uppercase text-brand-orange">Related</p>
-              <h2 className="mt-4 text-display font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-display tracking-tight text-ink">
                 Pair with.
               </h2>
             </div>
@@ -279,7 +279,7 @@ export default async function ServiceDetailPage({
       <section className="border-t border-ink bg-ink py-24 text-paper md:py-28">
         <Container>
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-mega font-extrabold leading-[0.95] tracking-tight">
+            <h2 className="text-mega leading-[0.95] tracking-tight">
               Ready for <span className="text-brand-orange">{service.shortName}</span>?
             </h2>
             <p className="mt-6 text-lead text-white/70">

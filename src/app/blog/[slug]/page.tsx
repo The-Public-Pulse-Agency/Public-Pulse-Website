@@ -335,7 +335,7 @@ export default async function BlogPostPage({
               {/* FAQ accordion */}
               {faqs.length > 0 && (
                 <section className="mt-14">
-                  <h2 className="text-h2 font-extrabold tracking-tight text-ink">
+                  <h2 className="text-h2 tracking-tight text-ink">
                     Frequently asked questions
                   </h2>
                   <div className="mt-6 space-y-3">
@@ -466,7 +466,7 @@ export default async function BlogPostPage({
       <section className="border-t border-ink bg-ink py-24 text-paper md:py-28">
         <Container>
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-mega font-extrabold leading-[0.95] tracking-tight">
+            <h2 className="text-mega leading-[0.95] tracking-tight">
               Want help <span className="text-brand-orange">executing</span> this?
             </h2>
             <p className="mt-6 text-lead text-white/70">

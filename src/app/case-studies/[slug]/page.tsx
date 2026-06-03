@@ -321,7 +321,7 @@ export default async function CaseStudyDetailPage({
           <Container>
             <div className="mx-auto max-w-3xl">
               <p className="text-eyebrow text-brand-red">FAQ</p>
-              <h2 className="mt-3 text-h2 font-extrabold tracking-tight text-ink">
+              <h2 className="mt-3 text-h2 tracking-tight text-ink">
                 Common questions about this engagement.
               </h2>
               <div className="mt-8 space-y-3">
@@ -355,7 +355,7 @@ export default async function CaseStudyDetailPage({
             <div className="flex items-end justify-between gap-6">
               <div>
                 <p className="text-eyebrow text-brand-red">More in {study.industry}</p>
-                <h2 className="mt-3 text-h2 font-extrabold tracking-tight text-ink">
+                <h2 className="mt-3 text-h2 tracking-tight text-ink">
                   Related work.
                 </h2>
               </div>

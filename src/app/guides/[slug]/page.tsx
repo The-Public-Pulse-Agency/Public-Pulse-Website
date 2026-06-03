@@ -123,7 +123,7 @@ export default async function GuidePage({
       <section className="border-t border-ink bg-paper py-16 md:py-20">
         <Container>
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-h2 font-extrabold tracking-tight text-ink">Step-by-step</h2>
+            <h2 className="text-h2 tracking-tight text-ink">Step-by-step</h2>
             <ol className="mt-8 space-y-6">
               {g.steps.map((s, i) => (
                 <li
@@ -147,7 +147,7 @@ export default async function GuidePage({
           <Container>
             <div className="mx-auto max-w-3xl">
               <p className="text-eyebrow uppercase text-brand-orange">In the glossary</p>
-              <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+              <h2 className="mt-4 text-h2 tracking-tight text-ink">
                 Terms used.
               </h2>
             </div>
@@ -178,7 +178,7 @@ export default async function GuidePage({
         <Container>
           <div className="mx-auto max-w-3xl">
             <p className="text-eyebrow uppercase text-brand-orange">FAQ</p>
-            <h2 className="mt-4 text-h2 font-extrabold tracking-tight text-ink">
+            <h2 className="mt-4 text-h2 tracking-tight text-ink">
               Frequently asked.
             </h2>
             <dl className="mt-8 space-y-4">
