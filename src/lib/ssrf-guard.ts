@@ -15,6 +15,7 @@
 
 import { lookup as dnsLookupCb } from "node:dns";
 import { promisify } from "node:util";
+import { Agent, fetch as undiciFetch } from "undici";
 
 const dnsLookup = promisify(dnsLookupCb);
 
@@ -145,19 +146,42 @@ export async function safeFetchPublic(rawUrl: string, timeoutMs = 10_000): Promi
     }
   }
 
-  // 2. DNS-rebinding mitigation: we re-validate within the response.
-  //    A full IP-pin via custom http.Agent isn't easy to compose with
-  //    native fetch in Node 22 without breaking SNI. The DNS check above
-  //    + the short request window + Node's resolver cache provide
-  //    practical defense; treating any non-2xx as failure prevents
-  //    leaking probe results.
-  void addrs;
+  // 2. DNS-rebinding defense: pin every TCP connect to the FIRST
+  //    validated address via undici's connect.lookup callback. The
+  //    callback re-validates whatever address we hand to undici (belt-
+  //    and-braces) and ALWAYS returns the same pinned address regardless
+  //    of the hostname undici asks about — so DNS rebinding can't swap
+  //    the IP between our resolve and the actual TCP connect.
+  //    SNI/Host header stay correct because we pass parsed.toString()
+  //    as the URL; undici routes that hostname to the pinned IP.
+  const pin = addrs[0];
+  // undici's connect.lookup uses node:dns LookupFunction shape: the
+  // callback can receive (err, string, family) OR (err, LookupAddress[]).
+  // We always return the single-address form. Cast to LookupFunction
+  // because the type union is wide.
+  const dispatcher = new Agent({
+    connect: {
+      lookup: ((
+        _hostname: string,
+        _opts: unknown,
+        cb: (err: Error | null, address: string, family: number) => void
+      ) => {
+        if (isPrivateAddress(pin.address, pin.family)) {
+          // Re-check at connect time. Belt-and-braces.
+          cb(new Error("blocked-host"), "", 0);
+          return;
+        }
+        cb(null, pin.address, pin.family);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any,
+    },
+  });
 
   // Use AbortController for timeout + body-cap.
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(parsed.toString(), {
+    const res = await undiciFetch(parsed.toString(), {
       method: "GET",
       redirect: "manual", // don't follow — caller can re-call this fn with the Location to re-validate
       headers: {
@@ -165,13 +189,16 @@ export async function safeFetchPublic(rawUrl: string, timeoutMs = 10_000): Promi
         Accept: "text/html,application/xhtml+xml",
       },
       signal: ctrl.signal,
+      dispatcher,
     });
 
     // Read body with size cap.
     const reader = res.body?.getReader();
     if (!reader) {
       clearTimeout(timer);
-      return { ok: true, status: res.status, html: "", ms: Date.now() - start, headers: res.headers };
+      const emptyHeaders = new Headers();
+      res.headers.forEach((v, k) => emptyHeaders.set(k, v));
+      return { ok: true, status: res.status, html: "", ms: Date.now() - start, headers: emptyHeaders };
     }
     const chunks: Uint8Array[] = [];
     let total = 0;
@@ -196,11 +223,20 @@ export async function safeFetchPublic(rawUrl: string, timeoutMs = 10_000): Promi
       off += c.byteLength;
     }
     const html = new TextDecoder("utf-8", { fatal: false }).decode(buf);
-    return { ok: true, status: res.status, html, ms: Date.now() - start, headers: res.headers };
+    // undici Headers is structurally compatible with global Headers but
+    // the TS types diverge on Symbol.dispose. Convert to a fresh global
+    // Headers to satisfy the caller's type.
+    const safeHeaders = new Headers();
+    res.headers.forEach((v, k) => safeHeaders.set(k, v));
+    return { ok: true, status: res.status, html, ms: Date.now() - start, headers: safeHeaders };
   } catch (err) {
     clearTimeout(timer);
     const name = (err as Error)?.name ?? "";
     if (name === "AbortError") return { ok: false, reason: "timeout", ms: Date.now() - start };
     return { ok: false, reason: "fetch-failed", ms: Date.now() - start };
+  } finally {
+    // Close the dispatcher's keep-alive sockets so the pinned Agent
+    // doesn't leak across invocations (each call creates its own Agent).
+    void dispatcher.close().catch(() => {});
   }
 }
