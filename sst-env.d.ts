@@ -22,6 +22,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "CAL_WEBHOOK_SECRET": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "CRON_SECRET": {
       "type": "sst.sst.Secret"
       "value": string
@@ -67,6 +71,10 @@ declare module "sst" {
       "value": string
     }
     "RESEND_REPLY_TO": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "RESEND_WEBHOOK_SECRET": {
       "type": "sst.sst.Secret"
       "value": string
     }

@@ -104,6 +104,13 @@ export default $config({
     // code. The value itself is PUBLIC (anyone with the link can use it).
     // Set via: sst secret set BOOKING_URL "https://cal.com/<user>/<event>"
     const BOOKING_URL = new sst.Secret("BOOKING_URL", "");
+    // CAL_WEBHOOK_SECRET — set in Cal.com → Settings → Developer → Webhooks
+    // when registering the publicpulse webhook endpoint. We verify HMAC-256
+    // signatures on /api/webhooks/cal-com using this secret.
+    const CAL_WEBHOOK_SECRET = new sst.Secret("CAL_WEBHOOK_SECRET", "");
+    // RESEND_WEBHOOK_SECRET — Svix-style signing secret from Resend →
+    // Webhooks → "Signing secret". Verifies /api/webhooks/resend events.
+    const RESEND_WEBHOOK_SECRET = new sst.Secret("RESEND_WEBHOOK_SECRET", "");
 
     // ─── Next.js (OpenNext) ────────────────────────────────────────────
     // The Nextjs component handles CloudFront + S3 (static + ISR cache) +
@@ -127,6 +134,8 @@ export default $config({
         META_CAPI_DATASET_ID,
         META_CAPI_TEST_EVENT_CODE,
         BOOKING_URL,
+        CAL_WEBHOOK_SECRET,
+        RESEND_WEBHOOK_SECRET,
       ],
       // Linked secrets are exposed at runtime as Resource.NAME.value AND
       // process.env.NAME for code that reads env directly.
@@ -143,6 +152,8 @@ export default $config({
         // do NOT use NEXT_PUBLIC_* because SST resolves secrets at Lambda
         // runtime, not at next-build time.
         BOOKING_URL: BOOKING_URL.value,
+        CAL_WEBHOOK_SECRET: CAL_WEBHOOK_SECRET.value,
+        RESEND_WEBHOOK_SECRET: RESEND_WEBHOOK_SECRET.value,
       },
       // Lambda OUTSIDE VPC by design — Neon over public TLS, no NAT.
       // Resend is called over public HTTPS — no IAM permissions needed.
@@ -235,6 +246,55 @@ export default $config({
           },
           runtime: "nodejs22.x",
           timeout: "120 seconds",
+          logging: { retention: "1 week" },
+        },
+      });
+
+      // ─── Auto-publisher cron (every 15 min) ──────────────────────
+      // Flips scheduled posts to published when their scheduledFor passes.
+      new sst.aws.Cron("AutoPublish", {
+        schedule: "rate(15 minutes)",
+        job: {
+          handler: "src/cron/trigger-cron.autoPublish",
+          link: [CRON_SECRET],
+          environment: {
+            AUTO_PUBLISH_URL: $interpolate`${web.url}api/cron/auto-publish`,
+          },
+          runtime: "nodejs22.x",
+          timeout: "30 seconds",
+          logging: { retention: "1 week" },
+        },
+      });
+
+      // ─── Lead maintenance cron (daily 03:00 UTC ≈ 09:00 Dhaka) ─────
+      // Archives stale unread leads + emails the Monday weekly digest.
+      new sst.aws.Cron("LeadMaintenance", {
+        schedule: "cron(0 3 * * ? *)",
+        job: {
+          handler: "src/cron/trigger-cron.leadMaintenance",
+          link: [CRON_SECRET],
+          environment: {
+            LEAD_MAINTENANCE_URL: $interpolate`${web.url}api/cron/lead-maintenance`,
+          },
+          runtime: "nodejs22.x",
+          timeout: "60 seconds",
+          logging: { retention: "1 week" },
+        },
+      });
+
+      // ─── Welcome-drip cron (daily 08:00 UTC ≈ 14:00 Dhaka inbox) ───
+      // Sends drip emails to confirmed subscribers based on confirmedAt
+      // age (24h playbook · 7d case study · 21d soft pitch).
+      new sst.aws.Cron("WelcomeDrip", {
+        schedule: "cron(0 8 * * ? *)",
+        job: {
+          handler: "src/cron/trigger-cron.welcomeDrip",
+          link: [CRON_SECRET],
+          environment: {
+            WELCOME_DRIP_URL: $interpolate`${web.url}api/cron/welcome-drip`,
+          },
+          runtime: "nodejs22.x",
+          timeout: "60 seconds",
           logging: { retention: "1 week" },
         },
       });

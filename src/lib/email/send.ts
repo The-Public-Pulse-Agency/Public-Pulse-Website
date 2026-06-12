@@ -23,7 +23,10 @@ export type SendArgs = {
   to: string;
   subject: string;
   /** React-email tree. We render to HTML and to plain text. */
-  react: ReactElement;
+  react?: ReactElement;
+  /** Pre-rendered HTML body (used by cron jobs that don't want to spin up
+   *  a React tree just to send one email). Provide either `react` OR `html`. */
+  html?: string;
   /** Subscriber unsubscribe token — REQUIRED for any email going to a
    *  subscriber-table recipient (digest, welcome). For purely transactional
    *  sends (e.g. admin auth) pass null and we omit the List-Unsubscribe
@@ -47,8 +50,13 @@ export async function sendEmail(args: SendArgs): Promise<SendResult> {
   if (!r) {
     return { ok: false, error: "RESEND_API_KEY not configured" };
   }
-  const html = await render(args.react);
-  const text = await render(args.react, { plainText: true });
+  if (!args.react && !args.html) {
+    return { ok: false, error: "send: react or html required" };
+  }
+  const html = args.html ?? (await render(args.react!));
+  const text = args.react
+    ? await render(args.react, { plainText: true })
+    : args.html!.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
   const fromAddr = args.fromOverride
     ?? process.env.RESEND_FROM_EMAIL

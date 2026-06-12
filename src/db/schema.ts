@@ -311,6 +311,10 @@ export const subscribers = pgTable(
       .defaultNow(),
     confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
     unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    // Welcome-drip progress. 0 = none sent, 1 = D1 sent, 2 = D7 sent,
+    // 3 = D21 sent. Cron picks the next stage based on age + dripStage.
+    dripStage: integer("drip_stage").notNull().default(0),
+    dripLastAt: timestamp("drip_last_at", { withTimezone: true }),
   },
   (t) => ({
     emailIdx: uniqueIndex("subscribers_email_idx").on(t.email),
@@ -432,6 +436,17 @@ export const newsletterSends = pgTable(
     providerId: text("provider_id"),
     error: text("error"),
     sentAt: timestamp("sent_at", { withTimezone: true }),
+    // ── Engagement analytics (populated by /api/webhooks/resend) ────────
+    // First/last event timestamps + counters. Lets us compute open rate +
+    // click rate per issue without keeping every event row (raw events go
+    // to resend_events for audit).
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    openCount: integer("open_count").notNull().default(0),
+    clickedAt: timestamp("clicked_at", { withTimezone: true }),
+    clickCount: integer("click_count").notNull().default(0),
+    bouncedAt: timestamp("bounced_at", { withTimezone: true }),
+    bounceType: text("bounce_type"), // "hard" | "soft" | "complaint"
+    complainedAt: timestamp("complained_at", { withTimezone: true }),
   },
   (t) => ({
     issueIdx: index("newsletter_sends_issue_idx").on(t.issueId),
@@ -439,6 +454,71 @@ export const newsletterSends = pgTable(
     issueSubIdx: uniqueIndex("newsletter_sends_issue_sub_idx").on(t.issueId, t.subscriberId),
   })
 );
+
+// ─── Raw Resend webhook events (audit trail) ─────────────────────────
+// Every Resend webhook delivery lands here verbatim. Lets us reconstruct
+// engagement state if `newsletterSends` columns ever drift, and provides
+// the audit log Resend's dashboard alone can't give us. Idempotency on
+// providerId + eventType so a Resend retry doesn't double-count.
+export const resendEvents = pgTable(
+  "resend_events",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    /** "email.sent" | "email.delivered" | "email.opened" | "email.clicked" | "email.bounced" | "email.complained" | "email.delivery_delayed" */
+    eventType: text("event_type").notNull(),
+    /** Resend message id. */
+    providerId: text("provider_id").notNull(),
+    to: text("to"),
+    subject: text("subject"),
+    /** Click-event URL or bounce reason. */
+    detail: text("detail"),
+    /** Raw JSON payload from Resend, kept for audit / debugging. */
+    payload: jsonb("payload"),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    typeIdx: index("resend_events_type_idx").on(t.eventType, t.receivedAt.desc()),
+    providerIdx: index("resend_events_provider_idx").on(t.providerId),
+    dedupIdx: uniqueIndex("resend_events_dedup_idx").on(t.providerId, t.eventType),
+  })
+);
+
+export type ResendEvent = typeof resendEvents.$inferSelect;
+
+// ─── Cal.com booking events (synced from /api/webhooks/cal-com) ───────
+// Auto-creates a lead row when a new booking lands. Stores the Cal.com
+// payload for follow-up + dedup. Booking lifecycle tracked here so a
+// reschedule/cancel doesn't lose the original lead context.
+export const calBookings = pgTable(
+  "cal_bookings",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    /** Cal.com booking UID (e.g. "abc123..."). */
+    calBookingId: text("cal_booking_id").notNull().unique(),
+    eventType: text("event_type"), // e.g. "15min", "strategy-call"
+    /** "booking.created" | "booking.rescheduled" | "booking.cancelled" */
+    status: text("status").notNull(),
+    attendeeName: text("attendee_name"),
+    attendeeEmail: text("attendee_email"),
+    attendeePhone: text("attendee_phone"),
+    startTime: timestamp("start_time", { withTimezone: true }),
+    endTime: timestamp("end_time", { withTimezone: true }),
+    timezone: text("timezone"),
+    meetingUrl: text("meeting_url"),
+    notes: text("notes"),
+    /** Linked lead row created from this booking (null until processed). */
+    leadId: uuid("lead_id"),
+    payload: jsonb("payload"),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    emailIdx: index("cal_bookings_email_idx").on(t.attendeeEmail),
+    startIdx: index("cal_bookings_start_idx").on(t.startTime.desc()),
+    statusIdx: index("cal_bookings_status_idx").on(t.status, t.receivedAt.desc()),
+  })
+);
+
+export type CalBooking = typeof calBookings.$inferSelect;
 
 export type NewsletterSend = typeof newsletterSends.$inferSelect;
 export type NewNewsletterSend = typeof newsletterSends.$inferInsert;

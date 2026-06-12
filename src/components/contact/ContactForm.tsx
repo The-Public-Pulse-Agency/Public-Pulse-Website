@@ -10,6 +10,7 @@ import { submitContact } from "@/app/contact/actions";
 import { SERVICES } from "@/lib/services";
 import { getServiceIcon } from "@/lib/icons";
 import { SITE } from "@/lib/site";
+import { track } from "@/lib/analytics";
 
 export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {}) {
   const [pending, startTransition] = useTransition();
@@ -48,6 +49,7 @@ export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {})
     startTransition(async () => {
       const result = await submitContact(data);
       if (result.ok) {
+        track("form_submitted", { label: "contact", surface: "/contact", service: data.serviceInterest ?? "none" });
         reset();
         setSelectedService("");
         setServerState({ status: "success" });
@@ -58,6 +60,7 @@ export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {})
           setError(field as keyof ContactInput, { message: message ?? "Invalid" });
         }
       }
+      track("form_error", { label: "contact", surface: "/contact", reason: result.error.slice(0, 50) });
       setServerState({ status: "error", message: result.error });
     });
   };
@@ -208,7 +211,7 @@ export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {})
             id="name"
             type="text"
             autoComplete="name"
-            aria-invalid={!!errors.name}
+            aria-invalid={errors.name ? "true" : "false"}
             aria-describedby={errors.name ? "name-error" : undefined}
             className="form-input"
             placeholder="Jane Karim"
@@ -220,7 +223,7 @@ export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {})
             id="email"
             type="email"
             autoComplete="email"
-            aria-invalid={!!errors.email}
+            aria-invalid={errors.email ? "true" : "false"}
             aria-describedby={errors.email ? "email-error" : undefined}
             className="form-input"
             placeholder="you@brand.com"
@@ -238,7 +241,7 @@ export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {})
             type="tel"
             autoComplete="tel"
             inputMode="tel"
-            aria-invalid={!!errors.phone}
+            aria-invalid={errors.phone ? "true" : "false"}
             aria-describedby={errors.phone ? "phone-error" : undefined}
             className="form-input"
             placeholder="+880 …"
@@ -258,7 +261,7 @@ export function ContactForm({ bookingUrl }: { bookingUrl?: string | null } = {})
         <textarea
           id="message"
           rows={6}
-          aria-invalid={!!errors.message}
+          aria-invalid={errors.message ? "true" : "false"}
           aria-describedby={errors.message ? "message-error" : undefined}
           maxLength={2000}
           className="form-input resize-y"
