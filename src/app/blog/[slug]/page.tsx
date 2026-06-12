@@ -23,6 +23,9 @@ import {
   getRelatedPosts,
 } from "@/lib/data/blog";
 import { PostBody } from "@/components/blog/PostBody";
+import { ReadingProgress } from "@/components/blog/ReadingProgress";
+import { ArticleTOC } from "@/components/blog/ArticleTOC";
+import { ScrollDepthTracker } from "@/components/analytics/ScrollDepthTracker";
 import { SERVICES } from "@/lib/services";
 import { LOCATIONS } from "@/lib/taxonomies/locations";
 import { INDUSTRIES } from "@/lib/taxonomies/industries";
@@ -189,6 +192,8 @@ export default async function BlogPostPage({
 
   return (
     <article>
+      <ReadingProgress />
+      <ScrollDepthTracker surface={`/blog/${post.slug}`} />
       <JsonLd data={schemas} />
 
       <GradientHero
@@ -393,9 +398,12 @@ export default async function BlogPostPage({
               )}
             </div>
 
-            {/* Sticky-ish sidebar with related posts */}
+            {/* Sticky-ish sidebar with TOC + related posts */}
             <aside className="lg:col-span-4">
               <div className="lg:sticky lg:top-24 space-y-6">
+                <div className="hidden lg:block">
+                  <ArticleTOC />
+                </div>
                 {related.length > 0 && (
                   <div className="rounded-panel border border-ink/15 bg-paper p-5">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-ink/55">

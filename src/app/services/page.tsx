@@ -8,6 +8,7 @@ import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { TiltCard } from "@/components/motion";
+import { ServiceMatcher } from "@/components/services/ServiceMatcher";
 import { SERVICES } from "@/lib/services";
 import { getServiceIcon } from "@/lib/icons";
 
@@ -74,6 +75,26 @@ export default function ServicesIndexPage() {
               );
             })}
           </ul>
+        </Container>
+      </section>
+
+      {/* ─── Service matcher quiz ─────────────────────────────────────
+          Interactive 3-question matcher → ranks top 3 services →
+          deep-links into /book with service preselected. */}
+      <section className="bg-surface-alt py-16 md:py-24">
+        <Container>
+          <div className="max-w-3xl">
+            <p className="text-eyebrow uppercase text-brand-orange">Not sure where to start?</p>
+            <h2 className="mt-4 text-h1 tracking-tight text-ink">
+              Three quick questions. We&rsquo;ll point you to the right service.
+            </h2>
+            <p className="mt-5 text-lead text-ink/65">
+              Tells us your goal, channels, and industry. We rank our nine services against your answers and surface the top three matches.
+            </p>
+          </div>
+          <div className="mt-10 max-w-3xl">
+            <ServiceMatcher />
+          </div>
         </Container>
       </section>
     </>

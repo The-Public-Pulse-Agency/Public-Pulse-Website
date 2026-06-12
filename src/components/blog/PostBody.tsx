@@ -21,6 +21,19 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Slugify a heading text for use as an anchor id. Strips Markdown
+// inline syntax (`*`, `_`, `[`, `]`) and normalizes whitespace.
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[*_`[\]()]/g, "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 function inlineLinkGlossary(text: string): React.ReactNode[] {
   const aliases = Array.from(GLOSSARY_INLINE.keys()).sort((a, b) => b.length - a.length);
   if (aliases.length === 0) return [text];
@@ -94,6 +107,16 @@ function inlineParse(text: string, keyPrefix: string): React.ReactNode[] {
 export function PostBody({ body }: { body: string }) {
   const lines = body.split(/\r?\n/);
   const blocks: React.ReactNode[] = [];
+  const seenIds = new Set<string>();
+  function uniqueId(text: string): string {
+    let base = slugify(text);
+    if (!base) base = "section";
+    let candidate = base;
+    let n = 2;
+    while (seenIds.has(candidate)) candidate = `${base}-${n++}`;
+    seenIds.add(candidate);
+    return candidate;
+  }
   let listBuffer: string[] = [];
   let olBuffer: string[] = [];
   let inListType: "ul" | "ol" | null = null;
@@ -147,11 +170,13 @@ export function PostBody({ body }: { body: string }) {
     const h2 = line.match(/^##\s+(.+)$/);
     const h3 = line.match(/^###\s+(.+)$/);
     if (h2) {
-      blocks.push(<h2 key={`h2-${key++}`} className="mt-12 text-h2 tracking-tight text-ink">{inlineParse(h2[1], `h2-${key}`)}</h2>);
+      const id = uniqueId(h2[1]);
+      blocks.push(<h2 id={id} key={`h2-${key++}`} className="mt-12 scroll-mt-24 text-h2 tracking-tight text-ink">{inlineParse(h2[1], `h2-${key}`)}</h2>);
       continue;
     }
     if (h3) {
-      blocks.push(<h3 key={`h3-${key++}`} className="mt-8 text-h3 font-bold text-ink">{inlineParse(h3[1], `h3-${key}`)}</h3>);
+      const id = uniqueId(h3[1]);
+      blocks.push(<h3 id={id} key={`h3-${key++}`} className="mt-8 scroll-mt-24 text-h3 font-bold text-ink">{inlineParse(h3[1], `h3-${key}`)}</h3>);
       continue;
     }
     blocks.push(<p key={`p-${key++}`} className="mt-5 text-base leading-relaxed text-ink/85">{inlineParse(line, `p-${key}`)}</p>);

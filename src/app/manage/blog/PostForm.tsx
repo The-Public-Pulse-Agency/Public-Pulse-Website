@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useFormAutosave, AutosaveBadge } from "@/components/admin/useFormAutosave";
 
 type CategoryOpt = { slug: string; nameEn: string };
 type AuthorOpt = { slug: string; name: string };
@@ -59,8 +60,36 @@ export function PostForm({
   const addFaq = () => setFaqs((prev) => [...prev, { q: "", a: "" }]);
   const removeFaq = (i: number) => setFaqs((prev) => prev.filter((_, idx) => idx !== i));
 
+  // ─── localStorage autosave ─────────────────────────────────────────
+  // Snapshot every input change to localStorage so browser crashes don't
+  // lose a 2000-word blog body. Signature = post slug + serverPublishedAt
+  // so when the server row moves on (someone else edited), the stale
+  // draft gets discarded automatically.
+  const formRef = useRef<HTMLFormElement>(null);
+  const storageKey = `pp:autosave:blog:${defaults.slug ?? "new"}`;
+  const sig = `${defaults.slug ?? "new"}|${defaults.publishedAt ?? ""}`;
+  const { status: autosaveStatus, clear: clearAutosave } = useFormAutosave(
+    formRef,
+    storageKey,
+    sig
+  );
+
+  // Wrap the action so localStorage gets cleared on successful submit.
+  async function wrappedAction(fd: FormData) {
+    try {
+      await action(fd);
+      clearAutosave();
+    } catch (err) {
+      throw err;
+    }
+  }
+
   return (
-    <form action={action} className="space-y-6">
+    <form ref={formRef} action={wrappedAction} className="space-y-6">
+      {/* Sticky autosave status, only visible while typing. */}
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 flex items-center justify-end gap-3 border-b border-ink/5 bg-paper/80 px-4 py-2 backdrop-blur">
+        <AutosaveBadge status={autosaveStatus} />
+      </div>
       {/* Hidden JSON field for FAQs */}
       <input type="hidden" name="faqJson" value={JSON.stringify(faqs)} />
 

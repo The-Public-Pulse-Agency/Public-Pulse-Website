@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Calendar, ShieldCheck, Clock, Users, Megaphone, AlertTriangle } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 
 import { buildMetadata } from "@/lib/seo";
 import {
@@ -15,6 +15,8 @@ import { AnswerBlock } from "@/components/seo/AnswerBlock";
 import { SITE } from "@/lib/site";
 import { politicalPr } from "@/content/services/political-pr";
 import { bookingUrl } from "@/lib/booking";
+import { PhaseTimeline } from "@/components/election/PhaseTimeline";
+import { ScrollDepthTracker } from "@/components/analytics/ScrollDepthTracker";
 
 export const metadata: Metadata = buildMetadata({
   // Title: 56 chars — under Google's 60-char SERP cutoff. Echoes the H1
@@ -68,33 +70,35 @@ const FAQS = [
 
 // 90-day phase plan, derived from political-pr.process but mapped to
 // week markers so a campaign manager can read it as a calendar.
-const PHASES = [
+// Icons are STRING keys (not component refs) because PhaseTimeline is a
+// client component — React can't serialize component refs over the wire.
+const PHASES: import("@/components/election/PhaseTimeline").Phase[] = [
   {
-    icon: Users,
+    icon: "users",
     weeks: "Day 0–14",
     title: "Discovery + survey",
     body: "Free consultation. Constituency opinion survey, rival analysis, baseline sentiment, identify the local-hero narrative thread.",
   },
   {
-    icon: Megaphone,
+    icon: "megaphone",
     weeks: "Week 3–6",
     title: "Strategy + production",
     body: "Narrative design, audience segmentation, creative production in-house — candidate photo, video, biography, public service documentation, copy.",
   },
   {
-    icon: Calendar,
+    icon: "calendar",
     weeks: "Week 7–10",
     title: "Mobilization",
     body: "Ground-team and digital activated together. Daily sentiment tracking, A/B narrative tests, weekly KPI reports, budget reallocation across booths.",
   },
   {
-    icon: AlertTriangle,
+    icon: "warning",
     weeks: "Week 11–12",
     title: "Peak + polling day",
     body: "24-hour crisis SLA fully active. Rapid-response copy + creative. Polling-day comms, get-out-the-vote messaging, real-time sentiment monitoring.",
   },
   {
-    icon: ShieldCheck,
+    icon: "shield",
     weeks: "Day +1 onward",
     title: "Post-election PR",
     body: "Result reframing, gracious-loss / decisive-win narrative, thank-you outreach, transition-to-governance messaging.",
@@ -106,6 +110,7 @@ export default function ElectionPage() {
 
   return (
     <>
+      <ScrollDepthTracker surface="/election" />
       <JsonLd
         data={[
           breadcrumbSchema(crumbs),
@@ -202,25 +207,9 @@ export default function ElectionPage() {
               stays the same, the depth changes.
             </p>
           </div>
-          <ol className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {PHASES.map((p, i) => (
-              <li
-                key={p.title}
-                className="rounded-card border border-ink/10 bg-paper p-6 shadow-card"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-orange/10 text-brand-orange">
-                    <p.icon className="h-5 w-5" aria-hidden />
-                  </span>
-                  <span className="text-meta font-mono uppercase tracking-wider text-ink/45">
-                    {String(i + 1).padStart(2, "0")} · {p.weeks}
-                  </span>
-                </div>
-                <h3 className="mt-5 text-h3 font-bold text-ink">{p.title}</h3>
-                <p className="mt-2 text-body text-ink/65">{p.body}</p>
-              </li>
-            ))}
-          </ol>
+          <div className="mt-12">
+            <PhaseTimeline phases={PHASES} />
+          </div>
         </Container>
       </section>
 
