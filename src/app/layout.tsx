@@ -86,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             // engines a confident map of the top-level URLs.
             siteNavigationSchema([
               { name: "Services", url: "/services" },
+              { name: "Pricing", url: "/pricing" },
               { name: "Work", url: "/case-studies" },
               { name: "Election readiness", url: "/election" },
               { name: "Insights", url: "/blog" },

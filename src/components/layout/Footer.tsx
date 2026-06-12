@@ -70,6 +70,9 @@ export function Footer() {
                 All services →
               </Link>
             </li>
+            <li>
+              <Link href="/pricing" className="text-white/80 hover:text-white">Pricing</Link>
+            </li>
           </ul>
         </div>
 

@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { GradientHero } from "@/components/seo/GradientHero";
 import { Container } from "@/components/ui/Container";
 import { LOCATIONS } from "@/lib/taxonomies/locations";
+import { BangladeshMap } from "@/components/locations/BangladeshMap";
 
 export const metadata: Metadata = buildMetadata({
   title: "Locations | Public Pulse Agency in Bangladesh",
@@ -44,6 +45,24 @@ export default function LocationsIndex() {
         lead={`Dhaka HQ. Active engagements in ${LOCATIONS.length} cities. Real local context — not copy-pasted templates.`}
         answer="Public Pulse Agency runs digital marketing and political PR engagements across Bangladesh — Dhaka, Chattogram, Sylhet, Khulna, Rajshahi, Cox's Bazar, Gazipur, Narayanganj and Comilla. Each city has its own LocalBusiness page grounded in real local industry mix and consumer behaviour, not generic templates."
       />
+
+      {/* ─── Interactive Bangladesh map ──────────────────────────────
+          Geographic SVG with hoverable city dots — replaces the static
+          grid as the primary discovery surface. Card list below stays
+          for SEO + keyboard browsing. */}
+      <section className="border-t border-ink bg-paper py-16 md:py-20">
+        <Container>
+          <div className="max-w-3xl">
+            <p className="text-eyebrow uppercase text-brand-orange">Coverage map</p>
+            <h2 className="mt-3 text-h2 tracking-tight text-ink">
+              Hover a city. See the local context. Click to open.
+            </h2>
+          </div>
+          <div className="mt-10">
+            <BangladeshMap />
+          </div>
+        </Container>
+      </section>
 
       <section className="border-t border-ink bg-paper-alt py-16 md:py-24">
         <Container>
