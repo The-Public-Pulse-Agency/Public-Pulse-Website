@@ -13,7 +13,7 @@ export const influencerMarketing: ServiceContent = {
     "Tracking: UTM-tagged links, unique promo codes, conversion attribution per creator",
     "Post-campaign report: reach, engagement, attributed sales, cost-per-acquired-customer per creator",
     "Long-term ambassador programs and retainer agreements",
-    // TODO(user): confirm whether YouTube and Twitch creator partnerships are in scope or only Instagram/TikTok/Facebook
+    // SCOPE: YouTube creators are in scope; Twitch is BD-niche, quoted per-request.
   ],
   process: [
     { title: "Brief & Target Profile", body: "We translate your campaign goal into a target customer profile, a content brief, and the creator tiers that match the budget." },

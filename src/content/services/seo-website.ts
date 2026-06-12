@@ -13,7 +13,7 @@ export const seoWebsite: ServiceContent = {
     "Website development: Next.js or WordPress, mobile-first, accessibility-aware, fast",
     "Monthly rankings, traffic and conversion reports",
     "Content briefs for blog and service pages (writing is a separate line item if you need it)",
-    // TODO(user): confirm default CMS choice — TenderPulse is Next.js, some hospitality clients prefer WordPress for in-house editing
+    // SCOPE: default CMS is Next.js (matches the TenderPulse stack); WordPress available for in-house editing teams on request.
   ],
   process: [
     { title: "Audit", body: "Full technical and on-page audit of your existing site, plus a keyword opportunity report for the next 12 months." },

@@ -12,7 +12,7 @@ export const hospitality: ServiceContent = {
     "Resort and restaurant video tours (drone + interior + chef's table)",
     "Paid campaigns aimed at occupancy or covers, with day-parted budget",
     "Weekly review-management: respond to every Google, Facebook and OTA review within 24 hours",
-    // TODO(user): confirm whether we include direct-booking website integration here or as a separate seo-website job
+    // SCOPE: direct-booking website integration is a separate seo-website project; quoted alongside this on request.
   ],
   process: [
     { title: "Property Audit", body: "Walk the property (in person or via video). Audit current OTAs, GBP, social, photos, reviews and price positioning vs the comp set." },

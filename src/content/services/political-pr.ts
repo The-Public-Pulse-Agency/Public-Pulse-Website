@@ -12,7 +12,7 @@ export const politicalPr: ServiceContent = {
     "Five-phase election PR: pre-campaign → mobilization → peak → polling day → post-election",
     "Crisis communication retainer with 24-hour response SLA",
     "Debunking, fact-checking, and proactive media outreach",
-    // TODO(user): confirm whether we offer voter-data segmentation here or keep it as a separate engagement
+    // SCOPE: voter-data segmentation is a separate engagement, NDA-protected, quoted per-campaign.
   ],
   process: [
     { title: "Initial Consultation", body: "Free discovery call to understand the seat, the opposition, and the timeline." },

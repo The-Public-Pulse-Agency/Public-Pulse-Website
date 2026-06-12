@@ -12,7 +12,7 @@ export const contentProduction: ServiceContent = {
     "Motion graphics and explainer animations",
     "Drone shoots for hospitality, real estate, events",
     "UGC content briefs, creator coordination and rights management",
-    // TODO(user): confirm whether 360°/VR is in scope; we've done it for resorts before but it's expensive
+    // SCOPE: 360°/VR available for resorts + hospitality; quoted per-shoot, materially higher than standard rates.
   ],
   process: [
     { title: "Brief & Treatment", body: "We translate your campaign goal into a shot list, mood board, scripts, and a one-page treatment you sign off on." },

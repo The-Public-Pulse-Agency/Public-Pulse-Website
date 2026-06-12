@@ -13,7 +13,7 @@ export const analyticsReporting: ServiceContent = {
     "Looker Studio dashboards: campaign-level, channel-level, executive-level",
     "Monthly ROI report in BDT with attribution model documented",
     "Quarterly attribution review — which channels actually drove revenue, which got false credit",
-    // TODO(user): confirm whether GA4 BigQuery export + custom modeling is in scope or sold as an upsell
+    // SCOPE: GA4 BigQuery export + custom modeling is an upsell; quoted separately, available on request.
   ],
   process: [
     { title: "Stack Audit", body: "We inventory every tracking pixel, every Tag Manager container, every GA4 property — and document what's broken, duplicated or sending bad data." },

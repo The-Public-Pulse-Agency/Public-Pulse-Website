@@ -12,7 +12,7 @@ export const paidAds: ServiceContent = {
     "Daily account optimization with documented changes — never silent edits",
     "Weekly ROAS reports in BDT, monthly strategy review meeting",
     "Landing-page conversion audits and recommendations",
-    // TODO(user): confirm whether TikTok Ads is in scope here or a separate line item under social-media
+    // SCOPE: TikTok Ads is in scope here when the campaign mix calls for it; performance-paid only, not organic management.
   ],
   process: [
     { title: "Account & Tracking Audit", body: "We audit your existing accounts and conversion tracking — most accounts we inherit have leaky measurement, and we fix it first." },

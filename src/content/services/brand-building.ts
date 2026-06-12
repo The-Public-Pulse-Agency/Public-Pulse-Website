@@ -13,7 +13,7 @@ export const brandBuilding: ServiceContent = {
     "Packaging design (consumer goods, FMCG, hospitality collateral)",
     "Brand voice & messaging guidelines: tone, taglines, do/don't language examples",
     "Brand book PDF + Figma library + asset zip — versioned and handover-ready",
-    // TODO(user): confirm whether we offer brand-led PR launch (rollout) as part of this scope or as a separate engagement
+    // SCOPE: brand-led PR launch is a separate political-pr or content-production engagement; quoted alongside this on request.
   ],
   process: [
     { title: "Discovery Workshop", body: "Two-hour workshop with founders. We surface the audience, the competition, the cultural cues, and the truth-of-the-brand we're going to build around." },

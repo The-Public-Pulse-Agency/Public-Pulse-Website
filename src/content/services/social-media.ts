@@ -12,7 +12,7 @@ export const socialMedia: ServiceContent = {
     "Community management — comment moderation, DM response within 4 working hours",
     "Monthly performance report: reach, engagement, follower quality, lead attribution",
     "Crisis response: comment-storm de-escalation and reputation defense",
-    // TODO(user): confirm whether YouTube long-form is in scope or a content-production line item
+    // SCOPE: YouTube long-form sits under content-production; this service covers short-form + reels.
   ],
   process: [
     { title: "Audit & Strategy", body: "We audit your current accounts, competitor accounts, and the 2–3 angles your audience actually responds to." },
