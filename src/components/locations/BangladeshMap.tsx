@@ -30,10 +30,64 @@ function project(lat: number, lng: number): { x: number; y: number } {
   return { x, y };
 }
 
-// Approximate BD country outline as a smoothed polyline. Not survey-grade —
-// shaped to evoke the country silhouette without map-data dependencies.
-const BD_PATH =
-  "M 180,40 L 240,30 L 300,55 L 340,85 L 360,130 L 380,180 L 395,220 L 405,260 L 410,310 L 400,355 L 380,395 L 350,420 L 320,450 L 280,475 L 250,490 L 215,505 L 175,510 L 145,498 L 120,475 L 105,440 L 95,400 L 90,355 L 95,310 L 105,275 L 115,245 L 130,210 L 142,175 L 150,135 L 160,95 L 175,60 Z";
+// Bangladesh boundary as ~40 real (lat, lng) points, simplified from a
+// public-domain outline. Goes clockwise starting from the NW corner near
+// Panchagarh. Projected through the same lat/lng → SVG transform used for
+// the city dots, so country shape and dots are geographically consistent.
+const BD_BOUNDARY: Array<[number, number]> = [
+  // North border with India (W → E)
+  [26.6, 88.3],   // NW Panchagarh
+  [26.6, 88.9],
+  [26.4, 89.4],   // Kurigram north
+  [26.3, 89.9],
+  [26.1, 90.3],   // Rangpur N
+  [25.9, 90.0],
+  [25.7, 90.4],   // Mymensingh N
+  [25.4, 90.8],
+  [25.2, 91.3],   // Netrokona N
+  [25.0, 91.9],
+  [25.2, 92.0],   // Sylhet N
+  [25.0, 92.5],   // NE corner near Sylhet/Tripura
+  // East border with India / Myanmar (N → S)
+  [24.3, 92.4],
+  [23.8, 91.8],
+  [23.3, 91.4],   // Tripura
+  [22.8, 91.7],
+  [22.4, 92.4],
+  [21.9, 92.5],   // Bandarban E
+  [21.5, 92.5],   // Cox's Bazar E
+  [21.2, 92.2],   // Naf River → Myanmar
+  // South coast on Bay of Bengal (E → W, irregular)
+  [21.0, 92.0],
+  [21.4, 91.8],
+  [21.5, 91.5],   // Cox's Bazar South
+  [22.1, 91.4],   // Chattogram coast
+  [22.4, 90.9],
+  [22.0, 90.6],   // Bhola
+  [21.9, 90.0],
+  [22.1, 89.6],   // Sundarbans / Khulna coast
+  [21.8, 89.0],   // SW Sundarbans
+  // West border with India (S → N)
+  [22.2, 88.9],
+  [22.8, 88.7],
+  [23.4, 88.6],   // Jessore W
+  [24.0, 88.4],
+  [24.3, 88.3],   // Chapainawabganj W
+  [24.9, 88.2],
+  [25.4, 88.4],   // Dinajpur W
+  [25.9, 88.4],
+  [26.2, 88.4],   // Panchagarh W
+  [26.6, 88.3],   // close
+];
+
+const BD_PATH = (() => {
+  const pts = BD_BOUNDARY.map(([lat, lng]) => {
+    const x = ((lng - 88.0) / (92.7 - 88.0)) * 460;
+    const y = ((26.7 - lat) / (26.7 - 20.5)) * 580;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  return "M " + pts.join(" L ") + " Z";
+})();
 
 export function BangladeshMap() {
   const [hovered, setHovered] = useState<Location | null>(null);

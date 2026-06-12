@@ -61,7 +61,12 @@ export function GradientHero({
         >
           <div className={variant === "panel" ? "lg:col-span-7" : "max-w-5xl"}>
             <span className="chip chip-orange">{chip}</span>
-            <h1 className="mt-6 text-mega tracking-tight text-ink leading-[0.95]">
+            {/* text-display (44-104px clamp) NOT text-mega (56-136px).
+                text-mega is reserved for the homepage wordmark + the footer
+                sign-off — using it on long article titles like blog posts
+                blows past the viewport and looks broken. text-display sits
+                in the right scale for inner-page heroes. */}
+            <h1 className="mt-6 text-display tracking-tight text-ink leading-[0.98]">
               {title}
             </h1>
             <p className="mt-6 max-w-2xl text-lead text-ink/70">{lead}</p>
