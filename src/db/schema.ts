@@ -455,6 +455,26 @@ export const newsletterSends = pgTable(
   })
 );
 
+// ─── Tool-run audit log (rate-limit anchor) ──────────────────────────
+// Every invocation of an interactive tool (currently /tools/seo-audit)
+// records a row keyed by ip_hash + tool. Used for per-IP rate-limit.
+// Self-pruning at the application level: queries only fetch rows < 1h old.
+
+export const toolRuns = pgTable(
+  "tool_runs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    tool: text("tool").notNull(),       // e.g. "seo-audit"
+    ipHash: text("ip_hash").notNull(),
+    runAt: timestamp("run_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    rateIdx: index("tool_runs_rate_idx").on(t.tool, t.ipHash, t.runAt.desc()),
+  })
+);
+
+export type ToolRun = typeof toolRuns.$inferSelect;
+
 // ─── Raw Resend webhook events (audit trail) ─────────────────────────
 // Every Resend webhook delivery lands here verbatim. Lets us reconstruct
 // engagement state if `newsletterSends` columns ever drift, and provides

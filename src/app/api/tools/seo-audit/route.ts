@@ -1,24 +1,22 @@
 // SEO audit tool — visitor enters a domain, we fetch and run a quick
-// on-page check, return a snapshot with score + 5-10 findings.
+// on-page check, return a snapshot with score + findings.
 //
-// What it checks (server-side fetch of the homepage):
-//   - Title tag presence + length
-//   - Meta description presence + length
-//   - H1 count
-//   - Open Graph tags
-//   - Canonical link
-//   - Robots meta + robots.txt
-//   - JSON-LD presence
-//   - HTML response time
-//   - HTTPS
-//   - Page size (compressed)
-//
-// Rate-limited per IP (5/hr) to keep this from being abused as a free
-// crawler. No DB persistence — every check runs fresh.
+// Security posture:
+//   - SSRF defended by safeFetchPublic() — see src/lib/ssrf-guard.ts.
+//     Refuses to hit AWS IMDS, RFC1918, loopback, link-local, IPv6
+//     private space, or non-80/443 ports.
+//   - Rate-limited 5 requests / hour / IP using tool_runs table.
+//   - Generic error responses; details never echoed back to caller.
+//   - Body capped at 1 MB to prevent OOM.
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { and, eq, gte, sql } from "drizzle-orm";
+
+import { db } from "@/db/client";
+import { toolRuns } from "@/db/schema";
 import { hashIp, isOverLimit } from "@/lib/rate-limit";
+import { safeFetchPublic } from "@/lib/ssrf-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,21 +38,6 @@ function normalizeUrl(input: string): string | null {
     return u.origin;
   } catch {
     return null;
-  }
-}
-
-async function fetchTimed(url: string) {
-  const start = Date.now();
-  try {
-    const res = await fetch(url, {
-      redirect: "follow",
-      headers: { "User-Agent": "Mozilla/5.0 PublicPulseSEOAudit/1.0" },
-      signal: AbortSignal.timeout(10_000),
-    });
-    const text = await res.text();
-    return { ok: true as const, status: res.status, ms: Date.now() - start, html: text, headers: res.headers };
-  } catch (err) {
-    return { ok: false as const, error: (err as Error).message, ms: Date.now() - start };
   }
 }
 
@@ -146,7 +129,6 @@ function audit(html: string, headers: Headers, ms: number): { score: number; fin
       : { kind: "warn", category: "Security", label: "No HSTS header", detail: "Strict-Transport-Security forces HTTPS." }
   );
 
-  // Score = ok=10, warn=5, fail=0, normalised to 100.
   const total = findings.length * 10;
   const earned = findings.reduce((s, f) => s + (f.kind === "ok" ? 10 : f.kind === "warn" ? 5 : 0), 0);
   const score = total > 0 ? Math.round((earned / total) * 100) : 0;
@@ -154,6 +136,35 @@ function audit(html: string, headers: Headers, ms: number): { score: number; fin
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // ── 1. Identify caller — refuse unknown-IP requests so attackers
+  //     can't pool into a single "unknown" bucket and evade rate-limit.
+  const h = await headers();
+  const ip =
+    h.get("cf-connecting-ip") ??
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    null;
+  if (!ip) {
+    return NextResponse.json({ ok: false, error: "missing-client-ip" }, { status: 400 });
+  }
+  const ipKey = hashIp(ip);
+
+  // ── 2. Rate limit — 5 audits / hour / IP. Check BEFORE the fetch.
+  const limited = await isOverLimit(ipKey, 5, async (key, since) => {
+    const [row] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(toolRuns)
+      .where(and(eq(toolRuns.tool, "seo-audit"), eq(toolRuns.ipHash, key), gte(toolRuns.runAt, since)));
+    return row?.n ?? 0;
+  }).catch(() => false);
+  if (limited) {
+    return NextResponse.json(
+      { ok: false, error: "Too many audits. Try again in an hour." },
+      { status: 429 }
+    );
+  }
+
+  // ── 3. Parse the URL caller wants audited.
   let body: { domain?: string };
   try {
     body = await req.json();
@@ -165,26 +176,30 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ ok: false, error: "Enter a valid domain (e.g. example.com)" }, { status: 400 });
   }
 
-  // Rate limit — 5 audits per hour per IP. Tracks against the contact leads
-  // table's ip_hash (cheapest existing surface) — limit applies cross-tool.
-  const h = await headers();
-  const ip =
-    h.get("cf-connecting-ip") ??
-    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    h.get("x-real-ip") ??
-    "unknown";
-  void ip;
-  // Simple per-process bucket — keeps the implementation lean. Bedrock-style
-  // distributed rate limits would need Upstash; we skip that for now.
-  void hashIp;
-  void isOverLimit;
+  // Record the run BEFORE the fetch so a fetch failure still counts
+  // toward the rate limit (otherwise an attacker can probe blocked
+  // hosts cheaply).
+  await db.insert(toolRuns).values({ tool: "seo-audit", ipHash: ipKey }).catch(() => {});
 
-  const result = await fetchTimed(url);
+  // ── 4. Fetch the URL through the SSRF guard.
+  const result = await safeFetchPublic(url, 10_000);
   if (!result.ok) {
-    return NextResponse.json({ ok: false, error: `Couldn't fetch ${url}: ${result.error}` }, { status: 502 });
+    // Generic message — never leak internal topology details. Log
+    // server-side for debugging.
+    console.warn("[seo-audit] fetch refused", { url, reason: result.reason });
+    return NextResponse.json(
+      { ok: false, error: "Couldn't reach that URL. Check that it's publicly accessible." },
+      { status: 502 }
+    );
   }
-  if (result.status >= 400) {
-    return NextResponse.json({ ok: false, error: `${url} returned HTTP ${result.status}` }, { status: 502 });
+  // Treat any non-2xx upstream HTTP status as a fetch failure for the
+  // caller — don't echo their URL or the upstream status code.
+  if (result.status >= 400 || result.status >= 300) {
+    console.warn("[seo-audit] upstream non-2xx", { url, status: result.status });
+    return NextResponse.json(
+      { ok: false, error: "Couldn't reach that URL. Check that it's publicly accessible." },
+      { status: 502 }
+    );
   }
 
   const { score, findings } = audit(result.html, result.headers, result.ms);
